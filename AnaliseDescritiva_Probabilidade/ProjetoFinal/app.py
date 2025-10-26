@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from scipy.stats import skew, kurtosis, norm
+import gdown  # <--- NOVO
 
 # -------------------------------------------------------------
 # CONFIGURAÇÃO GERAL DO APP
@@ -14,40 +15,67 @@ st.set_page_config(
 )
 
 st.title("📊 Análise Descritiva - Engenharia Civil (ENADE 2017)")
-
 st.sidebar.markdown("📂 **Carregamento dos Dados**")
 
 # -------------------------------------------------------------
-# OPÇÃO 1 - Leitura direta do Google Drive
+# LINK DIRETO DO GOOGLE DRIVE (ID do arquivo)
 # -------------------------------------------------------------
-drive_url = "https://drive.google.com/uc?export=download&id=1IS7U2n-9ZvaMXKDjv5ivXiQma5tcJ_y0"
+FILE_ID = "1IS7U2n-9ZvaMXKDjv5ivXiQma5tcJ_y0"
+DRIVE_URL = f"https://drive.google.com/uc?id={FILE_ID}"
+LOCAL_FILE = "MICRODADOS_ENADE_2017.txt"
 
-@st.cache_data(show_spinner="🔄 Baixando dados do Google Drive (pode levar alguns segundos)...")
-def load_data_from_drive(url: str) -> pd.DataFrame:
+# -------------------------------------------------------------
+# FUNÇÃO PARA DOWNLOAD E LEITURA DOS DADOS
+# -------------------------------------------------------------
+@st.cache_data(show_spinner="🔄 Baixando dados do Google Drive... (pode levar 1-2 minutos)")
+def load_data_from_drive() -> pd.DataFrame:
+    """
+    Faz o download do arquivo grande do Google Drive usando gdown
+    e carrega em um DataFrame pandas com tratamento numérico.
+    """
+    # Baixa o arquivo apenas se ainda não existir no cache local
+    gdown.download(DRIVE_URL, LOCAL_FILE, quiet=False, fuzzy=True)
+
+    # Conversor numérico para colunas decimais com vírgula
     def convert_num(x):
         try:
-            return float(x.replace(',', '.').strip())
+            return float(x.replace(",", ".").strip())
         except Exception:
             return pd.NA
 
+    # Lê o arquivo CSV
     df = pd.read_csv(
-        url,
-        sep=';',
-        encoding='latin1',
+        LOCAL_FILE,
+        sep=";",
+        encoding="latin1",
         low_memory=False,
         converters={
-            'NT_OBJ_CE': convert_num,
-            'NT_GER': convert_num,
-            'NT_OBJ_FG': convert_num
-        }
+            "NT_OBJ_CE": convert_num,
+            "NT_GER": convert_num,
+            "NT_OBJ_FG": convert_num,
+        },
     )
     return df
 
+
+# -------------------------------------------------------------
+# EXECUÇÃO PRINCIPAL
+# -------------------------------------------------------------
 try:
-    df_base = load_data_from_drive(drive_url)
+    df_base = load_data_from_drive()
     st.success("✅ Dados carregados com sucesso do Google Drive!")
+
     st.write(f"**{len(df_base):,} linhas** e **{len(df_base.columns)} colunas** carregadas.")
     st.dataframe(df_base.head())
+
+    # Exemplo de gráfico
+    if "NT_GER" in df_base.columns:
+        st.subheader("🎨 Distribuição da Nota Geral (NT_GER)")
+        fig = px.histogram(df_base, x="NT_GER", nbins=30, title="Distribuição de NT_GER")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("Coluna 'NT_GER' não encontrada no dataset.")
+
 except Exception as e:
     st.error(f"❌ Erro ao carregar os dados: {e}")
 
