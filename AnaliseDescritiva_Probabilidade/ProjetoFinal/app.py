@@ -15,33 +15,61 @@ st.set_page_config(
 
 st.title("📊 Análise Descritiva - Engenharia Civil (ENADE 2017)")
 
-st.sidebar.markdown("📂 **Leitura direta do arquivo local**")
-file_path = "/mnt/c/Users/Matheus/Desktop/PUC/AnaliseDescritiva_Probabilidade/MICRODADOS_ENADE_2017.txt"
+st.sidebar.markdown("📂 **Carregamento dos Dados**")
 
-with st.spinner("🔄 Lendo o arquivo diretamente do disco..."):
-    @st.cache_data
-    def load_data(path):
-        def convert_num(x):
-            try:
-                return float(x.replace(',', '.').strip())
-            except:
-                return pd.NA
+# -------------------------------------------------------------
+# UPLOAD INTERATIVO
+# -------------------------------------------------------------
+uploaded_file = st.sidebar.file_uploader(
+    "Envie o arquivo 'MICRODADOS_ENADE_2017.txt'",
+    type=["txt", "csv"]
+)
 
-        df = pd.read_csv(
-            path,
-            sep=';',
-            encoding='latin1',
-            converters={
-                'NT_OBJ_CE': convert_num,
-                'NT_GER': convert_num,
-                'NT_OBJ_FG': convert_num
-            }
-        )
-        return df
+@st.cache_data(show_spinner="🔄 Lendo o arquivo... isso pode levar alguns segundos.")
+def load_data(file):
+    """Lê o arquivo ENADE e converte colunas numéricas."""
+    def convert_num(x):
+        try:
+            return float(x.replace(',', '.').strip())
+        except Exception:
+            return pd.NA
 
-    df_base = load_data(file_path)
+    df = pd.read_csv(
+        file,
+        sep=';',
+        encoding='latin1',
+        low_memory=False,
+        converters={
+            'NT_OBJ_CE': convert_num,
+            'NT_GER': convert_num,
+            'NT_OBJ_FG': convert_num
+        }
+    )
+    return df
 
-st.success("✅ Arquivo carregado com sucesso do disco!")
+# -------------------------------------------------------------
+# PROCESSAMENTO E VISUALIZAÇÃO
+# -------------------------------------------------------------
+if uploaded_file is not None:
+    df_base = load_data(uploaded_file)
+    st.success("✅ Arquivo carregado com sucesso!")
+
+    st.write(f"**{len(df_base):,} linhas** e **{len(df_base.columns)} colunas** encontradas.")
+    st.dataframe(df_base.head())
+
+    # Exemplo de estatísticas descritivas
+    st.subheader("📈 Estatísticas Descritivas")
+    st.write(df_base.describe(include='all').T)
+
+    # Exemplo de gráfico interativo
+    st.subheader("🎨 Distribuição de Notas (NT_GER)")
+    if "NT_GER" in df_base.columns:
+        fig = px.histogram(df_base, x="NT_GER", nbins=30, title="Distribuição da Nota Geral")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("Coluna 'NT_GER' não encontrada no dataset.")
+else:
+    st.info("👆 Envie o arquivo 'MICRODADOS_ENADE_2017.txt' para iniciar a análise.")
 # -------------------------------------------------------------
 # LIMPEZA E TRANSFORMAÇÕES
 # -------------------------------------------------------------
