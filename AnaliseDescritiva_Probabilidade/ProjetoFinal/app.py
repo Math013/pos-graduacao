@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from scipy.stats import skew, kurtosis, norm
-import gdown  # <--- NOVO
 
 # -------------------------------------------------------------
 # CONFIGURAÇÃO GERAL DO APP
@@ -18,32 +17,22 @@ st.title("📊 Análise Descritiva - Engenharia Civil (ENADE 2017)")
 st.sidebar.markdown("📂 **Carregamento dos Dados**")
 
 # -------------------------------------------------------------
-# LINK DIRETO DO GOOGLE DRIVE (ID do arquivo)
+# CAMINHO LOCAL DO ARQUIVO AMOSTRAL NO REPOSITÓRIO
 # -------------------------------------------------------------
-FILE_ID = "1IS7U2n-9ZvaMXKDjv5ivXiQma5tcJ_y0"
-DRIVE_URL = f"https://drive.google.com/uc?id={FILE_ID}"
-LOCAL_FILE = "MICRODADOS_ENADE_2017.txt"
+LOCAL_FILE = "AnaliseDescritiva_Probabilidade/ProjetoFinal/MICRODADOS_ENADE_2017_SAMPLE.txt"
 
 # -------------------------------------------------------------
-# FUNÇÃO PARA DOWNLOAD E LEITURA DOS DADOS
+# FUNÇÃO PARA LEITURA DOS DADOS (sem gdown)
 # -------------------------------------------------------------
-@st.cache_data(show_spinner="🔄 Baixando dados do Google Drive... (pode levar 1-2 minutos)")
-def load_data_from_drive() -> pd.DataFrame:
-    """
-    Faz o download do arquivo grande do Google Drive usando gdown
-    e carrega em um DataFrame pandas com tratamento numérico.
-    """
-    # Baixa o arquivo apenas se ainda não existir no cache local
-    gdown.download(DRIVE_URL, LOCAL_FILE, quiet=False, fuzzy=True)
-
-    # Conversor numérico para colunas decimais com vírgula
+@st.cache_data(show_spinner="🔄 Lendo arquivo amostral... (pode levar alguns segundos)")
+def load_local_data() -> pd.DataFrame:
+    """Lê o arquivo amostral diretamente do repositório GitHub."""
     def convert_num(x):
         try:
             return float(x.replace(",", ".").strip())
         except Exception:
             return pd.NA
 
-    # Lê o arquivo CSV
     df = pd.read_csv(
         LOCAL_FILE,
         sep=";",
@@ -57,13 +46,12 @@ def load_data_from_drive() -> pd.DataFrame:
     )
     return df
 
-
 # -------------------------------------------------------------
 # EXECUÇÃO PRINCIPAL
 # -------------------------------------------------------------
 try:
-    df_base = load_data_from_drive()
-    st.success("✅ Dados carregados com sucesso do Google Drive!")
+    df_base = load_local_data()
+    st.success("✅ Dados amostrais carregados com sucesso do repositório!")
 
     st.write(f"**{len(df_base):,} linhas** e **{len(df_base.columns)} colunas** carregadas.")
     st.dataframe(df_base.head())
