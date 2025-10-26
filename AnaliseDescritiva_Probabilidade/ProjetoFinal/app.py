@@ -18,16 +18,12 @@ st.title("📊 Análise Descritiva - Engenharia Civil (ENADE 2017)")
 st.sidebar.markdown("📂 **Carregamento dos Dados**")
 
 # -------------------------------------------------------------
-# UPLOAD INTERATIVO
+# OPÇÃO 1 - Leitura direta do Google Drive
 # -------------------------------------------------------------
-uploaded_file = st.sidebar.file_uploader(
-    "Envie o arquivo 'MICRODADOS_ENADE_2017.txt'",
-    type=["txt", "csv"]
-)
+drive_url = "https://drive.google.com/uc?export=download&id=1IS7U2n-9ZvaMXKDjv5ivXiQma5tcJ_y0"
 
-@st.cache_data(show_spinner="🔄 Lendo o arquivo... isso pode levar alguns segundos.")
-def load_data(file):
-    """Lê o arquivo ENADE e converte colunas numéricas."""
+@st.cache_data(show_spinner="🔄 Baixando dados do Google Drive (pode levar alguns segundos)...")
+def load_data_from_drive(url: str) -> pd.DataFrame:
     def convert_num(x):
         try:
             return float(x.replace(',', '.').strip())
@@ -35,7 +31,7 @@ def load_data(file):
             return pd.NA
 
     df = pd.read_csv(
-        file,
+        url,
         sep=';',
         encoding='latin1',
         low_memory=False,
@@ -47,29 +43,14 @@ def load_data(file):
     )
     return df
 
-# -------------------------------------------------------------
-# PROCESSAMENTO E VISUALIZAÇÃO
-# -------------------------------------------------------------
-if uploaded_file is not None:
-    df_base = load_data(uploaded_file)
-    st.success("✅ Arquivo carregado com sucesso!")
-
-    st.write(f"**{len(df_base):,} linhas** e **{len(df_base.columns)} colunas** encontradas.")
+try:
+    df_base = load_data_from_drive(drive_url)
+    st.success("✅ Dados carregados com sucesso do Google Drive!")
+    st.write(f"**{len(df_base):,} linhas** e **{len(df_base.columns)} colunas** carregadas.")
     st.dataframe(df_base.head())
+except Exception as e:
+    st.error(f"❌ Erro ao carregar os dados: {e}")
 
-    # Exemplo de estatísticas descritivas
-    st.subheader("📈 Estatísticas Descritivas")
-    st.write(df_base.describe(include='all').T)
-
-    # Exemplo de gráfico interativo
-    st.subheader("🎨 Distribuição de Notas (NT_GER)")
-    if "NT_GER" in df_base.columns:
-        fig = px.histogram(df_base, x="NT_GER", nbins=30, title="Distribuição da Nota Geral")
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("Coluna 'NT_GER' não encontrada no dataset.")
-else:
-    st.info("👆 Envie o arquivo 'MICRODADOS_ENADE_2017.txt' para iniciar a análise.")
 # -------------------------------------------------------------
 # LIMPEZA E TRANSFORMAÇÕES
 # -------------------------------------------------------------
