@@ -116,7 +116,7 @@ st.success(f"✅ Base carregada com sucesso! ({len(df):,} registros)")
 
 # 2️⃣ Mostra prévia imediata (mantém o app vivo)
 st.info("🔍 Visualizando amostra dos dados brutos")
-st.dataframe(df.head(10), use_container_width=True)
+st.dataframe(df.head(10), width=True)
 
 # 3️⃣ Etapa seguinte: pré-processamento
 with st.spinner("🔧 Padronizando colunas e separando dados..."):
@@ -151,14 +151,14 @@ fig.update_layout(
     template="plotly_dark",
     height=600
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width=True)
 
 # Visualização inicial para manter o app ativo
 st.divider()
 st.subheader("🔍 Prévia dos Dados Carregados")
 
 # Mostra as 10 primeiras linhas
-st.dataframe(df.head(10), use_container_width=True)
+st.dataframe(df.head(10), width=True)
 
 # Mostra um gráfico de mortes por estado (para validar)
 mortes_estado = (
@@ -184,7 +184,7 @@ fig.update_layout(
     template="plotly_dark",
     height=600
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width=True)
 
 # ============================================================
 # KPIs
@@ -221,7 +221,7 @@ with col1:
         text=mortes_estado["last_available_deaths"].apply(lambda x: f"{x:,}".replace(",", ".")),
     )
     fig.update_layout(template="plotly_dark", height=500, showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width=True)
 
 with col2:
     mortes_cidade = (
@@ -240,7 +240,7 @@ with col2:
         text=mortes_cidade["last_available_deaths"].apply(lambda x: f"{x:,}".replace(",", ".")),
     )
     fig2.update_layout(template="plotly_dark", height=500, showlegend=False)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width=True)
 
 st.divider()
 
@@ -291,7 +291,7 @@ fig3.add_vline(x=media_est, line_dash="dash", line_color="white")
 fig3.add_annotation(x=media_est, y=-0.5, text=f"Média Estadual: {media_est:.2f}%", showarrow=False, font=dict(color="white"))
 fig3.update_traces(textposition="outside", marker_line_color="white", marker_line_width=1.2)
 fig3.update_layout(template="plotly_dark", height=700, showlegend=False)
-st.plotly_chart(fig3, use_container_width=True)
+st.plotly_chart(fig3, width=True)
 
 st.divider()
 
@@ -320,7 +320,7 @@ fig4 = px.bar(
     text=taxas_regiao["taxa_contaminacao"].apply(lambda x: f"{x:.2f}%"),
 )
 fig4.update_layout(template="plotly_dark", height=500, showlegend=False)
-st.plotly_chart(fig4, use_container_width=True)
+st.plotly_chart(fig4, width=True)
 
 taxas_regiao = taxas_regiao.sort_values(by='taxa_mortalidade', ascending=True)
 
@@ -332,7 +332,7 @@ fig5 = px.bar(
     text=taxas_regiao["taxa_mortalidade"].apply(lambda x: f"{x:.2f}%"),
 )
 fig5.update_layout(template="plotly_dark", height=500, showlegend=False)
-st.plotly_chart(fig5, use_container_width=True)
+st.plotly_chart(fig5, width=True)
 
 st.dataframe(taxas_regiao.round(3))
 
@@ -369,7 +369,7 @@ fig6 = px.scatter(df_reg, x=x_vars[x_label], y=y_vars[y_label], opacity=0.6,
 fig6.add_traces(go.Scatter(x=df_reg[x_vars[x_label]], y=y_pred, mode="lines",
                            line=dict(color="red", width=2), name="Reta de Regressão"))
 fig6.update_layout(template="plotly_dark", height=600)
-st.plotly_chart(fig6, use_container_width=True)
+st.plotly_chart(fig6, width=True)
 
 st.divider()
 
@@ -402,7 +402,7 @@ fig7 = px.bar(df_disp.melt(id_vars="Grupo"), x="Grupo", y="value", color="variab
               barmode="group", text_auto=".2f", title="Dispersão Estatística – Taxa de Mortalidade (%)",
               color_discrete_sequence=px.colors.qualitative.Dark24)
 fig7.update_layout(template="plotly_dark", height=500)
-st.plotly_chart(fig7, use_container_width=True)
+st.plotly_chart(fig7, width=True)
 
 # ============================================================
 # 🔥 Heatmap de Correlação – Variáveis Epidemiológicas
@@ -450,7 +450,7 @@ fig_corr.update_layout(
     margin=dict(l=50, r=50, t=100, b=50)
 )
 
-st.plotly_chart(fig_corr, use_container_width=True)
+st.plotly_chart(fig_corr, width=True)
 
 # Interpretação textual dinâmica
 st.markdown("### 🧩 Interpretação Automática")
