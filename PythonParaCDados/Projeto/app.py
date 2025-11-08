@@ -1,7 +1,4 @@
-# ============================================================
-# 🦠 Painel Epidemiológico – caso_full (Streamlit + Plotly)
-# ============================================================
-
+import os
 import io
 import numpy as np
 import pandas as pd
@@ -56,7 +53,7 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for c in num_cols:
         df[c] = pd.to_numeric(df[c], errors="coerce")
-    if "is_last" in df: 
+    if "is_last" in df:
         df["is_last"] = df["is_last"].astype(bool, errors="ignore")
     if "is_repeated" in df:
         df["is_repeated"] = df["is_repeated"].astype(bool, errors="ignore")
@@ -85,16 +82,33 @@ def stats_dispersion(series):
     return media, dp, cv
 
 # ============================================================
-# 📥 Fonte de Dados Automática – Brasil.io
+# 📥 Fonte de Dados Automática – Brasil.io (cache local)
 # ============================================================
-st.subheader("📁 Fonte de Dados – Brasil.io")
+@st.cache_resource(show_spinner=True)
+def load_full_dataset():
+    """Baixa e cacheia localmente o dataset do Brasil.io (apenas 1x)."""
+    url = "https://data.brasil.io/dataset/covid19/caso_full.csv.gz"
+    local_path = "caso_full.csv.gz"
 
-url = "https://data.brasil.io/dataset/covid19/caso_full.csv.gz"
-with st.spinner("Baixando e descompactando dados do Brasil.io..."):
-    response = requests.get(url)
-    response.raise_for_status()
-    with gzip.GzipFile(fileobj=io.BytesIO(response.content)) as gz:
-        df = pd.read_csv(gz)
+    # Se não existir, baixa uma vez e salva localmente
+    if not os.path.exists(local_path):
+        with st.spinner("📦 Baixando base completa do Brasil.io (pode levar até 2 min)..."):
+            response = requests.get(url, timeout=180)
+            response.raise_for_status()
+            with open(local_path, "wb") as f:
+                f.write(response.content)
+
+    # Lê diretamente do arquivo local (sem rebaixar)
+    with gzip.open(local_path, "rt") as f:
+        df = pd.read_csv(f)
+
+    return df
+
+# ----------------------------------------------------------
+# Usa a função de cache
+st.subheader("📁 Fonte de Dados – Brasil.io (cache persistente)")
+df = load_full_dataset()
+st.success(f"✅ Base carregada com sucesso! ({len(df):,} registros)")
 
 df = standardize_columns(df)
 df_state_nr, df_state_last, df_city_nr, df_city_last = split_city_state_latest(df)
