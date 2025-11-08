@@ -105,15 +105,53 @@ def load_full_dataset():
     return df
 
 # ----------------------------------------------------------
-# Usa a função de cache
+# Usa a função de cache e mantém o app ativo enquanto carrega
 st.subheader("📁 Fonte de Dados – Brasil.io (cache persistente)")
-df = load_full_dataset()
+
+# 1️⃣ Carregamento com feedback visual
+with st.spinner("📦 Baixando base completa do Brasil.io (pode levar até 2 min)..."):
+    df = load_full_dataset()
+
 st.success(f"✅ Base carregada com sucesso! ({len(df):,} registros)")
 
-df = standardize_columns(df)
-df_state_nr, df_state_last, df_city_nr, df_city_last = split_city_state_latest(df)
+# 2️⃣ Mostra prévia imediata (mantém o app vivo)
+st.info("🔍 Visualizando amostra dos dados brutos")
+st.dataframe(df.head(10), use_container_width=True)
 
-st.success("✅ Dados carregados com sucesso a partir do Brasil.io!")
+# 3️⃣ Etapa seguinte: pré-processamento
+with st.spinner("🔧 Padronizando colunas e separando dados..."):
+    df = standardize_columns(df)
+    df_state_nr, df_state_last, df_city_nr, df_city_last = split_city_state_latest(df)
+
+st.success("✅ Estrutura de dados criada com sucesso!")
+
+# 4️⃣ Mostra feedback intermediário e pequeno resumo
+st.write(f"**Estados únicos:** {df_state_last['state'].nunique()} | **Cidades únicas:** {df_city_last['city'].nunique()}")
+
+# 5️⃣ Primeiro gráfico rápido pra garantir renderização
+st.subheader("📊 Mortes por Estado (visualização inicial)")
+mortes_estado = (
+    df_state_last.groupby("state")["last_available_deaths"]
+    .max()
+    .reset_index()
+    .sort_values(by="last_available_deaths", ascending=False)
+)
+fig = px.bar(
+    mortes_estado,
+    x="last_available_deaths",
+    y="state",
+    orientation="h",
+    title="Mortes por Estado (último registro)",
+    color="last_available_deaths",
+    color_continuous_scale="Reds",
+)
+fig.update_layout(
+    xaxis_title="Número de Mortes",
+    yaxis_title="Estado",
+    template="plotly_dark",
+    height=600
+)
+st.plotly_chart(fig, use_container_width=True)
 
 # Visualização inicial para manter o app ativo
 st.divider()
