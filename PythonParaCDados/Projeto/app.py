@@ -101,6 +101,39 @@ df_state_nr, df_state_last, df_city_nr, df_city_last = split_city_state_latest(d
 
 st.success("✅ Dados carregados com sucesso a partir do Brasil.io!")
 
+# Visualização inicial para manter o app ativo
+st.divider()
+st.subheader("🔍 Prévia dos Dados Carregados")
+
+# Mostra as 10 primeiras linhas
+st.dataframe(df.head(10), use_container_width=True)
+
+# Mostra um gráfico de mortes por estado (para validar)
+mortes_estado = (
+    df_state_last.groupby("state")["last_available_deaths"]
+    .max()
+    .reset_index()
+    .sort_values(by="last_available_deaths", ascending=False)
+)
+
+fig = px.bar(
+    mortes_estado,
+    x="last_available_deaths",
+    y="state",
+    orientation="h",
+    title="Mortes por Estado (último registro)",
+    color="last_available_deaths",
+    color_continuous_scale="Reds",
+)
+
+fig.update_layout(
+    xaxis_title="Número de Mortes",
+    yaxis_title="Estado",
+    template="plotly_dark",
+    height=600
+)
+st.plotly_chart(fig, use_container_width=True)
+
 # ============================================================
 # KPIs
 # ============================================================
