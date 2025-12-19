@@ -1,0 +1,196 @@
+---
+title: "Lista2"
+author: "Matheus Oliveira Nonato da Silva"
+output: html_document
+date: "2025-12-01"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Exercício 1**
+
+**Análise descritiva**
+
+```{r}
+
+# install.packages(c("dplyr", "ggplot2", "car", "psych", "corrplot", "nortest", "lmtest"))
+
+# options("download.file.method"="wininet")
+
+library(dplyr)
+library(ggplot2)
+library(car) # Para algumas funções estatísticas, se necessário
+library(psych) # Para a função describe
+library(corrplot) # Para o correlograma
+library(nortest) # Para o teste de Kolmogorov-Smirnov (lillie.test ou ad.test)
+library(lmtest) # Para testes de hipóteses do modelo de regressão, como o Breusch-Pagan
+```
+
+```{r}
+
+library(readr)
+propaganda <- read_csv("C:/Users/Matheus/Desktop/PUC/TécnicasAmostragemRegressãoLinear/1 - propaganda.csv")
+propaganda
+
+```
+
+```{r}
+describe(propaganda)
+```
+
+```{r, fig.width=10, fig.height=8}
+par(mfrow = c(2, 2))  # layout 2x2
+
+# Estilo
+cor <- rgb(0.2, 0.6, 0.8, 0.5)
+borda <- "gray30"
+
+hist(propaganda$TV,
+     breaks = 15,
+     col = cor,
+     border = borda,
+     main = "TV")
+
+hist(propaganda$Radio,
+     breaks = 15,
+     col = cor,
+     border = borda,
+     main = "Radio")
+
+hist(propaganda$Jornal,
+     breaks = 15,
+     col = cor,
+     border = borda,
+     main = "Jornal")
+
+hist(propaganda$Vendas,
+     breaks = 15,
+     col = cor,
+     border = borda,
+     main = "Vendas")
+
+```
+
+```{r}
+
+library(tidyr)
+library(ggplot2)
+
+propaganda_long <- pivot_longer(
+  propaganda,
+  cols = everything(),        # transforma todas as colunas
+  names_to = "Variable",
+  values_to = "Value"
+)
+
+ggplot(propaganda_long, aes(x = Variable, y = Value)) +
+  geom_boxplot(fill = "steelblue") +
+  labs(title = "Boxplots das Variáveis Quantitativas", y = "Valor") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+ggplot(propaganda, aes(y = Vendas)) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(title = "Boxplot da Variável Resposta (Vendas)", y = "Vendas") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(propaganda, aes(x = Vendas)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", aes(y = ..density..)) +
+  geom_density(color = "red", linetype = "solid", size = 1.5) +
+  labs(title = "Histograma da Variável Resposta (Vendas)", x = "Vendas", y = "Densidade") +
+  theme_minimal()
+
+# help(geom_density)
+```
+
+**Cálculo de correlação e covariacia**
+
+```{r, fig.width=10, fig.height=8}
+
+correlacao = cor(propaganda)
+
+corrplot(correlacao,
+         method="color",
+         col = brewer.pal(n = 11, name = "RdYlGn"),
+         is.corr = TRUE,
+         addCoef.col = "black",
+         tl.col = "black",
+         tl.srt = 45,
+         title = "Correlação de Pearson",
+         mar = c(0, 0, 1, 0))
+
+```
+
+```{r, fig.width=10, fig.height=8}
+
+covariancia = cov(propaganda)
+
+corrplot(covariancia,
+         method = "color",
+         is.corr = FALSE,   # <--- ESSENCIAL
+         col = brewer.pal(n = 11, name = "RdYlGn"),
+         addCoef.col = "black",
+         tl.col = "black",
+         tl.srt = 45,
+         title = "Matriz de Covariância",
+         mar = c(0, 0, 1, 0)
+)
+```
+
+**Modelo de regressão**
+
+```{r}
+model_regressao <- lm(Vendas ~ ., data = propaganda)
+
+# Visualizando o resumo do modelo
+
+summary(model_regressao)
+```
+
+**Análise dos resíduos**
+
+```{r}
+residuos <- residuals(model_regressao)
+
+# Histograma dos resíduos
+ggplot(data.frame(residuos), aes(x = residuos)) +
+  geom_histogram(binwidth = 0.05, fill = "purple", color = "black", aes(y = ..density..)) +
+  geom_density(color = "green", linetype = "solid", size = 1.5) +
+  labs(title = "Histograma dos Resíduos do Modelo", x = "Resíduos", y = "Densidade") +
+  theme_minimal()
+```
+
+```{r}
+qqnorm(residuos, main = "Gráfico Q-Q dos Resíduos do Modelo")
+qqline(residuos, col = "blue")
+```
+
+**Análise de multicolinearidade**
+
+```{r}
+model_regressao <- lm(Vendas ~ TV + Radio + Jornal, data = propaganda)
+vif(model_regressao)
+
+```
+
+| R²    | R² ajustado |
+|-------|-------------|
+| 0.897 | 0.896       |
+
+Indica que aproximadamente 89,6% da variabilidade das vendas é explicada pelos investimentos em mídia.
+
+F-statistic = 570,3 com p \< 0,0001, significa que o modelo é altamente significativo.
+
+| Variável | Coeficiente |
+|----|----|
+| **Intercepto (2.9389)** | Valor esperado das vendas quando todos os investimentos são zero. |
+| **TV (0.0458)** | **Cada 1 unidade monetária investida em TV aumenta as vendas em 0.0458 unidades**, mantendo as demais variáveis constantes. É o preditor mais forte. |
+| **Rádio (0.1885)** | **Cada 1 unidade investida em Rádio aumenta as vendas em 0.1885 unidades.** Apesar de numericamente maior, o investimento típico em Rádio é muito menor, portanto o impacto total é moderado. |
+| **Jornal (-0.0010)** | Efeito praticamente nulo. **P-valor = 0.860**, indicando ausência total de significância estatística. |

@@ -1,0 +1,791 @@
+---
+title: "Lista2"
+author: "Matheus Oliveira"
+date: "2025-12-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Propaganda
+
+```{r}
+# install.packages(c("dplyr", "ggplot2", "car", "psych", "corrplot", "nortest", "lmtest"))
+
+# options("download.file.method"="wininet")
+
+library(dplyr)
+library(ggplot2)
+library(car) # Para algumas funções estatísticas, se necessário
+library(psych) # Para a função describe
+library(corrplot) # Para o correlograma
+library(nortest) # Para o teste de Kolmogorov-Smirnov (lillie.test ou ad.test)
+library(lmtest) # Para testes de hipóteses do modelo de regressão, como o Breusc
+library(tidyr)
+```
+
+```{r}
+propaganda = read.csv('1 - propaganda.csv')
+```
+
+```{r}
+head(propaganda)
+```
+
+```{r}
+dim(propaganda)
+```
+
+```{r}
+sapply(propaganda, class)
+```
+
+```{r}
+colSums(is.na(propaganda))
+```
+
+```{r}
+summary(propaganda)
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+propaganda %>%
+  select(where(is.numeric)) %>%         # só colunas numéricas
+  pivot_longer(cols = everything(), 
+               names_to = "variavel", 
+               values_to = "valor") %>%
+  ggplot(aes(x = valor)) +
+  geom_histogram(bins = 15, 
+                 fill = "skyblue", 
+                 color = "black") +
+  facet_wrap(~ variavel, scales = "free") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    strip.text = element_text(face = "bold")
+  )
+
+```
+
+Cálculo de correlação e covariancia
+
+```{r, fig.width=10, fig.height=8}
+
+library(corrplot)
+
+corr <- cor(propaganda, use = "complete.obs")
+
+corrplot(
+  corr,
+  method = "color",
+  col = colorRampPalette(RColorBrewer::brewer.pal(11, "RdYlGn"))(200),
+  addCoef.col = "black",
+  tl.col = "black",
+  tl.srt = 45,
+  title = "Matriz de Correlação",
+  mar = c(0,0,2,0)
+)
+
+corr
+
+
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+cov_matriz <- cov(propaganda, use = "complete.obs")
+
+cov_df <- as.data.frame(cov_matriz) %>%
+  mutate(Var1 = rownames(cov_matriz)) %>%
+  pivot_longer(
+    cols = -Var1,
+    names_to = "Var2",
+    values_to = "value"
+  )
+
+ggplot(cov_df, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = sprintf("%.2f", value)), size = 3) +
+  scale_fill_distiller(palette = "RdYlGn") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid = element_blank()
+  ) +
+  labs(title = "Matriz de Covariância", x = "", y = "")
+
+
+```
+
+Modelo de regressão
+
+```{r}
+# Selecionar as variáveis explicativas
+X <- propaganda[, c("TV", "Radio", "Jornal")]
+
+# Variável dependente
+y <- propaganda$Vendas
+
+# Criar modelo OLS com intercepto (default do R)
+modelo <- lm(Vendas ~ TV + Radio + Jornal, data = propaganda)
+
+# Resumo do modelo
+summary(modelo)
+
+```
+
+Análise de resíduos
+
+```{r}
+
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+
+# Resíduos do modelo
+residuos <- residuals(modelo)
+df_res <- data.frame(index = 1:length(residuos), resid = residuos)
+
+# 1) Série dos resíduos (linha)
+p1 <- ggplot(df_res, aes(x = index, y = resid)) +
+  geom_line(color = "steelblue") +
+  ggtitle("Resíduos do Modelo 1") +
+  theme_minimal()
+
+# 2) Histograma + densidade
+p2 <- ggplot(df_res, aes(x = resid)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 30,
+                 fill = "skyblue",
+                 color = "black") +
+  geom_density(color = "red", linewidth = 1) +
+  ggtitle("Histograma dos Resíduos") +
+  theme_minimal()
+
+# 3) ACF construído “na mão” com ggplot
+acf_data <- acf(residuos, plot = FALSE)
+df_acf <- data.frame(
+  lag = as.numeric(acf_data$lag),
+  acf = as.numeric(acf_data$acf)
+)
+
+p3 <- ggplot(df_acf, aes(x = lag, y = acf)) +
+  geom_bar(stat = "identity", fill = "darkgreen") +
+  geom_hline(yintercept = 0, color = "black") +
+  ggtitle("ACF dos Resíduos") +
+  theme_minimal()
+
+# 4) QQ-Plot com ggplot2
+p4 <- ggplot(df_res, aes(sample = resid)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  ggtitle("QQ-Plot dos Resíduos") +
+  theme_minimal()
+
+# Organizar igual ao Python (2x2)
+grid.arrange(p1, p2, p3, p4, ncol = 2)
+
+
+```
+
+```{r}
+teste_shapiro <- shapiro.test(residuals(modelo))
+
+cat("Estatística de teste:", teste_shapiro$statistic, "\n")
+cat("p-valor:", teste_shapiro$p.value, "\n")
+
+```
+
+```{r}
+library(ggplot2)
+
+df_plot <- data.frame(
+  fitted = fitted(modelo),
+  resid = residuals(modelo)
+)
+
+ggplot(df_plot, aes(x = fitted, y = resid)) +
+  geom_point(color = "steelblue", alpha = 0.7) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  ggtitle("Homocedasticidade") +
+  theme_minimal()
+
+```
+
+Análise de multicolinearidade
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+propaganda %>%
+  pivot_longer(cols = everything(),
+               names_to = "variavel",
+               values_to = "valor") %>%
+  ggplot(aes(x = variavel, y = valor)) +
+  geom_boxplot(fill = "skyblue") +
+  facet_wrap(~ variavel, scales = "free", ncol = 4) +
+  ggtitle("Boxplots das Variáveis") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(size = 15)
+  )
+
+```
+
+```{r}
+library(car)
+
+vif_valores <- vif(modelo)
+
+vif_df <- data.frame(
+  variavel = names(vif_valores),
+  VIF = as.numeric(vif_valores)
+)
+
+vif_df
+
+```
+
+Análise do modelo
+
+```{r}
+summary(modelo)
+```
+
+| R²    | R² ajustado |
+|-------|-------------|
+| 0.897 | 0.896       |
+
+Indica que aproximadamente 89,6% da variabilidade das vendas é explicada pelos investimentos em mídia.
+
+F-statistic = 570,3 com p \< 0,0001, significa que o modelo é altamente significativo.
+
+| Variável | Coeficiente |
+|----|----|
+| **Intercepto (2.9389)** | Valor esperado das vendas quando todos os investimentos são zero. |
+| **TV (0.0458)** | **Cada 1 unidade monetária investida em TV aumenta as vendas em 0.0458 unidades**, mantendo as demais variáveis constantes. É o preditor mais forte. |
+| **Rádio (0.1885)** | **Cada 1 unidade investida em Rádio aumenta as vendas em 0.1885 unidades.** Apesar de numericamente maior, o investimento típico em Rádio é muito menor, portanto o impacto total é moderado. |
+| **Jornal (-0.0010)** | Efeito praticamente nulo. **P-valor = 0.860**, indicando ausência total de significância estatística. |
+
+# Preço carro
+
+```{r}
+base = read.csv('preco_carro.csv')
+```
+
+```{r}
+summary(base)
+```
+
+```{r}
+dim(base)
+```
+
+```{r}
+sapply(base, class)
+```
+
+setdiff(num_cols, names(base))
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+num_cols <- c(
+  "on.road.old", "on.road.now", "years", "km",
+  "rating", "condition", "economy",
+  "top.speed", "hp", "torque", "current.price"
+)
+
+base %>%
+  select(all_of(num_cols)) %>%
+  pivot_longer(cols = everything(),
+               names_to = "variavel",
+               values_to = "valor") %>%
+  ggplot(aes(x = variavel, y = valor)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  ggtitle("Boxplots das Variáveis Numéricas")
+
+
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+base %>%
+  select(where(is.numeric)) %>%             # somente variáveis numéricas
+  pivot_longer(
+    cols = everything(),
+    names_to = "variavel",
+    values_to = "valor"
+  ) %>%
+  ggplot(aes(x = valor)) +
+  geom_histogram(bins = 15,
+                 fill = "skyblue",
+                 color = "black") +
+  facet_wrap(~ variavel, scales = "free") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    strip.text = element_text(face = "bold")
+  ) +
+  ggtitle("Histogramas das Variáveis Numéricas")
+
+```
+
+Matriz de correlação
+
+```{r, fig.width=10, fig.height=8}
+
+library(corrplot)
+
+corr <- cor(base[, num_cols], use = "complete.obs")
+
+corrplot(
+  corr,
+  method = "color",
+  col = colorRampPalette(RColorBrewer::brewer.pal(11, "RdYlGn"))(200),
+  addCoef.col = "black",
+  tl.col = "black",
+  tl.srt = 45,
+  title = "Matriz de Correlação",
+  mar = c(0,0,2,0)
+)
+
+corr
+```
+
+```{r, fig.width=20, fig.height=10}
+
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+cov_matriz <- cov(base[, num_cols], use = "complete.obs")
+cov_matriz
+
+cov_df <- as.data.frame(cov_matriz) %>%
+  mutate(Var1 = rownames(cov_matriz)) %>%
+  pivot_longer(cols = -Var1, names_to = "Var2", values_to = "value")
+
+ggplot(cov_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  geom_text(aes(label = round(value, 2))) +
+  scale_fill_distiller(palette = "RdYlGn") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Matriz de Covariância")
+
+
+```
+
+```{r}
+corr <- cor(base[, num_cols], use = "complete.obs")
+
+corr_target <- corr[, "current.price"]
+corr_target <- corr_target[names(corr_target) != "current.price"]
+corr_target <- sort(corr_target, decreasing = TRUE)
+
+corr_target
+
+
+```
+
+```{r}
+top3 <- names(corr_target[c("km", "on.road.now", "on.road.old")])
+top5 <- names(corr_target[c("km", "on.road.now", "on.road.old", "condition", "rating")])
+
+cat("Top 3:", top3, "\n")
+cat("Top 5:", top5, "\n")
+
+
+```
+
+Modelos de regressão
+
+```{r}
+y = base$current.price
+
+X1 <- base %>% select(-v.id, -current.price)
+X2 <- base %>% select(all_of(top3))
+X3 <- base %>% select(all_of(top5))
+
+model1 <- lm(y ~ ., data = X1)
+model2 <- lm(y ~ ., data = X2)
+model3 <- lm(y ~ ., data = X3)
+
+```
+
+```{r}
+print('Modelo com todas as variáveis explicativas numéricas')
+summary(model1)
+
+```
+
+```{r}
+print('Modelo com as três variáveis mais correlacionadas')
+summary(model2)
+```
+
+```{r}
+print('Modelo com as cinco variáveis mais correlacionadas')
+summary(model3)
+```
+
+Análise de resíduos
+
+```{r}
+library(ggplot2)
+
+df_res1 <- data.frame(
+  fitted = fitted(model1),
+  resid = residuals(model1)
+)
+
+ggplot(df_res1, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Valores Ajustados",
+    y = "Resíduos",
+    title = "Resíduos vs Ajustados – Modelo 1"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+library(ggplot2)
+
+# Resíduos e padronização
+resid1 <- residuals(model1)
+resid_pad <- (resid1 - mean(resid1)) / sd(resid1)
+
+# Histograma + densidade
+ggplot(data.frame(resid_pad), aes(x = resid_pad)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 30,
+                 fill = "skyblue",
+                 color = "black") +
+  geom_density(color = "red", linewidth = 1) +
+  ggtitle("Histograma dos Resíduos – Modelo 1") +
+  theme_minimal()
+
+# QQ-plot
+ggplot(data.frame(resid_pad), aes(sample = resid_pad)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  ggtitle("QQ-Plot dos Resíduos – Modelo 1") +
+  theme_minimal()
+
+# Shapiro-Wilk
+teste_shapiro <- shapiro.test(resid1)
+cat("Estatística W =", teste_shapiro$statistic, "\n")
+cat("p-valor =", teste_shapiro$p.value, "\n")
+
+```
+
+```{r}
+library(ggplot2)
+
+df_res2 <- data.frame(
+  fitted = fitted(model2),
+  resid = residuals(model2)
+)
+
+ggplot(df_res2, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Valores Ajustados",
+    y = "Resíduos",
+    title = "Resíduos vs Ajustados – Modelo 2"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+library(ggplot2)
+
+# Resíduos e padronização
+resid2 <- residuals(model2)
+resid_pad2 <- (resid2 - mean(resid2)) / sd(resid2)
+
+# Histograma + densidade
+ggplot(data.frame(resid_pad2), aes(x = resid_pad2)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 30,
+                 fill = "skyblue",
+                 color = "black") +
+  geom_density(color = "red", linewidth = 1) +
+  ggtitle("Histograma dos Resíduos – Modelo 2") +
+  theme_minimal()
+
+# QQ-plot
+ggplot(data.frame(resid_pad2), aes(sample = resid_pad2)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  ggtitle("QQ-Plot dos Resíduos – Modelo 2") +
+  theme_minimal()
+
+# Shapiro-Wilk
+teste_shapiro <- shapiro.test(resid2)
+cat("Estatística W =", teste_shapiro$statistic, "\n")
+cat("p-valor =", teste_shapiro$p.value, "\n")
+```
+
+```{r}
+library(ggplot2)
+
+df_res3 <- data.frame(
+  fitted = fitted(model3),
+  resid = residuals(model3)
+)
+
+ggplot(df_res3, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Valores Ajustados",
+    y = "Resíduos",
+    title = "Resíduos vs Ajustados – Modelo 3"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+library(ggplot2)
+
+# Resíduos e padronização
+resid3 <- residuals(model3)
+resid_pad3 <- (resid3 - mean(resid3)) / sd(resid3)
+
+# Histograma + densidade
+ggplot(data.frame(resid_pad3), aes(x = resid_pad3)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 30,
+                 fill = "skyblue",
+                 color = "black") +
+  geom_density(color = "red", linewidth = 1) +
+  ggtitle("Histograma dos Resíduos – Modelo 3") +
+  theme_minimal()
+
+# QQ-plot
+ggplot(data.frame(resid_pad3), aes(sample = resid_pad3)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  ggtitle("QQ-Plot dos Resíduos – Modelo 3") +
+  theme_minimal()
+
+# Shapiro-Wilk
+teste_shapiro <- shapiro.test(resid3)
+cat("Estatística W =", teste_shapiro$statistic, "\n")
+cat("p-valor =", teste_shapiro$p.value, "\n")
+```
+
+```{r}
+library(ggplot2)
+
+# Resíduos de cada modelo
+resid1 <- residuals(model1)
+resid2 <- residuals(model2)
+resid3 <- residuals(model3)
+
+# Garante que todos têm o mesmo tamanho
+n1 <- length(resid1)
+n2 <- length(resid2)
+n3 <- length(resid3)
+
+# Monta um data frame empilhando tudo
+df_residuos <- data.frame(
+  modelo = c(
+    rep("Modelo 1", n1),
+    rep("Modelo 2", n2),
+    rep("Modelo 3", n3)
+  ),
+  residuo = c(resid1, resid2, resid3)
+)
+
+# Boxplot
+ggplot(df_residuos, aes(x = modelo, y = residuo)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  ggtitle("Boxplot dos Resíduos dos Modelos") +
+  ylab("Resíduos") +
+  xlab("") +
+  theme_minimal()
+
+
+
+```
+
+Análise de Multicolinearidade
+
+```{r}
+library(car)
+
+calcular_vif <- function(X) {
+  X <- as.data.frame(X)
+
+  # remover colunas constantes
+  X <- X[, sapply(X, function(col) length(unique(col)) > 1), drop = FALSE]
+
+  # criar variável dummy (necessária para lm)
+  X$dummy_target <- rnorm(nrow(X))
+
+  # criar fórmula usando todas as variáveis exceto a dummy como preditoras
+  formula <- as.formula(
+    paste("dummy_target ~", paste(names(X)[names(X) != "dummy_target"], collapse = " + "))
+  )
+
+  # ajustar modelo auxiliar
+  model_temp <- lm(formula, data = X)
+
+  # calcular VIF
+  vif_vals <- car::vif(model_temp)
+
+  data.frame(
+    Variavel = names(vif_vals),
+    VIF = as.numeric(vif_vals)
+  )
+}
+
+vif1 <- calcular_vif(X1)
+print('VIF - Modelo1')
+print(vif1)
+
+vif2 <- calcular_vif(X2)
+print('VIF - Modelo2')
+print(vif2)
+
+vif3 <- calcular_vif(X3)
+print('VIF - Modelo3')
+print(vif3)
+
+
+```
+
+Análise de Outliers
+
+```{r}
+library(ggplot2)
+
+fitted1 <- fitted(model1)
+std_resid1 <- rstudent(model1)
+
+df_std <- data.frame(
+  fitted = fitted1,
+  std_resid = std_resid1
+)
+
+ggplot(df_std, aes(x = fitted, y = std_resid)) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "black", linetype = "dashed") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+  labs(
+    x = "Valores Ajustados",
+    y = "Resíduos Padronizados",
+    title = "Resíduos Padronizados – Modelo 1"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+library(ggplot2)
+
+fitted2 <- fitted(model2)
+std_resid2 <- rstudent(model2)
+
+df_std2 <- data.frame(
+  fitted = fitted2,
+  std_resid = std_resid2
+)
+
+ggplot(df_std2, aes(x = fitted, y = std_resid2)) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "black", linetype = "dashed") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+  labs(
+    x = "Valores Ajustados",
+    y = "Resíduos Padronizados",
+    title = "Resíduos Padronizados – Modelo 2"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+
+library(ggplot2)
+
+fitted3 <- fitted(model3)
+std_resid3 <- rstudent(model3)
+
+df_std3 <- data.frame(
+  fitted = fitted3,
+  std_resid = std_resid3
+)
+
+ggplot(df_std3, aes(x = fitted, y = std_resid3)) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "black", linetype = "dashed") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  geom_hline(yintercept = -3, color = "red", linetype = "dashed") +
+  labs(
+    x = "Valores Ajustados",
+    y = "Resíduos Padronizados",
+    title = "Resíduos Padronizados – Modelo 3"
+  ) +
+  theme_minimal()
+```
+
+Comparação de modelos
+
+```{r}
+resumo_modelo <- function(nome, modelo, y) {
+  fitted <- fitted(modelo)
+  resid <- y - fitted
+  rmse <- sqrt(mean(resid^2))
+
+  data.frame(
+    Modelo = nome,
+    R2 = summary(modelo)$r.squared,
+    R2_ajustado = summary(modelo)$adj.r.squared,
+    AIC = AIC(modelo),
+    BIC = BIC(modelo),
+    RMSE = rmse
+  )
+}
+
+resumos <- rbind(
+  resumo_modelo("Modelo 1 - todas variáveis", model1, base$current.price),
+  resumo_modelo("Modelo 2 - top 3", model2, base$current.price),
+  resumo_modelo("Modelo 3 - top 5", model3, base$current.price)
+)
+
+resumos
+
+```
