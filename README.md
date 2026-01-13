@@ -140,6 +140,13 @@ Tecnicas-Amostragem-Regressao-Linear/
 - `index/` contém **rascunhos e versões intermediárias**
 - `projeto_final/` contém a **entrega oficial**
 
+# Estudos Extras
+
+Este diretório contém estudos complementares e experimentais,
+realizados como reforço aos conteúdos da pós-graduação.
+
+Não corresponde a entregas formais das disciplinas.
+
 ### Tecnologias
 - Python
 - R
