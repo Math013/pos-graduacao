@@ -1,0 +1,159 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+1\. Se uma amostra aleatória n=25, tem uma média amostral de 51,3 e uma desvio padrão populacional de σ=2. Construa o intervalo com 95% de confiança para a média populacional µ.
+
+```{r}
+n = 25
+media = 51.3
+desvio_padrao = 2
+ic = 1-0.95
+
+zc = qnorm(p = 1 - ic/2, mean = 0, sd = 1)
+erro_margem = zc * (desvio_padrao / sqrt(n))
+intervalo_confianca = c(media - erro_margem, media + erro_margem)
+print(paste("Intervalo de confiança para a média com 95% de confiança:", intervalo_confianca[1], "a", intervalo_confianca[2]))
+```
+
+2\. Sabe-se que a vida em horas de um bulbo de lâmpada de 75W é distribuída de forma aproximadamente normal com desvio padrão de σ=25. Uma amostra aleatória de 20 bulbos tem uma vida media de 1.014 horas. Construa um intervalo de confiança de 95% para a vida média. 
+
+```{r}
+n = 20
+desvio_padrao = 25
+media_amostra = 1014
+ic = 1 - 0.95
+
+zc = qnorm(p = 1 - ic/2, mean = 0, sd = 1)
+erro_margem = zc * (desvio_padrao / sqrt(n))
+intervalo_confianca = c(media_amostra - erro_margem, media_amostra + erro_margem)
+print(paste("Intervalo de confiança para a média com 95% de confiança:", intervalo_confianca[1], "a", intervalo_confianca[2]))
+```
+
+3\. Qual deve ser o tamanho da amostra para que o intervalo com 99,5% de confiança para a média populacional tenha uma semi amplitude não superior a 1,5? Sabe-se que a variância populacional é de 23.
+
+```{r}
+e = 1.5
+i = 1 - 0.995
+variancia = 23
+desvio_padrao = sqrt(variancia)
+zc = qnorm(p = 1 - i/2, mean = 0, sd = 1)
+n = (zc * desvio_padrao / e)^2
+print(paste("Tamanho da amostra necessário para um erro máximo de 1.5 com 99.5% de confiança:", ceiling(n)))
+
+```
+
+4\. Calcular o intervalo de confiança de 95% para a seguinte amostra, com variância populacional desconhecida:   19,8  18,5 17,6 16,7 15,8 15,4 14,1 13,6 11,9 11,4 11,4 8,8 7,5 15,4 15,4 19,5 14,9 12,7 11,9 11,4 10,1 7,9 
+
+```{r}
+amostra = c(19.8, 18.5, 17.6, 16.7, 15.8, 15.4, 14.1, 13.6, 11.9, 11.4, 11.4, 8.8, 7.5, 15.4, 15.4, 19.5, 14.9, 12.7, 11.9, 11.4, 10.1, 7.9)
+media = mean(amostra)
+desvio_padrao = sd(amostra)
+n = length(amostra)
+ic = 1 - 0.95
+
+tc = qt(p = 1 - ic/2, df = n - 1)
+erro_margem = tc * (desvio_padrao / sqrt(n))
+intervalo_confianca = c(media - erro_margem, media + erro_margem)
+print(paste("Intervalo de confiança para a média com 95% de confiança:", intervalo_confianca[1], "a", intervalo_confianca[2]))
+```
+
+5\. Uma marca particular de margarina diet foi analisada para determinar o nível em porcentagem de ácidos graxos insaturados. Uma amostra de seis pacotes resultou nos seguintes dados: 16,8; 17,2; 17,4; 16,9; 16,5 e 17,1. Encontre o intervalo de confiança de 99% para a amostra. 
+
+```{r}
+n = 6
+amostra = c(16.8, 17.2, 17.4, 16.9, 16.5, 17.1)
+media = mean(amostra)
+soma_quadrados = sum((amostra - media)^2)
+variancia_amostra = soma_quadrados / (n - 1)
+ic = 1 - 0.99
+tc = qt(p = 1 - ic/2, df = n - 1)
+erro_margem = tc * sqrt(variancia_amostra / n)
+intervalo_confianca = c(media - erro_margem, media + erro_margem)
+print(paste("Intervalo de confiança para a média com 99% de confiança:", intervalo_confianca[1], "a", intervalo_confianca[2]))
+
+```
+
+6\. Uma amostra piloto com 12 elementos tece média de 6,7 e desvio padrão de 1,7. Qual deve ser o tamanho da amostra para que a semi amplitude do intervalo de 99,5% de confiança da média populacional não seja superior a 0,8 .
+
+```{r}
+n = 12
+media = 6.7
+desvio_padrao = 1.7
+i = 1 - 0.995
+e = 0.8
+
+zc = qnorm(p = 1 - i/2, mean = 0, sd = 1)
+n_necessario = (zc * desvio_padrao / e)^2
+print(paste("Tamanho da amostra necessário para um erro máximo de 0.8 com 99.5% de confiança:", ceiling(n_necessario)))
+```
+
+7\. Em uma amostra aleatória de 85 mancais de eixos de manivelas de motores de automóveis, 10 têm um acabamento superficial mais rugoso do que as especificações permitidas. Calcule um intervalo de confiança para o 95% da proporção. 
+
+```{r}
+p_conservador = 0.5
+p_otimista = 0.8
+n = 85
+x = 10
+p = x / n
+ic = 1 - 0.95
+zc = qnorm(p = 1 - ic/2, mean = 0, sd = 1)
+
+erro_margem = zc * ((p * (1 - p) / n) ** 0.5)
+intervalo_confianca = c(p - erro_margem, p + erro_margem)
+print(paste("Intervalo de confiança para a proporção com 95% de confiança:", intervalo_confianca[1], "a", intervalo_confianca[2]))
+
+erro_margem_otimista = zc * ((p_otimista * (1 - p_otimista) / n) ** 0.5)
+intervalo_confianca_otimista = c(p - erro_margem_otimista, p + erro_margem_otimista)
+print(paste("Intervalo de confiança para a proporção (p otimista) com 95% de confiança:", intervalo_confianca_otimista[1], "a", intervalo_confianca_otimista[2]))
+
+erro_margem_conservador = zc * ((p_conservador * (1 - p_conservador) / n) ** 0.5)
+intervalo_confianca_conservador = c(p - erro_margem_conservador, p + erro_margem_conservador)
+print(paste("Intervalo de confiança para a proporção (p conservador) com 95% de confiança:", intervalo_confianca_conservador[1], "a", intervalo_confianca_conservador[2]))
+
+```
+
+8\. De 1.000 casos selecionados de aleatoriamente de câncer de pulmão, 823 resultaram em morte. Construa um intervalo de confiança de 95% para a taxa de morte de câncer de pulmão. 
+
+```{r}
+p_conservador = 0.5
+p_otimista = 0.8
+n = 1000
+x = 823
+p = x / n
+ic = 1 - 0.95
+zc = qnorm(p = 1 - ic/2, mean = 0, sd = 1)
+
+erro_margem = zc * ((p * (1 - p) / n) ** 0.5)
+intervalo_confianca = c(p - erro_margem, p + erro_margem)
+print(paste("Intervalo de confiança para a proporção com 95% de confiança:", intervalo_confianca[1], "a", intervalo_confianca[2]))
+
+erro_margem_otimista = zc * ((p_otimista * (1 - p_otimista) / n) ** 0.5)
+intervalo_confianca_otimista = c(p - erro_margem_otimista, p + erro_margem_otimista)
+print(paste("Intervalo de confiança para a proporção (p otimista) com 95% de confiança:", intervalo_confianca_otimista[1], "a", intervalo_confianca_otimista[2]))
+
+erro_margem_conservador = zc * ((p_conservador * (1 - p_conservador) / n) ** 0.5)
+intervalo_confianca_conservador = c(p - erro_margem_conservador, p + erro_margem_conservador)
+print(paste("Intervalo de confiança para a proporção (p conservador) com 95% de confiança:", intervalo_confianca_conservador[1], "a", intervalo_confianca_conservador[2]))
+
+```
+
+9\. Sabe-se que a proporção de animais contaminados com uma determinada doença não é superior a 10%. Qual deve o tamanho da amostra para que a semi amplitude do intervalo com 92% de confiança para a fração populacional não seja superior a 2%? 
+
+```{r}
+ic = 1 - 0.92
+p = 0.1
+erro = 0.02
+
+p_conservador = 0.5
+p_otimista = 0.8
+
+zc = qnorm(p = 1 - ic/2, mean = 0, sd = 1)
+n_conservador = (zc^2 * p_conservador * (1 - p_conservador)) / (erro^2)
+n_otimista = (zc^2 * p_otimista * (1 - p_otimista)) / (erro^2)
+n = (zc^2 * p * (1 - p)) / (erro^2)
+print(paste("Tamanho da amostra necessário para um erro máximo de 0.02 com 92% de confiança:", ceiling(n)))
+print(paste("Tamanho da amostra necessário (p conservador) para um erro máximo de 0.02 com 92% de confiança:", ceiling(n_conservador)))
+print(paste("Tamanho da amostra necessário (p otimista) para um erro máximo de 0.02 com 92% de confiança:", ceiling(n_otimista)))
+```

@@ -1,0 +1,380 @@
+---
+title: "Lista de Exercícios 3"
+author: "Matheus Oliveira - Rian Bonin"
+date: "2025-12-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if (!requireNamespace("BSDA", quietly = TRUE)) {install.packages("BSDA")}
+if (!requireNamespace("EnvStats", quietly = TRUE)) {install.packages("BSDA")}
+if (!requireNamespace("RVAideMemoire", quietly = TRUE)) {install.packages("RVAideMemoire")}
+if (!requireNamespace("ggplot2", quietly = TRUE)) {install.packages("ggplot2")}
+if (!requireNamespace("car", quietly = TRUE)) {install.packages("car")}
+if (!requireNamespace("DescTools", quietly = TRUE)) {install.packages("DescTools")}
+if (!requireNamespace("rstatix", quietly = TRUE)) {install.packages("rstatix")}
+
+library(car)     
+library(BSDA)
+library(EnvStats)
+library(ggplot2)
+library(RVAideMemoire)   
+library(car)   
+library(DescTools)
+library(rstatix)
+library(dplyr)
+library(tidyverse)
+```
+
+# Respostas
+
+#### 1.
+
+Testes paramétricos assumem que os dados seguem uma distribuição específica (como Normal ou Binomial) e testam hipóteses sobre parâmetros populacionais, como média (μ), variância (σ²) ou proporção (p).
+
+Testes não paramétricos não exigem uma forma definida de distribuição; operam com postos (ranks), sinais ou frequências, sendo mais flexíveis quando as premissas não são atendidas.
+
+Optamos inicialmente pelos testes paramétricos porque, quando as premissas são razoáveis, eles são mais poderosos e eficientes, aproveitando melhor a informação da amostra. Já os não paramétricos, embora mais gerais e robustos, perdem informação e tendem a apresentar menor poder estatístico.
+
+#### 2.
+
+```{r}
+bateria <- c(12.53, 12.23, 12.06, 10.54, 12.1, 10.8, 8.21, 8.79, 10.66, 10.98,
+10.07, 10.51, 10.52, 9.92, 10.87, 8.17, 10.25, 10.84, 11.75, 11.36,
+9.67, 12.19, 10.35, 11.9, 9.14, 9.84, 9.4, 12.65, 8.93, 12.41,
+8.65, 11.14, 12.01, 7.9, 10.64, 10.02, 8.07, 11.21, 10.45, 10.95,
+11.83, 10.17, 12.26, 9.46, 7.43)
+
+teste <- t.test(bateria,
+                mu = 10,
+                alternative = "greater")
+
+media_amostral = 10.5
+desvio_padrao = 1.4
+significancia = 0.05
+
+cat('Hipótese')
+cat('\nH0: µ = 10,5\nH1: µ > 10,5\n\n')
+
+shapiro <- shapiro.test(bateria)
+
+if (shapiro$p.value <= significancia) {
+  cat('Rejeitamos a hipótese nula - os dados não possuem distribuição normal\n')
+  cat('P-valor:', round(shapiro$p.value, 2), '<= nível de significancia (alfa):', round(significancia, 2), '\n', 'Teste t: ')
+} else {
+    cat('Não rejeitamos a Hipótese Nula - Os dados possuem dist. Normal\n')
+    cat('P-valor:', round(shapiro$p.value, 2), '> nível de significancia (alfa):', round(significancia, 2), '\nTeste t: ')
+}
+
+# teste
+
+cat('Como', teste$p.value, '<', significancia, 'logo rejeitamos a hipótese nula, evidenciando que a bateria dura mais que 10 horas')
+```
+
+#### 3.
+
+```{r}
+n <- 200
+x <- 150
+p_amostral <- x / n
+p0 <- 0.82
+alfa <- 0.05
+
+cat('Hipótese')
+cat('\nH0: p = p0', '\n')
+cat("H1: p <", p0, "\n\n")
+
+erro_padrao <- sqrt(p0 * (1 - p0 ) / n)
+
+z <- (p_amostral - p0) / erro_padrao
+
+p_valor <- pnorm(z)
+
+if (p_valor <= alfa) {
+  cat("Rejeitamos H0. Há evidências de que a proporção diminuiu.\n")
+} else {
+  cat("Não rejeitamos H0. Não há evidências de que a proporção diminuiu.\n")
+}
+
+cat("Z =", round(z, 3), "\n")
+cat("p-valor =", round(p_valor, 5), "\n")
+
+cat('\nHá evidência estatisticamente significativa, ao nível de 5%, de que a proporção de motoristas menores de 18 anos que usam celular enquanto dirigem diminuiu em relação aos 82% anteriores.
+Portanto, a lei foi eficaz em reduzir essa proporção.')
+
+```
+
+#### 4.
+
+```{r}
+amostra <- c(1647.59, 1687.1, 1673.78, 1473.45, 1416.26, 1650.44, 1584.19,
+1598.89, 1563.98, 1519.6, 1424.55, 1674.44, 1619.96, 1560.52, 1486.71, 1545.91,
+1910.67, 1741.09, 1532.24, 1593.26, 1663.64, 1576.65, 1445.8, 1534.2, 1568.34,
+1524.93, 1578.27, 1760.9, 1572.98, 1629.74, 1773.92, 1580.99, 1569.87, 1469.23,
+1487.92, 1720.54, 1631.08, 1460.43, 1555.71, 1723.44, 1568.48, 1543.65, 1543.78,
+1609.93, 1599.63, 1709.23, 1434.94, 1669.04, 1388.75, 1501.29, 1623.75, 1542.41,
+1617.93, 1861.44, 1557.13, 1432.54, 1766.31, 1678.37, 1463.46, 1647.16, 1611.37,
+1537.3, 1617.04, 1630.58, 1618.38, 1575.04, 1774.63, 1739.11, 1693.14, 1714.35,
+1698.93, 1572, 1532.64, 1418.22, 1567.97, 1470.45, 1563.12, 1639.74, 1766.52,
+1672.85, 1534.74, 1375.84, 1601.11, 1650.86, 1749.66, 1630.23, 1546.1, 1697.13,
+1600.64, 1646.69, 1654.1, 1666.44, 1633.33, 1490.66, 1551.56, 1434.63, 1472.35,
+1734.77, 1586.06, 1604.09)
+
+mu0 <- 1600
+sigma <- 120
+significancia <- 0.05
+
+media <- mean(amostra)
+n <- length(amostra)
+
+cat('Hipótese')
+cat("\nH0: mu = 1600\nH1: mu != 1600\n\n")
+
+shapiro <- shapiro.test(amostra)
+cat("Shapiro p-valor:", round(shapiro$p.value, 4), "\n")
+
+z <- (media - mu0) / (sigma / sqrt(n))
+p_valor <- 2 * pnorm(abs(z), lower.tail = FALSE)
+
+cat("z =", round(z, 3), "\n")
+cat("p-valor =", round(p_valor, 4), "\n")
+
+if (p_valor <= significancia) {
+  cat("Rejeitamos H0: evidência de que a média é diferente de 1600 horas.\n")
+} else {
+  cat("Não rejeitamos H0: não há evidência de que a média seja diferente de 1600 horas.\n")
+}
+```
+
+#### 5.
+
+```{r}
+desvio_padrao <- 0.051
+amostra <- c(11.98, 11.98, 11.99, 11.98, 11.90, 12.02, 11.99, 11.93,
+12.02, 12.02, 12.02, 11.98, 12.01, 12.00, 11.99, 11.95,
+11.95, 11.96, 11.96, 12.02, 11.99, 12.07, 11.93, 12.05)
+significancia <- 0.05
+
+cat('Hipótese')
+cat("\nH0: σ² = 0,051²\nH1: σ² < 0.051²\n\n")
+
+n <- length(amostra)
+media <- mean(amostra)
+s2 <- var(amostra)
+sigma0 <- 0.051
+chi2 <- (n - 1) * s2 / sigma0^2
+
+p_valor <- pchisq(chi2, df = n - 1, lower.tail = TRUE)
+
+cat('p-valor = ', p_valor)
+cat('\nComo', round(p_valor, 4), 'é maior que 5%, não rejeitamos a hipótese nula.')
+cat('\nAssim, ao nível de significância de 5%, não há evidências estatísticas suficientes de que a nova máquina tenha reduzido a variância em relação ao processo anterior.')
+```
+
+#### 6.
+
+```{r}
+
+proportions_ztest <- function(successes1, total1, successes2, total2, alpha = 0.05, alternative = "two-sided") {
+  # Calculate sample proportions
+  p1 <- successes1 / total1
+  p2 <- successes2 / total2
+
+  # Pooled sample proportion
+  p_pooled <- (successes1 + successes2) / (total1 + total2)
+
+  # Calculate standard error
+  se <- sqrt(p_pooled * (1 - p_pooled) * ((1 / total1) + (1 / total2)))
+
+  # Calculate Z-statistic
+  z_statistic <- (p1 - p2) / se
+
+  # Decision based on the p-value
+  if (alternative == "two-sided") {
+    p_value = 2 * (1 - pnorm(abs(z_statistic)))
+    critical_value = qnorm(1 - alpha / 2)
+  } else if (alternative == "less") {
+    p_value = pnorm(z_statistic)
+    critical_value = qnorm(alpha)
+  } else if (alternative == "greater") {
+    p_value = 1 - pnorm(z_statistic)
+    critical_value = qnorm(1 - alpha)
+  } else {
+    stop("The 'alternative' argument must be 'two-sided', 'less', or 'greater'.")
+  }
+
+  # Display results
+  cat(paste("Z-score:", round(z_statistic, 2), "\n"))
+  cat(paste("P-value:", round(p_value, 4), "\n"))
+  cat(paste("Critical value:", round(critical_value, 2), "\n"))
+
+  # Decision based on the p-value
+  if (p_value < alpha) {
+    cat("Result: Reject the null hypothesis.\n")
+  } else {
+    cat("Result: Fail to reject the null hypothesis.\n")
+  }
+}
+
+
+sex_m = 2200
+sex_f = 2380
+
+p_masc = round(sex_m * 0.72, 0)
+p_fem = round(sex_f * 0.84, 0)
+
+significancia = 0.05
+
+cat('Hipótese')
+cat('\nH0: pm = pf')
+cat('\nH1: pm != pf\n\n')
+
+proportions_ztest(p_masc, sex_m, p_fem, sex_f, alpha = significancia, alternative = "two-sided")
+
+cat('Com o nível de significancia de 5%, rejeitamos H0\n')
+cat('Há evidência estatística de que homens e mulheres não têm a mesma taxa de uso de cinto de segurança.
+Mulheres usam mais cinto.')
+
+```
+
+#### 7.
+
+```{r}
+significancia = 0.05
+
+cat('Hipótese\n')
+cat('H0: µd = 0\n')
+cat('H1: µd > 0\n\n')
+
+antes  <- c(8.1, 7.9, 6.8, 7.8, 7.6, 7.9, 5.7, 8.4, 8.0, 9.5, 8.0, 6.8)
+depois <- c(11.6, 8.8, 9.9, 9.5, 11.6, 9.1, 10.6, 10.8, 13.4, 10.6, 10.5, 11.4)
+
+teste = t.test(depois - antes, mu = 0, alternative = "greater")
+
+if (teste$p.value <= significancia) {
+  cat(sprintf("p-valor = %.4f <= %.2f → rejeitamos H0.\n", teste$p.value, significancia))
+  cat("Conclusão: o novo combustível aumenta o rendimento médio (km/l).\n")
+} else {
+  cat(sprintf("p-valor = %.4f > %.2f → não rejeitamos H0.\n", teste$p.value, significancia))
+  cat("Conclusão: não há evidência de aumento no rendimento médio.\n")
+}
+
+
+```
+
+#### 8.
+
+```{r}
+
+cat('Hipótese\n')
+cat('H0: µj = µa\n')
+cat('H1: µj != µa\n')
+
+turma_j = c(10, 13, 9, 10, 14, 13, 10, 15, 12, 10, 9, 10, 13, 14)
+turma_a = c(15, 12, 18, 16, 15, 17, 17, 15, 16, 17, 11, 17, 14)
+
+shapiro_j = shapiro.test(turma_j)
+shapiro_a = shapiro.test(turma_a)
+
+cat('\nP-Valor - Turma J', shapiro_j$p.value)
+cat('\nP-Valor - Turma A', shapiro_a$p.value)
+
+teste = t.test(turma_j, turma_a,
+       alternative = "two.sided",
+       var.equal = TRUE)
+
+# teste
+
+# Conclusão
+if (teste$p.value <= 0.05) {
+  cat("Rejeitamos H0: há diferença significativa entre os tempos médios.\n")
+} else {
+  cat("Não rejeitamos H0: não há diferença significativa entre os tempos médios.\n")
+}
+
+
+```
+
+#### 9.
+
+```{r}
+cat('Hipótese\n')
+cat('H0: μ1 = μ2 = μ3 = μ4')
+cat('\nH1: pelo menos uma das médias seja diferente\n\n')
+
+valores <- c(56,55,62,59,60,
+             64,61,50,55,56,
+             45,46,45,39,43,
+             42,39,45,43,41)
+
+tipo <- factor(rep(c("I","II","III","IV"), each = 5))
+
+dados <- data.frame(valor = valores, tipo = tipo)
+
+modelo <- aov(valor ~ tipo, data = dados)
+summary(modelo)
+
+cat('\nAo nível de 5% de significância, o teste ANOVA indica p-valor muito menor que 0,05, portanto rejeitamos a hipótese nula de igualdade das médias.
+Concluímos que existe diferença significativa na impermeabilidade média entre os tipos de concreto.')
+
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+resumo <- dados %>%
+  group_by(tipo) %>%
+  summarise(
+    media = mean(valor),
+    sd = sd(valor),
+    n = n(),
+    se = sd/sqrt(n),
+    IC_inferior = media - qt(0.975, n-1)*se,
+    IC_superior = media + qt(0.975, n-1)*se
+  )
+
+ggplot(resumo, aes(x = tipo, y = media)) +
+  geom_point(size = 4, color = "darkblue") +
+  geom_errorbar(aes(ymin = IC_inferior, ymax = IC_superior),
+                width = 0.15, color = "darkblue") +
+  labs(title = "Média da Quantidade de Água por Tipo de Concreto",
+       x = "Tipo de Concreto",
+       y = "Média da água que passou") +
+  theme_minimal(base_size = 14)
+
+```
+
+#### 10.
+
+```{r}
+cat("Hipóteses\n")
+cat("H0: As distribuições de notas são iguais entre escola pública e particular\n")
+cat("H1: As distribuições de notas são diferentes\n\n")
+
+tabela <- matrix(c(
+  15, 22, 18, 3,   # Pública
+   6, 10, 20, 6    # Particular
+), 
+nrow = 2, byrow = TRUE)
+
+colnames(tabela) <- c("0-2.5", "2.5-5.0", "5.0-7.5", "7.5-10")
+rownames(tabela) <- c("Pública", "Particular")
+
+teste <- chisq.test(tabela, correct = FALSE)
+
+alpha <- 0.01
+
+if (teste$p.value < alpha) {
+  cat("\nRejeitamos H0 ao nível de 1%.\n")
+  cat("\nHá evidência estatística de que as distribuições de notas diferem entre escola pública e particular.\n")
+} else {
+  cat("\nNão rejeitamos H0 ao nível de 1%.\n")
+  cat("Não há evidências suficientes para afirmar que as distribuições de notas são diferentes.\n")
+}
+
+```

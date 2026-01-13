@@ -1,0 +1,296 @@
+---
+title: "Trabalho Final - Inferência Estatística"
+author: "Matheus Oliveira - Rian Bonin"
+date: "2025-12-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if (!requireNamespace("rstatix", quietly = TRUE)) {install.packages("rstatix")}
+if (!requireNamespace("reshape2", quietly = TRUE)) {install.packages("reshape2")}
+if (!requireNamespace("PMCMRplus", quietly = TRUE)) {install.packages("PMCMRplus")}
+if (!requireNamespace("ggplot2", quietly = TRUE)) {install.packages("ggplot2")}
+
+devtools::install_github("ebbertd/chisq.posthoc.test")
+
+library(chisq.posthoc.test)
+library(reshape2)
+library(rstatix)     
+library(PMCMRplus)
+library(ggplot2)
+
+```
+
+## Exercício 1
+
+```{r}
+base <- read.csv("ocd_patient_dataset.csv")
+base
+```
+
+```{r}
+head(base)
+```
+
+```{r}
+library(dplyr)
+
+base_masc <- base %>%
+  filter(Gender == "Male") %>%
+  select(Gender, Y.BOCS.Score..Obsessions.)
+
+base_fem <- base %>%
+  filter(Gender == 'Female') %>%
+  select(Gender, Y.BOCS.Score..Obsessions.)
+
+nivel_significancia = 0.05
+```
+
+```{r}
+summary(base_fem)
+```
+
+```{r}
+summary(base_masc)
+```
+
+```{r}
+boxplot(base_fem$Y.BOCS.Score..Obsessions., base_masc$Y.BOCS.Score..Obsessions.,
+        names = c("Feminino", "Masculino"),
+        main = "Y-BOCS (Obsessões) por Sexo",
+        ylab = "Score")
+```
+
+```{r}
+cat('Hipótese')
+cat('\nH0: µf = µm\nH1: µf != µm\n\n')
+
+shapiro.test(base_fem$Y.BOCS.Score..Obsessions.)
+shapiro.test(base_masc$Y.BOCS.Score..Obsessions.)
+
+```
+
+```{r}
+teste = t.test(
+  base_fem$Y.BOCS.Score..Obsessions.,
+  base_masc$Y.BOCS.Score..Obsessions.,
+  alternative = 'two.sided',
+  conf.level = 1 - nivel_significancia
+)
+
+if (teste$p.value >= nivel_significancia) {
+  cat("Não há evidências estatísticas suficientes, ao nível de 5% de significância, para afirmar que existe diferença no score de obsessões entre pacientes do sexo feminino e masculino.\n")
+} else {
+  cat("Há evidências estatísticas, ao nível de 5% de significância, de que o score médio de obsessões difere entre pacientes do sexo feminino e masculino.\n")
+}
+
+```
+
+## Exercício 2
+
+```{r}
+base <- read.csv("Sleep_health_and_lifestyle_dataset.csv")
+base
+```
+
+```{r}
+head(base)
+```
+
+```{r}
+library(dplyr)
+
+base_selecionada <- base %>%
+  select(Occupation, Sleep.Disorder)
+
+nivel_significancia = 0.05
+```
+
+```{r}
+cat('Hipótese')
+cat("\nH0: A proporção de indivíduos com Insônia é a mesma em todas as ocupações.\n")
+cat("H1: Pelo menos uma ocupação apresenta proporção de indivíduos com Insônia diferente das demais.\n\n")
+
+tabela_cont <- table(base_selecionada$Occupation, base_selecionada$Sleep.Disorder, dnn = c("Ocupação", "Distúrbio de Sono"), useNA = "ifany", exclude = NULL)
+
+chi_square_result <- chisq.test(tabela_cont)
+
+chi_square_result
+
+```
+
+```{r}
+chi_square_result$expected
+```
+
+```{r}
+nivel_significancia <- 0.05
+
+if (chi_square_result$p.value < nivel_significancia) {
+  cat("Ao nível de 5% de significância, rejeita-se a hipótese nula, indicando associação entre ocupação e presença de Insônia.\n")
+} else {
+  cat("Ao nível de 5% de significância, não há evidências estatísticas suficientes para rejeitar a hipótese nula.\n")
+}
+
+
+```
+
+```{r}
+library(chisq.posthoc.test)
+chisq.posthoc.test(tabela_cont, method = "bonferroni", round = 6)
+
+cat("\nA análise post hoc, realizada por meio do teste de comparações múltiplas com correção de Bonferroni, indicou que as ocupações 'Doctor', 'Engineer' e 'Lawyer' apresentam proporções de Insônia estatisticamente menores do que o esperado (p < 0,05). Para as ocupações 'Accountant' e 'Nurse', não foram observadas diferenças estatisticamente significativas.")
+```
+
+## Exercício 3
+
+```{r}
+base <- read.csv('treinamentoVendedores.csv')
+base
+```
+
+```{r}
+head(base)
+```
+
+```{r}
+base
+```
+
+```{r}
+cat('Hipótese')
+cat("\nH0: µd <= 0\n")
+cat("H1: µd > 0\n\n")
+
+dif <- base$Convencional - base$VendaPro
+shapiro.test(dif)
+```
+
+```{r}
+nivel_significancia = 1 - 0.02
+
+teste <- t.test(
+  base$Convencional,
+  base$VendaPro,
+  paired = TRUE,
+  alternative = "greater",
+  conf.level = nivel_significancia
+)
+
+if (teste$p.value < nivel_significancia) {
+  cat("Ao nível de 2% de significância, rejeita-se a hipótese nula: o método VendaPro Academy é estatisticamente superior ao método convencional.\n")
+} else {
+  cat("Ao nível de 2% de significância, não há evidências estatísticas suficientes para afirmar que o método VendaPro Academy é superior.\n")
+}
+
+```
+
+## Exercício 4
+
+```{r}
+base <- read.csv('Musicas.csv')
+base
+```
+
+```{r}
+head(base)
+```
+
+```{r}
+library(dplyr)
+
+base_selecionada <- base %>%
+  select(Fav.genre, Hours.per.day)
+
+nivel_significancia = 0.05
+```
+
+```{r}
+base_selecionada
+```
+
+```{r}
+cat('Hipótese')
+cat("\nH0: µ1 = µ2 = µk\n")
+cat("H1: i != j : µi != µj\n\n")
+```
+
+```{r}
+#help(aov)
+modelo_anova <- aov(base_selecionada$Hours.per.day ~ base_selecionada$Fav.genre, data = base_selecionada)
+
+shapiro.test(residuals(modelo_anova))
+```
+
+```{r}
+summary(modelo_anova)
+```
+
+```{r}
+resultado_tukey <- TukeyHSD(modelo_anova, conf.level = 0.95)
+resultado_tukey
+```
+
+```{r}
+plot(resultado_tukey, las = 1)
+```
+
+```{r}
+tukey_df <- as.data.frame(resultado_tukey$`base_selecionada$Fav.genre`)
+
+tukey_df$significativo <- ifelse(
+  tukey_df$`p adj` < nivel_significancia,
+  "Diferença significativa",
+  "Sem diferença significativa"
+)
+
+cat("As comparações par a par indicaram diferenças estatisticamente significativas entre os gêneros X e Y (p < 0,05), enquanto os demais pares não apresentaram diferenças significativas.")
+```
+
+```{r}
+tukey_df
+```
+
+## Exercício 5
+
+```{r}
+base <- read.csv("ImpactoTreinador.csv")
+base
+```
+
+```{r}
+head(base)
+```
+
+```{r}
+cat("Hipóteses do teste\n")
+cat("H0: As médias do tempo de corrida são iguais para todos os tipos de comportamento do treinador.\n")
+cat("H1: Pelo menos um tipo de comportamento do treinador apresenta média de tempo de corrida diferente.\n\n")
+
+```
+
+```{r}
+modelo_anova <- aov(base$Tempo.de.Corrida ~ base$Tipo.de.Treinador, data = base)
+summary(modelo_anova)
+```
+
+```{r}
+shapiro.test(residuals(modelo_anova))
+```
+
+```{r}
+resultado_tukey <- TukeyHSD(modelo_anova, conf.level = 0.95)
+resultado_tukey
+```
+
+```{r}
+plot(resultado_tukey, las = 1)
+```
+
+```{r}
+cat("Foi identificada diferença estatisticamente significativa no tempo de finalização da corrida entre os diferentes tipos de comportamento do treinador. A análise post hoc indicou que os comportamentos 'Motivador' e 'Analítico' estão associados a tempos significativamente menores de finalização da corrida, caracterizando impacto positivo no desempenho das equipes. O comportamento 'Colaborador' apresentou os maiores tempos médios, sendo associado a pior desempenho relativo.")
+```

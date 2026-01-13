@@ -1,0 +1,8 @@
+streamlit==1.40.0
+pandas
+matplotlib
+seaborn
+plotly
+numpy
+scipy
+gdown
