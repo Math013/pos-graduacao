@@ -1,0 +1,404 @@
+---
+title: "Regressão Múltipla com R"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Usaremos um conjunto de dados sobre o estilo de vida de estudantes e seu
+desempenho acadêmico (GPA). Nosso objetivo é estimar o GPA a partir de
+variáveis como horas de estudo, atividades extracurriculares, sono,
+socialização, atividades físicas e nível de estresse.
+
+### Apresentando o Dataset Utilizado
+
+O dataset student_lifestyle_dataset.csv nos oferece uma visão dos
+padrões de estilo de vida de 2.000 estudantes e como eles podem
+influenciar o Índice de Desempenho Acadêmico (GPA).
+
+As variáveis presentes no dataset são:
+
+-   Student_ID: Código de identificação do estudante.
+
+-   Study_Hours_Per_Day: Número de horas diárias de estudo.
+
+-   Extracurricular_Hours_Per_Day: Número de horas diárias em atividades
+    extracurriculares.
+
+-   Sleep_Hours_Per_Day: Número de horas diárias de sono.
+
+-   Social_Hours_Per_Day: Número de horas diárias em atividades sociais.
+
+-   Physical_Activity_Hours_Per_Day: Número de horas diárias em
+    atividades físicas.
+
+-   Stress_Level: Nível de estresse do aluno (categórica: 'Low',
+    'Moderate', 'High').
+
+-   GPA: Índice de desempenho acadêmico (variável resposta).
+
+Nosso objetivo principal é estimar o GPA (Y) usando as demais variáveis
+de estilo de vida como preditores (X).
+
+## Configuração do Ambiente e Importação de Dados
+
+```{r}
+# 'dplyr' para manipulação de dados
+# 'ggplot2' para visualizações de alta qualidade
+# 'car' para funções como a criação de variáveis dummy (embora model.matrix seja mais direto)
+# 'psych' para estatísticas descritivas e correlações (alternativa ao describe do Python)
+# 'corrplot' para visualização de matriz de correlação
+# 'nortest' para testes de normalidade (Kolmogorov-Smirnov)
+# 'lmtest' para testes de heteroscedasticidade
+#options("download.file.method"="wininet")
+#install.packages(c("dplyr", "ggplot2", "car", "psych", "corrplot", "nortest", "lmtest"))
+
+
+library(dplyr)
+library(ggplot2)
+library(car) # Para algumas funções estatísticas, se necessário
+library(psych) # Para a função describe
+library(corrplot) # Para o correlograma
+library(nortest) # Para o teste de Kolmogorov-Smirnov (lillie.test ou ad.test)
+library(lmtest) # Para testes de hipóteses do modelo de regressão, como o Breusch-Pagan
+
+# Exemplo se o arquivo estiver no mesmo diretório:
+library(readxl)
+lifestyle <- read_excel("student_lifestyle_dataset_2.xlsx")
+
+# Visualizando as primeiras linhas do dataset para verificar a importação
+head(lifestyle)
+```
+
+Análise Exploratória dos Dados (AED) A Análise Exploratória de Dados é
+uma etapa crucial para compreendermos a estrutura, a qualidade e as
+características iniciais do nosso dataset.
+
+Visualizando Informações do Dataset
+
+```{r}
+# A função 'str()' mostra a estrutura do objeto, incluindo o tipo de cada variável.
+str(lifestyle)
+```
+
+```{r}
+lifestyle <- lifestyle %>%
+  mutate(
+    Study_Hours_Per_Day = as.numeric(Study_Hours_Per_Day),
+    Extracurricular_Hours_Per_Day = as.numeric(Extracurricular_Hours_Per_Day),
+    Sleep_Hours_Per_Day = as.numeric(Sleep_Hours_Per_Day),
+    Social_Hours_Per_Day = as.numeric(Social_Hours_Per_Day),
+    GPA = as.numeric(GPA)
+  )
+```
+
+Verificando a Dimensão do Dataset
+
+```{r}
+# Usamos 'dim()' para obter o número de linhas e colunas (observações e variáveis).
+dim(lifestyle)
+```
+
+Simplificando o Nome das Variáveis Nomes de variáveis mais curtos e
+claros facilitam a codificação e a interpretação.
+
+```{r}
+lifestyle <- lifestyle %>%
+  rename(
+    Study_Hours = Study_Hours_Per_Day,
+    Extracurricular_Hours = Extracurricular_Hours_Per_Day,
+    Sleep_Hours = Sleep_Hours_Per_Day,
+    Social_Hours = Social_Hours_Per_Day
+  )
+
+# Conferindo os novos nomes das colunas
+names(lifestyle)
+```
+
+## Analise descritiva
+
+A função summary() em R fornece um resumo estatístico para cada
+variável, incluindo média, mediana, quartis, mínimo e máximo.
+
+```{r}
+# Selecionamos apenas as variáveis quantitativas para a análise descritiva.
+# A função 'describe()' do pacote 'psych' fornece um resumo mais completo,
+# incluindo desvio padrão, skewness e curtose.
+lifestyle_quanti <- lifestyle %>%
+  select(Study_Hours, Extracurricular_Hours, Sleep_Hours, Social_Hours, GPA)
+
+describe(lifestyle_quanti)
+```
+
+```{r}
+# Para criar boxplots para múltiplas variáveis, podemos usar ggplot2 e a função gather() ou pivot_longer()
+# do pacote tidyr (que é parte do tidyverse, assim como dplyr).
+# Primeiro, 'pivot_longer' para transformar os dados para o formato longo.
+lifestyle_quanti_long <- lifestyle_quanti %>%
+  tidyr::pivot_longer(
+    cols = everything(), # Seleciona todas as colunas
+    names_to = "Variable",
+    values_to = "Value"
+  )
+
+ggplot(lifestyle_quanti_long, aes(x = Variable, y = Value)) +
+  geom_boxplot(fill = "steelblue") +
+  labs(title = "Boxplots das Variáveis Quantitativas", y = "Valor") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotaciona os rótulos do eixo X
+```
+
+*Interpretação:* Através do boxplot, podemos observar que a maioria das
+variáveis apresenta uma distribuição relativamente simétrica (a mediana
+está próxima do centro da caixa). A variável "PhysicalAct_Hours" é a que
+mostra mais outliers e uma distribuição mais dispersa. A variável "GPA"
+também apresenta alguns outliers, tanto inferiores quanto superiores, e
+tem a menor variabilidade aparente em comparação com outras variáveis.
+Como o notebook original indica que não há explicação para esses
+outliers (se são erros de medição ou características reais dos dados),
+optaremos por mantê-los.
+
+Análise da Variável Resposta (GPA) É fundamental entender a distribuição
+da nossa variável dependente, o GPA.
+
+```{r}
+# Boxplot da variável GPA
+ggplot(lifestyle, aes(y = GPA)) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(title = "Boxplot da Variável Resposta (GPA)", y = "GPA") +
+  theme_minimal()
+```
+
+O boxplot do GPA mostra uma distribuição simétrica, com a presença de
+alguns outliers nas caudas superior e inferior. Como no notebook
+original, assumimos que esses outliers são dados válidos e os manteremos
+na análise.
+
+```{r}
+# Histograma da variável GPA com curva de densidade
+ggplot(lifestyle, aes(x = GPA)) +
+  geom_histogram(binwidth = 0.1, fill = "blue", color = "black", aes(y = ..density..)) +
+  geom_density(color = "red", linetype = "dashed") +
+  labs(title = "Histograma da Variável Resposta (GPA)", x = "GPA", y = "Densidade") +
+  theme_minimal()
+```
+
+O histograma do GPA, com sua curva de densidade em forma de sino, sugere
+uma distribuição próxima à Normal. Essa é uma observação importante,
+pois a normalidade dos resíduos (e não da variável resposta em si) é uma
+das suposições chave da regressão linear.
+
+Correlograma (Matriz de Correlação) Para investigar a relação linear
+entre as variáveis quantitativas e verificar a presença de
+multicolinearidade (alta correlação entre variáveis preditoras), vamos
+construir um correlograma.
+
+```{r}
+# Calcular a matriz de correlação de Pearson para as variáveis quantitativas.
+# 'cor()' calcula a correlação entre todas as colunas de um dataframe.
+correlation_matrix <- cor(lifestyle_quanti)
+
+# Visualizar a matriz de correlação como um mapa de calor (heatmap).
+# O pacote 'corrplot' oferece uma função dedicada para isso.
+# 'method = "color"' usa cores para representar a correlação.
+# 'type = "upper"' mostra apenas a parte superior da matriz (evita redundância).
+# 'addCoef.col = "black"' adiciona os valores dos coeficientes na matriz.
+# 'tl.col = "black"' define a cor dos rótulos.
+# 'tl.srt = 45' rotaciona os rótulos.
+corrplot(correlation_matrix,
+         method = "color",
+         type = "upper",
+         addCoef.col = "black",
+         tl.col = "black",
+         tl.srt = 45,
+         title = "Correlação de Pearson",
+         mar=c(0,0,1,0) # Margens para o título não ser cortado
+)
+```
+
+A matriz de correlação mostra a força e a direção das relações lineares
+entre cada par de variáveis.
+
+GPA vs. Study_Hours: A correlação mais alta é entre o GPA (variável
+resposta) e as Horas de Estudo (Study_Hours), indicando que, como
+esperado, mais horas de estudo estão associadas a um GPA mais alto.
+
+Multicolinearidade: Nenhuma das variáveis explicativas (preditoras)
+possui alta correlação entre si (valores de correlação distantes de 1 ou
+-1). Isso é um bom sinal, pois a multicolinearidade pode causar
+problemas na estimação dos coeficientes em um modelo de regressão,
+tornando-os instáveis e difíceis de interpretar. A ausência de alta
+multicolinearidade facilita a construção de um modelo de regressão
+múltipla confiável.
+
+Construção do Modelo de Regressão Múltipla Nosso objetivo é modelar o
+GPA (variável dependente) em função das variáveis de estilo de vida
+(variáveis independentes), incluindo as variáveis dummy de nível de
+estresse.
+
+A equação da regressão linear múltipla pode ser expressa como:
+
+GPA=β0+β1Study_Hours+β2Extracurricular_Hours+β3Sleep_Hours+β4Social_Hours+ϵ
+
+Onde:
+
+beta_0: Intercepto do modelo (valor esperado do GPA quando todas as
+variáveis independentes são zero). epsilon: Termo de erro aleatório.
+
+```{r}
+
+# Primeiro, vamos remover a coluna Student_ID, pois ela é apenas um identificador.
+# Também removemos a coluna original Stress_Level, pois já criamos as dummies.
+lifestyle_model <- lifestyle %>%
+  select(-Student_ID)
+
+# Ajustando o modelo de regressão
+# O ponto '.' no lado direito da fórmula significa "todas as outras variáveis no dataframe"
+# que não são a variável resposta.
+# Alternativamente, você pode listar as variáveis explicitamente:
+# model_regressao <- lm(GPA ~ Study_Hours + Extracurricular_Hours + Sleep_Hours +
+#                        Social_Hours  + Stress_Moderate + Stress_High,
+#                        data = lifestyle_model)
+
+model_regressao <- lm(GPA ~ ., data = lifestyle_model)
+
+# Visualizando o resumo do modelo
+
+summary(model_regressao)
+```
+
+```{r}
+# Primeiro, vamos remover a coluna Student_ID, pois ela é apenas um identificador.
+# Também removemos a coluna original Stress_Level, pois já criamos as dummies.
+lifestyle_model <- lifestyle %>%
+  select(-Student_ID)
+
+# Ajustando o modelo de regressão
+# O ponto '.' no lado direito da fórmula significa "todas as outras variáveis no dataframe"
+# que não são a variável resposta.
+# Alternativamente, você pode listar as variáveis explicitamente:
+# model_regressao <- lm(GPA ~ Study_Hours + Extracurricular_Hours ,
+#                        data = lifestyle_model)
+
+model_regressao <- lm(GPA ~ Study_Hours + Extracurricular_Hours ,
+                        data = lifestyle_model)
+
+# Visualizando o resumo do modelo
+
+summary(model_regressao)
+```
+
+Avaliação do Modelo de Regressão Após ajustar o modelo, é essencial
+avaliar sua performance e verificar as suposições do modelo de regressão
+linear.
+
+1.  Verificação da Normalidade dos Resíduos Os testes de normalidade são
+    aplicados aos resíduos (erros) do modelo, e não à variável resposta
+    em si. É uma suposição importante para a validade dos testes de
+    significância dos coeficientes (valores p).
+
+```{r}
+# Extraindo os resíduos do modelo
+residuos <- residuals(model_regressao)
+
+# Histograma dos resíduos
+ggplot(data.frame(residuos), aes(x = residuos)) +
+  geom_histogram(binwidth = 0.01, fill = "purple", color = "black", aes(y = ..density..)) +
+  geom_density(color = "red", linetype = "dashed") +
+  labs(title = "Histograma dos Resíduos do Modelo", x = "Resíduos", y = "Densidade") +
+  theme_minimal()
+```
+
+```{r}
+# Q-Q Plot dos resíduos
+qqnorm(residuos, main = "Gráfico Q-Q dos Resíduos do Modelo")
+qqline(residuos, col = "blue")
+```
+
+Comparação de testes de normalidade:
+
+| Característica | Teste de Kolmogorov-Smirnov (KS Clássico) | Teste de Lilliefors | Teste de Shapiro-Wilk |
+|---------------|---------------|------------------|------------------------|
+| Parâmetros da Distribuição Normal | Devem ser conhecidos a priori | Estimados a partir da amostra | Estimados a partir da amostra |
+| Poder de Detecção | Menor poder quando parâmetros são estimados na prática | Melhor que KS clássico para parâmetros estimados | Geralmente considerado o mais poderoso para detectar desvios da normalidade em pequenas e médias amostras |
+| Tamanho da Amostra | Mais adequado para amostras grandes | Mais adequado para amostras grandes (mas menos sensível que SW para pequenas) | Mais adequado para amostras pequenas a médias (N \< 5000) |
+| Sensibilidade a Caudas | Menos sensível às caudas da distribuição | Ajustado, mas ainda menos sensível que Shapiro-Wilk às caudas | Mais sensível a desvios nas caudas |
+| Implementação em R | ks.test() | lillie.test() (pacote nortest) | shapiro.test() |
+
+```{r}
+# Teste de Shapiro-Wilk para os resíduos
+shapiro_test_residuos <- shapiro.test(residuos)
+print("TESTE DE NORMALIDADE DE SHAPIRO-WILK PARA RESÍDUOS")
+print(paste("Estatística de teste:", round(shapiro_test_residuos$statistic, 5)))
+print(paste("p-valor:", round(shapiro_test_residuos$p.value, 5)))
+
+if (shapiro_test_residuos$p.value < 0.05) {
+  print("Os resíduos NÃO seguem uma distribuição Normal (rejeitamos H0).")
+} else {
+  print("Os dados seguem uma distribuição Normal (NÃO rejeitamos H0).")
+}
+```
+
+```{r}
+# Teste de Kolmogorov-Smirnov (Lilliefors) para os resíduos
+lillie_test_residuos <- lillie.test(residuos)
+print("TESTE DE NORMALIDADE DE KOLMOGOROV-SMIRNOV (Lilliefors) PARA RESÍDUOS")
+print(paste("Estatística de teste:", round(lillie_test_residuos$statistic, 5)))
+print(paste("p-valor:", round(lillie_test_residuos$p.value, 5)))
+
+if (lillie_test_residuos$p.value < 0.05) {
+  print("Os resíduos NÃO seguem uma distribuição Normal (rejeitamos H0).")
+} else {
+  print("Os resíduos seguem uma distribuição Normal (NÃO rejeitamos H0).")
+}
+```
+
+Verificação da Homocedasticidade A homocedasticidade (variância
+constante dos resíduos) é outra suposição crucial da regressão linear. A
+heterocedasticidade (variância não constante) pode levar a erros padrão
+incorretos e, consequentemente, a inferências inválidas sobre a
+significância dos coeficientes.
+
+```{r}
+# Gráfico de Resíduos vs. Valores Ajustados (Fitted Values)
+# A função 'plot(model_regressao, which = 1)' gera o gráfico de Fitted vs Residuals
+
+model_regressao
+
+plot(residuos, which = 1, main = "Resíduos vs. Valores Ajustados",
+     xlab = "Valores Ajustados (Fitted Values)", ylab = "Resíduos Padronizados")
+```
+
+```{r}
+# Teste de Breusch-Pagan para Heterocedasticidade
+# Hipótese Nula (H0): Homocedasticidade (variância dos erros é constante).
+# Hipótese Alternativa (H1): Heterocedasticidade (variância dos erros não é constante).
+# Usamos a função 'bptest()' do pacote 'lmtest'.
+bp_test <- bptest(model_regressao)
+print("TESTE DE BREUSCH-PAGAN PARA HETEROCEDASTICIDADE")
+print(paste("Estatística de teste:", round(bp_test$statistic, 5)))
+print(paste("p-valor:", round(bp_test$p.value, 5)))
+
+if (bp_test$p.value < 0.05) {
+  print("Há evidências de Heterocedasticidade (rejeitamos H0).")
+} else {
+  print("NÃO há evidências de Heterocedasticidade (NÃO rejeitamos H0).")
+}
+```
+
+Avaliação da Ausência de Multicolinearidade Já verificamos a
+multicolinearidade com a matriz de correlação. Um método mais formal é
+calcular o Fator de Inflação da Variância (VIF). Valores de VIF maiores
+que 5 ou 10 são geralmente considerados problemáticos, indicando alta
+multicolinearidade.
+
+```{r}
+# O VIF é calculado usando a função 'vif()' do pacote 'car'.
+# A multicolinearidade pode inflacionar a variância dos coeficientes de regressão,
+# tornando-os instáveis e difíceis de interpretar.
+vif_values <- vif(model_regressao)
+print("FATOR DE INFLAÇÃO DA VARIÂNCIA (VIF):")
+print(vif_values)
+
+```

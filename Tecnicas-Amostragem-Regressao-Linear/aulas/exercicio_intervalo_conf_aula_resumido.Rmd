@@ -1,0 +1,139 @@
+---
+title: "Intervalos de Confiança com R"
+output: html_notebook
+---
+
+# Intervalos de confiança
+
+## Intervalo de confiança para média com σ conhecido
+
+**Exemplo 1**
+
+O projetista de uma indústria tomou uma amostra de 36 funcionários para verificar o tempo médio gasto (minutos) para montar um determinado brinquedo.
+
+```{r}
+tempo = c(19, 19, 24, 19, 10, 17, 23, 23, 14, 12, 28, 20, 23, 19, 19, 21, 20, 17,
+          15, 23, 21, 20, 20,22, 28, 26, 27, 25, 19, 17, 20, 19, 16, 22, 19, 13)
+```
+
+De acordo com estudos anteriores e conhecimento dos pesquisadores tem-se que σ=5,73. Pede-se, construir um intervalo de confiança de nível 95% para a média populacional μ.
+
+1º Passo - Determinar o quant1l (z/2) da distribuição normal padrão N(0,1)
+
+```{r}
+alpha = 0.05
+zc <- qnorm(p = 1-alpha/2,
+             mean = 0,
+             sd = 1)
+zc
+```
+
+2º Passo - Calcular o erro amostral
+
+```{r}
+sigma = 5.73
+n = 36
+
+erro <- zc*sigma/sqrt(n)
+erro
+```
+
+3º Passo Construir o intervalo para μ com 95% de confiança
+
+```{r}
+media = mean(tempo)
+
+media - erro
+media + erro
+```
+
+Conclusão:
+
+Podemos dizer com 95% de confiança que o verdadeiro valor do tempo médio gasto (minutos) para montar o brinquedo, está entre: 18.01 e 21.84.
+
+## Intervalo de confiança para média com σ desconhecido
+
+**Exemplo 1: t-student**
+
+Diâmetro de árvores castanheiras
+
+A seguir encontra-se uma amostra de 10 árvores castanheiras todas com 8 anos de idade numa certa floresta. O diâmetro (polegadas) das árvores foram medidos à uma altura de 3 pés:
+
+```{r}
+diametro <- c(19.4, 21.4, 22.3, 22.1, 23.8, 24.6, 19.9, 21.5, 19.1)
+```
+
+Com base neste dados, construa um intervalo com 95% de confiança
+
+1º Passo - Determinar o quantl (tα/2) da distribuição t-Student com n-1 graus de liberdade
+
+```{r}
+alpha = 0.05
+n = length(diametro)
+n
+
+```
+
+```{r}
+tc <- qt(p = 1-alpha/2,
+         df = n-1)
+
+tc
+```
+
+2º Passo - Calcular o erro amostral:
+
+```{r}
+S = sd(diametro)
+
+erro <- tc*S/sqrt(n)
+erro
+```
+
+3 º Passo - Construir o intervalo para μ com 95% de confiança
+
+```{r}
+media = mean(diametro)
+
+media - erro -> linf
+media + erro -> lsup
+linf
+lsup
+```
+
+Com uma confiança de 95%, Podemos dizer que o verdadeiro valor do diâmetro médio da população da qual a amostra foi retirada encontra-se entre 20.11 e 23.02.
+
+## Intervalo de confiança para Proporção
+
+**Exemplo 1**
+
+Numa amostra aleatória de tamanho n=700 foram encontrados 68 elementos defeituosos. Achar um intervalo de confiança de nível 95% para a proporção p de defeituosos.
+
+1º Passo - Determinar o quantil (zα/2) da distribuição normal padrão N(0,1)
+
+```{r}
+alpha = 0.05
+zc <- qnorm(p = 1-alpha/2,
+             mean = 0,
+             sd = 1)
+zc
+```
+
+2º Passo - Calcular o erro amostral:
+
+```{r}
+p = 68/700
+n = 700
+
+erro <- zc*sqrt( p*(1-p)/n  )
+erro
+```
+
+3 º - Passo Construir o intervalo para p com 95% de confiança
+
+```{r}
+p - erro ->linf
+p + erro -> lsup
+linf
+lsup
+```

@@ -1,0 +1,205 @@
+---
+title: "Medidas de Associação"
+output: html_notebook
+---
+
+
+**Exemplo 1 -**
+
+Considerando as insformações de idade e custo de uma pessoa em uma empresa de plano de saúde.
+
+```{r}
+library(tidyverse)
+
+idade <- c(18,23,28,33,38,43,48,53,58,63)
+custo <- c(871,1132,1242,1356,1488,1638,2130,2454,3066,4090)
+dados <- data.frame(idade,custo)
+dados
+```
+
+queremos entender se:
+
+Existe uma relação matemática entre as variáveis.
+
+```{r}
+ggplot(dados, aes(x=idade,y=custo)) + geom_point()
+```
+
+Observe que cada ponto é uma observação da tabela.
+
+Onde:
+
+Y: Variável Resposta Dependente X: Variável exploratória ou independente
+
+Os dados estão correlacionados?
+
+```{r}
+cor(custo,idade)
+
+result = cor.test(custo,idade, method = "spearman")
+
+result
+```
+
+################### **Exercício 1**
+
+Relação entre horas de estudo e desempenho em um teste
+
+Suponha que temos dados sobre o tempo de estudo (em horas) e o desempenho em um teste (pontuação) de 50 alunos. Queremos verificar se os alunos que estudam mais tem melhor desempenho no teste.
+
+```{r}
+set.seed(42)
+
+tempo_estudo <- rnorm(50, mean = 5, sd = 1) 
+desempenho_teste <- 3 * tempo_estudo + rnorm(50, mean = 10, sd = 2) 
+
+# Calcular correlação de Pearson e covariância
+correlacao <- cor(tempo_estudo, desempenho_teste)
+covariancia <- cov(tempo_estudo, desempenho_teste)
+
+correlacao
+covariancia
+```
+
+```{r}
+data = data.frame(tempo_estudo,desempenho_teste)
+ggplot(data, aes(x = tempo_estudo, y = desempenho_teste)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Tempo de Estudo x Desempenho no Teste",
+       x = "Tempo de Estudo (horas)",
+       y = "Desempenho no Teste")
+```
+
+################### **Exercício 2**
+
+Relação entre a quantidade de exercício físico e a frequência cardíaca
+
+Suponha que temos dados sobre a quantidade de exercício físico (em minutos) e a frequência cardíaca (em batimentos por minuto) de 100 indivíduos. Queremos entender a relação entre as duas variáveis
+
+```{r}
+set.seed(42)
+
+# Gerar dados aleatórios
+exercicio_fisico <- rnorm(100, mean = 60, sd = 10)  
+frequencia_cardiaca <- 180 - exercicio_fisico + rnorm(100, mean = 0, sd = 5) 
+
+# Calcular correlação de Pearson e covariância
+correlacao <- cor(exercicio_fisico, frequencia_cardiaca)
+covariancia <- cov(exercicio_fisico, frequencia_cardiaca)
+
+correlacao
+covariancia
+
+```
+
+```{r}
+data = data.frame(exercicio_fisico, frequencia_cardiaca)
+ggplot(data, aes(x = exercicio_fisico, y = frequencia_cardiaca)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Tempo de exercício físico x Frequencia cardíaca",
+       x = "Tempo de exercício físico",
+       y = "Frequencia cardíaca")
+```
+
+################### **Exercício 3**
+
+Relação entre a quantidade de sono e a produtividade no trabalho
+
+Suponha que temos dados sobre a quantidade de sono (em horas) e a produtividade no trabalho (medida em uma escala de 0 a 10) de 100 funcionários. Inferir a relação entre a quantidade de sono e a produtividade do trabalho
+
+```{r}
+set.seed(42)
+
+# Gerar dados aleatórios
+sono_horas <- rnorm(100, mean = 7, sd = 1)  
+produtividade <- sono_horas + rnorm(100, mean = 3, sd = 1)  
+
+# Calcular correlação de Pearson e covariância
+correlacao <- cor(sono_horas, produtividade)
+covariancia <- cov(sono_horas, produtividade)
+
+correlacao
+covariancia
+
+```
+
+```{r}
+data = data.frame(sono_horas,produtividade )
+ggplot(data, aes(x = sono_horas, y = produtividade)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Horas de Sono x Produtividade",
+       x = "Horas de Sono",
+       y = "Produtividade")
+```
+
+################### **Exercício 4**
+
+Quantidade de horas de estudo e nível de ansiedade
+
+Suponha que temos dados sobre a quantidade de horas de estudo (em horas) e o nível de ansiedade (medido em uma escala de 0 a 10) de 100 estudantes. Pretende-se entender a relação entre as variáveis
+
+```{r}
+set.seed(42)
+
+# Gerar dados aleatórios
+horas_estudo <- rnorm(100, mean = 5, sd = 1) 
+nivel_ansiedade <- 5 - horas_estudo + rnorm(100, mean = 0, sd = 2)  
+
+# Calcular correlação de Pearson e covariância
+correlacao <- cor(horas_estudo, nivel_ansiedade)
+covariancia <- cov(horas_estudo, nivel_ansiedade)
+
+correlacao
+covariancia
+
+```
+
+```{r}
+#library(tidyverse)
+data = data.frame(horas_estudo, nivel_ansiedade)
+
+```
+
+```{r}
+ggplot(data, aes(x = horas_estudo, y = nivel_ansiedade)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Horas de Estudo x Nível de ansiedade",
+       x = "Horas de Estudo",
+       y = "Nível de Ansiedade")
+```
+
+################### **Exercício 5**
+
+Quantidade de exercício físico e calorias queimada durante o exercício
+
+Suponha que temos dados sobre a quantidade de exercício físico (em minutos) e a quantidade de calorias queimadas durante o exercício de 100 indivíduos. Pretende-se entender a relação entre as variáveis
+
+```{r}
+set.seed(42)
+
+exercicio_fisico <- rnorm(100, mean = 60, sd = 10)  
+calorias_queimadas <- rnorm(100, mean = 300, sd = 50) 
+
+# Calcular correlação de Pearson e covariância
+correlacao <- cor(exercicio_fisico, calorias_queimadas)
+covariancia <- cov(exercicio_fisico, calorias_queimadas)
+
+correlacao
+covariancia
+
+```
+
+```{r}
+library(tidyverse)
+data = data.frame(exercicio_fisico, calorias_queimadas)
+ggplot(data, aes(x = exercicio_fisico, y = calorias_queimadas)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Exercício Físico x Quantidade de Calorias Queimadas",
+       x = "Exercício Físico",
+       y = "Quantidade de Calorias Queimadas")
+```

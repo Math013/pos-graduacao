@@ -1,0 +1,70 @@
+---
+title: "Cáculo Tamanho Amostral"
+output: html_notebook
+---
+
+# Cálculo do Tamanho Amostral
+
+Um dos pacotes que podemos utilizar para calcular tamonhos amostrais é o 'samplingbook'
+
+```{r}
+install.packages('samplingbook')
+library(samplingbook)
+```
+
+Exemplo 1
+
+Um site de empregos deseja estimar a renda média dos cientista de dados.
+
+Quantos valores de renda devem ser tomados, se o site deseja ter 95% de confiança em que a média amostral esteja a menos de R\$500,00 da verdadeira média populacional?
+
+Suponha que saibamos, por um estudo prévio, que, para tais rendas, σ = R\$6250,00.
+
+Parâmetro a ser estimado: Renda média.
+
+Dados solicitados:
+
+-   Nível de confiança= 0,95
+
+-   Margem de erro (E)=R\$500
+
+-   Desvio padrão populacional (σ)=R\$6250
+
+***Não temos qualquer informação sobre o tamanho populacional!***
+
+```{r}
+sample.size.mean(500, 6250, N = Inf, level = 0.95)
+
+```
+
+A)  Considerando a margem de erro igual a R\$500 e nível de confiança de 90%
+
+```{r}
+sample.size.mean(500, 6250, N = Inf, level = 0.90)
+```
+
+B)  Considerando a margem de erro igual a R\$250,00 e nível de confiança de 95%.
+
+```{r}
+sample.size.mean(250, 6250, N = Inf, level = 0.95)
+```
+
+## Tamanho amostral para um proporção
+
+Houve um aumento de sinistros causados por motoristas que utilizam celular ao estarem dirigindo. Por isso foi pensado em cobrar prêmios mais elevados para os motoristas que utilizam celulares. Desejamos estimar, com uma margem de erro de três pontos percentuais, a percentagem de motoristas que falam ao celular enquanto estão dirigindo. Supondo que se pretende um nível de 95% de confiança nos resultados, quantos motoristas devem ser pesquisados?
+
+A)  Suponha que tenhamos uma estimativa, com base em estudos anteriores, de 18% de motoristas que falam ao celular.
+
+```{r}
+sample.size.prop(0.03, P = 0.18, N = Inf, level = 0.95)
+
+```
+
+B)  Suponha que não tenhamos qualquer informação que possa sugerir um valor de 𝑝.
+
+Utilizando o método conservador
+
+```{r}
+sample.size.prop(0.03, P = 0.5, N = Inf, level = 0.95)
+
+```

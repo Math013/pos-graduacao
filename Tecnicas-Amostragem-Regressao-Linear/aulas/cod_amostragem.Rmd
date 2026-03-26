@@ -1,0 +1,179 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Amostragem Simples
+
+Gerar 500 amostras, de zero e 1, com reposição, e prob. equivalentes ( o mesmo que jogar 500 moedas, sendo que 1 seria cara)
+
+**sample** - amostra simples no R
+
+vetor de C(0,1) universo no qual ele vai produzir as amostras - contem 0 e 1
+
+-   **500**: tamanho da amostra de 0 e 1
+
+-   **Replace** = TRUE : há reposição
+
+-   **prob** : probabilidade de ocorrencia
+
+Gerando 500 amostras, compostas de zero e 1, com reposição, probabilidade equivalentes (0.5)
+
+```{r}
+amostra = sample(c(0,1), 500, replace = TRUE, prob=c(0.5,0.5))
+amostra_2 <- sample(c(0,1), 1000, replace = TRUE)
+amostra
+amostra_2
+
+#resumo do numero de 0 e 1's
+summary(as.factor(amostra))
+summary(as.factor(amostra_2))
+```
+
+Gerando 500 amostras, compostas de zero e 1, com reposição, probabilidade **NÃO** equivalentes (0.3,0.7)
+
+```{r}
+amostra = sample(c(0,1), 500, replace = TRUE, prob=c(0.7,0.3))
+amostra
+summary(as.factor(amostra))
+```
+
+Gerando 250 amostras, de 1 a 1000, sem reposição, prob. equivalentes
+
+```{r}
+amostra = sample(c(1:1000), 250, replace = FALSE)
+amostra
+```
+
+***Aplicando na separação de base treino e teste :***
+
+Supondo que queremos separar o conjunto de dados iris em 70% e 30%
+
+```{r}
+dim(iris)
+iris
+```
+
+Obs: Iris tem 150 instancias
+
+```{r}
+amostra = sample(c(0,1), 150, replace = TRUE, prob=c(0.7,0.3))
+summary(as.factor(amostra))
+amostra
+```
+
+Gera a amostra
+
+```{r}
+amostrairis_30 = iris[amostra==1,]
+amostrairis_30
+amostrairis_70 = iris[amostra!=1,]
+amostrairis_70
+
+dim(amostrairis_70)
+```
+
+***Sementes aleatórias:***
+
+Repetir experimento
+
+```{r}
+set.seed(51)
+sample(c(1000), 1)
+```
+
+Repetindo
+
+```{r}
+set.seed(5555)
+sample(c(1000), 1)
+```
+
+# Amostra Sistemática
+
+```{r}
+#install.packages("TeachingSampling")
+library("TeachingSampling")
+```
+
+Amostra sistematica de tamanho 150, 10 em 10
+
+```{r}
+amostra = S.SY(150, 10)
+amostra
+```
+
+Tamanho
+
+```{r}
+dim(amostra)
+```
+
+Usamos em iris
+
+```{r}
+amostrairis = iris[amostra,]
+```
+
+Verificamos
+
+```{r}
+amostrairis
+```
+
+Tamanho
+
+```{r}
+dim(amostrairis)
+```
+
+# Amostragem Estratificada
+
+```{r}
+install.packages("sampling")
+library("sampling")
+```
+
+Proporção
+
+```{r}
+prop = 20
+```
+
+Srswor amostra simples sem reposição, srswr com reposição, poisson, systematic
+
+a ordem de size é que está no conjunto de dados (summary)
+
+size -\> proporção em cada estrato (Species) - 20 observações em cada estrato
+
+```{r}
+summary(iris)
+amostrairis2=strata(data=iris,stratanames=c("Species"),size=c(rep( prop,3)), method="srswor")
+```
+
+Resultado
+
+```{r}
+summary(amostrairis2)
+```
+
+Dados de infertilidade
+
+```{r}
+infert
+summary(infert)
+```
+
+Amostragem por estratos de education
+
+```{r}
+amostra=strata(data=infert,
+               stratanames=c("education"),size=c(6,60,58), method="srswor")
+```
+
+Resultado
+
+```{r}
+amostra
+summary(amostra)
+```

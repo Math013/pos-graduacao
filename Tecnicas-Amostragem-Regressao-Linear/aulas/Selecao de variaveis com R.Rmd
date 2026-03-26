@@ -1,0 +1,150 @@
+---
+title: "Seleção de variáveis - R"
+output: html_notebook
+---
+
+Carregando pacotes necessários
+
+```{r}
+library(tidyverse)
+library(caret)
+library(MASS)
+library(glmnet)
+
+```
+
+Carregando os dados
+
+```{r}
+library(readxl)
+diabetes_dataset <- read_excel("diabetes_dataset.xlsx")
+```
+
+Dividindo os dados em conjunto de treino e teste Defina uma semente para reprodução dos resultados
+
+```{r}
+set.seed(123)
+
+```
+
+Divida o conjunto de dados em treinamento (80%) e teste (20%)
+
+```{r}
+train_index <- createDataPartition(diabetes_dataset$progressao, p = 0.8, list = FALSE)
+
+```
+
+Crie conjuntos de treinamento e teste com base nos índices gerados
+
+```{r}
+train_data <- diabetes_dataset[train_index, ]
+test_data <- diabetes_dataset[-train_index, ]
+
+```
+
+Função para realizar o Stepwise
+
+```{r}
+stepwise_selection <- function(X, y) {
+  full_model <- lm(y ~ ., data = X)
+  reduced_model <- step(full_model, direction = "both", trace = 0)
+  return(reduced_model)
+}
+```
+
+Seleção de variáveis usando Stepwise
+
+```{r}
+selected_features_stepwise <- stepwise_selection(train_data[, -ncol(train_data)], train_data$progressao)
+
+```
+
+Extrair as variáveis selecionadas
+
+```{r}
+selected_features_stepwise <- names(selected_features_stepwise$coefficients)[-1]
+cat("Variáveis selecionadas pelo Stepwise:\n")
+cat(selected_features_stepwise, "\n")
+
+```
+
+Treinamento do modelo final usando as variáveis selecionadas pelo Stepwise
+
+```{r}
+model_stepwise <- lm(progressao ~ ., data = train_data[, c(selected_features_stepwise, "progressao")])
+
+summary(model_stepwise)
+```
+
+Calcular métricas de avaliação a partir do resumo do modelo
+
+```{r}
+summary_model_stepwise <- summary(model_stepwise)
+mae_stepwise <- summary_model_stepwise$sigma
+mse_stepwise <- summary_model_stepwise$sigma^2
+aic_stepwise <- AIC(model_stepwise)
+bic_stepwise <- BIC(model_stepwise)
+r_squared_stepwise <- summary_model_stepwise$adj.r.squared
+
+```
+
+Imprimir as métricas do Modelo Stepwise
+
+```{r}
+cat("Métricas do Modelo Stepwise:\n",
+    "MAE:", mae_stepwise, "\n",
+    "MSE:", mse_stepwise, "\n",
+    "AIC:", aic_stepwise, "\n",
+    "BIC:", bic_stepwise, "\n",
+    "R²:", r_squared_stepwise, "\n")
+
+```
+
+Usando Lasso (L1) para seleção de variáveis com cross-validation para encontrar o melhor alpha
+
+```{r}
+lasso_model <- cv.glmnet(as.matrix(train_data[, -ncol(train_data)]), train_data$progressao, alpha = 1)
+
+best_alpha <- lasso_model$lambda.min
+cat("Melhor valor de alpha encontrado pelo Lasso:", best_alpha, "\n")
+
+```
+
+Usando o melhor valor de alpha para treinar o modelo final com Lasso
+
+```{r}
+
+lasso_model_final <- glmnet(as.matrix(train_data[, -ncol(train_data)]), train_data$progressao, alpha = 1, lambda = best_alpha)
+```
+
+Avaliação do modelo final com Lasso
+
+```{r}
+lasso_predictions <- predict(lasso_model_final, s = best_alpha, newx = as.matrix(test_data[, -ncol(test_data)]))
+
+```
+
+Calculando métricas de avaliação para Lasso
+
+```{r}
+lasso_mae <- mean(abs(lasso_predictions - test_data$progressao))
+lasso_mse <- mean((lasso_predictions - test_data$progressao)^2)
+
+```
+
+Calculando R² para Lasso
+
+```{r}
+r_squared_lasso <- cor(lasso_predictions, test_data$progressao)^2
+
+```
+
+Imprimir as métricas do Modelo Lasso
+
+```{r}
+cat("Métricas do Modelo Lasso:\n")
+cat("MAE:", lasso_mae, "\n")
+cat("MSE:", lasso_mse, "\n")
+cat("R²:", r_squared_lasso, "\n")
+
+```

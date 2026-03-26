@@ -1,0 +1,88 @@
+---
+title: "Regressão Linear Simples"
+output: html_notebook
+---
+
+###Modelo de Regressão Linear Simples
+
+Considerando as insformações de idade e custo de uma pessoa em uma empresa de plano de saúde.
+
+```{r}
+library(tidyverse)
+
+idade <- c(18,23,28,33,38,43,48,53,58,63)
+custo <- c(871,1132,1242,1356,1488,1638,2130,2454,3066,4090)
+dados <- data.frame(idade,custo)
+dados
+```
+
+**Estimando os coeficientes por matrizes**
+
+Imaginando que queremos o seguinte modelo
+
+Yi = a + bXi + ei
+
+sendo: custo = a + b\*idade + e
+
+Transformando em vetores e matrizes
+
+```{r}
+# criando matrizes e vetores
+Y <- custo
+is.vector(Y) 
+X=cbind(1,idade)
+is.matrix(X)
+
+```
+
+Criando a operação matricial
+
+-   t(x) -\> transposta de X
+
+-   solve -\> inversa
+
+-   %\*% -\> multiplicação
+
+Chegamos aos betas
+
+```{r}
+solve(t(X)%*%X)%*%t(X)%*%Y
+```
+
+Chegamos ao nosso modelo
+
+custo = -558,94 + 61,86\*idade
+
+Geramos o modelo usando função lm Queremos prever o custo baseado na idade dos clientes Interceptação e Inclinação o quanto a variável depe. aumenta com o aumento da variavel indepenente
+
+```{r}
+modelo = lm(custo ~ idade, data=dados)
+summary(modelo)
+```
+
+```{r}
+shapiro.test(modelo$residuals)
+```
+
+Teste de Normalidade Shapiro- Wilk
+
+-   H0: X é normalmente distribuiído
+
+-   H1: X não é normalemnte distribuído
+
+p-valor \> 0,05 Não rejeitamos H0
+
+Aplicando o teste de shapiro, NÃO rejeitamos a hipotese nula e podemos assumir a normalidade dos residuals pois p-value = 0.5043 .
+
+```{r}
+par(mfrow = c(2,2))
+plot(modelo)
+```
+
+Gráfico 1: Temos os resíduos em função dos valores estimados. Aqui observamos a independência e a homocedasticidade, se os resíduos se distribuem de maneira razoavelmente aleatória e com mesma amplitude em torno do zero.
+
+Gráfico 2: Podemos avaliar a normalidade dos resíduos. A linha diagonal pontilhada representa a distribuição normal teórica, e os pontos a distribuição dos resíduos observada. Espera-se que não exista grande fuga dos pontos em relação à reta.
+
+Gráfico 3: Pode ser avaliado da mesma maneira que o primeiro, observando a aleatoriedade e amplitude, desta vez dos resíduos padronizados.
+
+Gráfico 4: E o último gráfico permite visualizar as Distâncias de Cook das observações, uma medida de influência que pode indicar a presença de outliers quando possui valor maior do que 1.
