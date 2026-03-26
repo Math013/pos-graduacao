@@ -1,0 +1,214 @@
+---
+title: "GLM - Poisson"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+## Regressão para contagens - Poisson
+
+**Instalando Bibliotecas**
+
+```{r}
+install.packages("ISwR")
+install.packages("AER")
+```
+
+```{r}
+library(ISwR)
+library(AER)
+```
+
+**Carregando a base de dados**
+
+Dados sobre a incidencia de cancer pulmonar em 4 cidades dinamarquesas
+entre 1968 e 1971
+
+```{r}
+data("eba1977")
+```
+
+**Objetivo** : Ajustar um modelo de regressão de poisson para a variavel
+nº de casos (variável respsota) - tipo contagem, utilizando as variáveis
+explicativas: cidade , idade , população
+
+Ajustar um modelo para estudar a taxa de incidencia de cancer de pulmão
+nas cidades dinamarquesas em relação a caracteristica das populações
+
+```{r}
+dados <- eba1977
+dados
+```
+
+Analise descritiva dos dados
+
+```{r}
+summary(dados)
+```
+
+Verificando a suposição de equidispersão:
+
+Calcular a média e variancia para a variavel reposta
+
+```{r}
+mean(dados$cases)
+var(dados$cases)
+
+colnames(dados)
+
+```
+
+Com os resultados observamos que a media e variancia em valores bem
+proximos.
+
+Uma outro forma de avaliar a suposição de equidispersão é atraves do
+desvio residual e dos graus de liberdade. Para isso vamos realizar o
+ajuste do modelo de Poisson
+
+```{r}
+library(stats)
+
+modelo1 <- glm(cases ~ city + age + offset(log(pop)), family = poisson(link = "log"), data = dados)
+modelo2 <- glm(cases ~ city + age + log(pop), family = poisson(link = "log"), data = dados)
+```
+
+No contexto de um modelo de regressão, o termo offset(log(pop)) indica a
+inclusão de uma variável explicativa transformada como um termo de
+deslocamento.
+
+log(pop): transformação logarítmica da variável pop. Ajuda a estabilizar
+a variância e a lidar com relações não lineares entre as variáveis.
+
+offset(): especifica uma variável que tem um efeito conhecido e fixo no
+modelo. Ele é usado quando queremos incluir uma variável explicativa no
+modelo com um coeficiente de regressão fixo de 1. Nesse caso, o log(pop)
+age como um termo de deslocamento.
+
+offset(log(pop)) indica que a variável pop está sendo usada como um
+termo de deslocamento no modelo,. Isso significa que o efeito da
+variável pop no modelo é completamente especificado e não é estimado
+pelos coeficientes do modelo, mas é mantido como um fator multiplicativo
+constante. Esse termo é comumente usado em situações onde a variável pop
+representa exposição ou tempo em risco e deve ser levada em consideração
+ao modelar a variável resposta.
+
+```{r}
+summary(modelo1)
+```
+
+```{r}
+summary(modelo2)
+```
+
+Temos 23.447 de deviance e 15 graus de liberdade. O deviance esta
+proximo ao nº de graus de liberdade
+
+```{r}
+x <- 23.447/15
+x
+```
+
+Como é um numero pequeno temos indicios de um bom ajuste
+
+Outra forma de avaliarmos a equidispersão , é o:
+
+**Teste de equidispersão**
+
+onde:
+
+-   H0: Existe equidispersão
+
+-   H1: Superdispersão e/ou subdispersão
+
+    ACeita h0 p-valor \> 0.05
+
+```{r}
+dispersiontest(modelo1, alternative = c("two.sided"))
+```
+
+Quando aceitamos H0 o pressuposto não foi violado.
+
+-   Superdispersão: quando os dados possuem mais variação do que a
+    esperada com base em uma distribuição de Poisson: Valor esperado \<
+    variancia
+
+-   Subdispersão: Quando os dados possuem menos variação do que a
+    esperada com base em uma distribuição de Poisson: Valor esperado \>
+    variancia
+
+Como P-valor \> 0.05 nao esta violando o pressuposto de equidispersao
+
+**Validação do modelo Análise de resíduos**
+
+Desconsiderar o gráfico de normalidade dos resíduos. Pressuposto não
+precisa ser atendido.
+
+Observe que por padrão o R ja utiliza o Residuos de Pearson(como
+apresentado no summary do modelo)
+
+```{r}
+par(mfrow = c(2,2))
+plot(modelo1)
+```
+
+**Teste de hipótese para adequação do modelo por Pearson:**
+
+-   H0: O modelo é adequado
+-   HA: O modleo não é adequado
+
+Aceita H0 quando p-valor \> 0.05
+
+O p-valor da estatística qui-quadrado de Pearson.
+
+```{r}
+pchisq(sum(modelo1$residuals^2), df = modelo1$df.residual, lower.tail = F)
+```
+
+Como a hipótese nula desse teste é de adequação do modelo, considerando
+um nível de confiança de 5%, não foi rejeitada tal hipótese, portanto,
+pode-se garantir que o modelo esteja adequado.
+
+**Teste do Ajuste Deviance:**
+
+Outra forma de teste de ajuste é pelos resíduos Deviance.
+
+Neste caso o teste não faz sentido uma vez que o modelo satura é = ao
+modelo ajustado.
+
+```{r}
+# Ajuste do modelo GLM
+modelo <- glm(cases ~ city + age + offset(log(pop)), family = poisson(link = "log"), data = dados)
+
+# Ajuste do modelo saturado (modelo completo)
+modelo_saturado <- glm(cases ~ ., family = poisson(link = "log"), data = dados)
+
+# Teste de ajuste da deviance
+teste_deviance <- anova(modelo, modelo_saturado, test = "Chisq")
+
+# Impressão dos resultados
+teste_deviance
+```
+
+**Interpretação do modelo**
+
+```{r}
+tabela <- cbind(exp(coef(modelo1)),
+                exp(summary(modelo1)$coeff[,1]-(1.96*summary(modelo1)$coeff[,2])),
+                exp(summary(modelo1)$coeff[,1]+(1.96*summary(modelo1)$coeff[,2])))
+colnames(tabela)<- c("Exp(coef)", "L.I", "L.S")
+tabela
+```
+
+-   Houve diferença significativa entre as cidades com relação a
+    incidencia de pulmão.
+
+-   A incidencia de cancer de pulmão foi de 0,69 vezes menor na cidade
+    de Kolding, quando comparada com a cidade de Fredericia - nossa
+    cidade de referencia .
+
+-   Em relação as faixas etária podemos dizer que quanto mais velhos os
+    individuos (até 74 anos) maior a incidencia de cancer de pulmão. Em
+    comparação a faixa etária de 40 a 54 anos que é a categoria de
+    referencia, para a faixa de 55 a 59 , a incidencia foi 3 x maior
+    ....

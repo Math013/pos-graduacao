@@ -1,0 +1,332 @@
+---
+title: "GLM para Contagens"
+output: html_notebook
+---
+
+### GLM - Para contagens
+
+Instalando pacotes necessários
+
+```{r}
+install.packages('visdat')
+install.packages('tidyverse')
+install.packages('lattice')
+install.packages('RVAideMemoire')
+install.packages('DHARMa')
+install.packages('performance')
+install.packages('MuMIn')
+install.packages('piecewiseSEM')
+install.packages('MASS')
+install.packages('ggExtra')
+install.packages('Rmisc')
+install.packages('emmeans') 
+install.packages('sjPlot')
+install.packages('bbmle')
+install.packages('glmmTMB')
+install.packages('ordinal')
+install.packages('car')
+install.packages('ecolottery')
+install.packages('naniar')
+install.packages('vcd')
+install.packages('generalhoslem')
+```
+
+Carregando pacotes necessários
+
+```{r}
+library(visdat)
+library(tidyverse)
+library(lattice)
+library(RVAideMemoire)
+library(DHARMa)
+library(performance)
+library(MuMIn)
+library(piecewiseSEM)
+library(MASS)
+library(ggExtra)
+library(Rmisc)
+library(emmeans) 
+library(sjPlot)
+library(bbmle)
+library(glmmTMB)
+library(ordinal)
+library(car)
+library(ecolottery)
+library(naniar)
+library(vcd)
+library(generalhoslem)
+```
+
+### Regressão de Poisson
+
+**Exemplo 1**
+
+Explicação dos dados
+
+Dados de riqueza de anfíbios anuros coletados em 40 poças, açudes e brejos ao redor de fragmentos florestais no Noroeste Paulista. Foram medidas seis variáveis em escala local e outras três em escala de paisagem.
+
+Queremos entender se a distância linear para o corpo d'água mais próximo influencia a abundância total de espécies de anfíbios.
+
+Espera-se que poças mais conectadas entre si tenham maior riqueza total de anuros.
+
+*Variáveis*
+
+**Variável reposta:** riqueza de anuros em 40 poças
+
+**Variável preditora:** distância da poça focal para a mais próxima na escala da paisagem
+
+*Carregando a base de dados*
+
+```{r}
+load('fragmentos.rda')
+glimpse(fragmentos)
+```
+
+A base contém 40 colunas.
+
+As preditoras já estão padronizadas( média 0 e desvio padrão 1).
+
+As variáveis com "2" indicam variáveis quadráticas (podem ser usadas para se testar relações não lineares).
+
+Também temos a riqueza observada e a estimada (Riqueza_HB) e as coordenadas geográficas (X e Y).
+
+Vamos agora explorar os dados e ver como é a relação entre riqueza e distância para a poça mais próxima.
+
+```{r}
+ggplot(fragmentos, aes(dfrag, Riqueza_obs)) +
+    geom_point(size = 4, alpha = 0.7) +
+    geom_smooth(method = "lm") +
+     labs(x = "Distância para o fragmento mais próximo", 
+         y = "Riqueza observada")
+```
+
+**Modelagem**
+
+Iremos modelar a riqueza de anfíbios em função da distância para o fragmento mais próximo.
+
+```{r}
+## Modelo
+mod_pois <- glm(Riqueza_obs ~ dfrag, family = poisson(link = "log"), data = fragmentos)
+```
+
+**Diagnose básica dos resíduos do modelo**
+
+Iremos realizar duas diagnoses básicas dos GLMs, avaliando diferentes aspectos do modelo:
+
+-   Análise de resíduos
+
+-   Sobredispersão (Overdispersion)
+
+```{r}
+## Diagnose básica
+par(mfrow = c(2, 2))
+plot(mod_pois) 
+```
+
+As linhas vermelhas (que indicam a tendência dos dados) estão praticamente retas seguindo a linha pontilhada, sugerindo que existe homogeneidade de variância dos resíduos.
+
+As observações, 1, 7 e 30 (linhas do data frame) aparecem identificados, pois apresentam ligeiro desvio e estão distantes da média.
+
+Por não ser valores muito extremos, possivelmente nao impactaria no modelo.
+
+Portanto, temos indicios que o modelo com Poisson parece ser adequado para modelar estes dados, pela análise de resíduos
+
+**Diagnose da sobredispersão (**overdispersion)
+
+Um pressuposto importante dos modelos de contagem (incluindo Poisson) é a sobredispersão (overdispersion).
+
+Vejamos como o pacote DHARMa funciona
+
+```{r}
+## Diagnose avançada
+simulationOutput <- simulateResiduals(fittedModel = mod_pois, plot = TRUE)
+```
+
+O plot claramente indica que há problema com overdispersion, mas não em termos de desvios de normalidade (KS test) ou outlier, já que apenas o primeiro foi significativo (aparece em vermelho).
+
+**Detectando e lidando com overdispersion**
+
+O que é sobredispersão (overdispersion)?
+
+Ela ocorre quando a variância observada é muito maior do que aquela predita pelo modelo.
+
+Para modelos que utilizam a distribuição de Poisson, isso ocorre quando a variância aumenta com a média.
+
+*Poisson* -\> Parâmetro único para descrever tanto a média quanto a variância (λ). Logo, espera-se que a variância seja igual à média.
+
+Se a variância nos dados observados for muito maior do que a média -\> sobredispersão nos dados.
+
+Existem duas formas de diagnosticar overdispersion:
+
+-   check_overdispersion()
+
+-   testDispersion()
+
+A função testDispersion() -\> método de aleatorização dos resíduos para determinar se há overdispersion nos dados, cuja vantagem é que aborda diretamente a variação nos dados, ao invés de medir o ajuste do modelo em si.
+
+```{r}
+## Overdispersion
+par(mfrow = c(1, 1))
+testDispersion(mod_pois) # modelo tem overdispersion
+```
+
+Tanto no gráfico e no resultado do teste de overdispersion (que já aparecia no gráfico anterior) mostrando que de fato há overdispersion: perceba que o valor de P é significativo.
+
+O gráfico nos mostra em cinza a distribuição dos resíduos aleatorizados e a linha vermelha o valor observado da estatística.
+
+Já que a linha está bem à direita da distribuição, isso indica overdispersion, se estivesse à esquerda seria o caso de underdispersion.
+
+Utilizando check_overdisperion() -\> a partir da distribuição chi-quadrado e o valor de dispersion ratio, testa a presença de overdispersion no modelo.
+
+Esse teste também pode ser feito com a função acima ao se especificar o argumento type="PearsonChisq".
+
+```{r}
+## Testar a presença de overdispersion
+check_overdispersion(mod_pois) # modelo tem overdispersion
+```
+
+Quando este resultado é significativo, como vimos na última linha acima, isso indica que há overdispersion.
+
+Usando a função summary() podemos ter um resumo e descrição dos parâmetros do modelo.
+
+```{r}
+## Resumo do modelo
+summary(mod_pois)
+
+deviance(mod_pois) / df.residual(mod_pois)
+
+```
+
+Também podemos calcular o dispersion parameter dividindo o residual deviance pelos graus de liberdade dos resíduos.
+
+Esta é outra maneira fácil e rápida de detectar overdispersion.
+
+Neste exemplo, temos que Dispersion parameter = 1.8119903.
+
+Quando esse valor é próximo de 1, isso sugere que não há overdispersion.
+
+No entanto, se ele for maior que 1.5, isso sugere que o modelo sofre de overdispersion e que devemos usar outra distribuição, tal como a distribuição binomial negativa, por exemplo.
+
+Outra forma de diagnosticar o modelo é calcular os resíduos de Pearson (resíduos normalizados), que é basicamente a raiz quadrada da variância da variável resposta.
+
+```{r}
+## Coeficientes estimados pelo modelo
+summary(mod_pois)
+
+```
+
+Plot do modelo predito
+
+Vamos realizar a visualização do ajusto do modelo Poisson.
+
+```{r}
+a1 <- ggplot(fragmentos, aes(dfrag, Riqueza_obs)) +
+    geom_point(cex = 4,alpha = 0.7) +
+    geom_smooth(method = "glm", formula = y~x, 
+                method.args = list(family = "poisson"), se = TRUE) +
+    labs(x = "Distância para o fragmento mais próximo", 
+         y = "Riqueza observada") 
+ggMarginal(a1, fill = "red")
+```
+
+Interpretação dos resultados
+
+Há uma leve tendência na relação positiva entre distância para o fragmento mais próximo e a riqueza de anfíbios observada. No entanto, há uma grande dispersão nos dados ao redor da reta do modelo, fazendo com que a relação não seja de fato significativa e tenhamos um R2 bem baixo.
+
+***Modelagem de uma binomial negativa***
+
+```{r}
+## Ajuste do modelo
+mod_nb <- glm.nb(Riqueza_obs ~ dfrag, data = fragmentos)
+```
+
+Diagnose resíduos
+
+```{r}
+par(mfrow = c(2, 2))
+plot(mod_nb)
+par(mfrow = c(1, 1))
+(chat <- deviance(mod_nb) / df.residual(mod_nb))
+```
+
+Comparando esses dados com os do modelo anterior com distribuição Poisson. Eles são praticamente idênticos, ou seja, o modelo com Poisson já tinha homogeneidade de variância e não tinha problemas com normalidade dos resíduos.
+
+Agora vejamos se o problema com overdispersion foi resolvido.
+
+```{r}
+simulationOutput <- simulateResiduals(fittedModel = mod_nb, plot = TRUE)
+```
+
+Na diagnose do modelo pelo DHARMa, vemos que bastou mudar a distribuição de probabilidade que o problema de overdispersion foi resolvido (nenhum teste foi significativo no quadro da esquerda).
+
+Como já sabíamos, não há problemas com homogeneidade de variância (plot da direita mostrando a tendência entre o predito e resíduos pra cada quantil), nem de outliers. O dispersion parameter é mais próximo de 1 do que no modelo com Poisson.
+
+```{r}
+summary(mod_nb)
+```
+
+**Interpretação dos resultados**
+
+Aqui vemos que a interpretação do resultado em termos de valor de P não mudou, ou seja, a distância para o fragmento mais próximo não foi significativa. Mas vejam que o coeficiente mudou um pouco, antes era 0.0718 (SE=0.0507) e com binomial negativa passa a ser 0.07248 (SE=0.06571).
+
+Plot do modelo predito
+
+Vamos realizar a visualização do ajuste do modelo binomial Negativo.
+
+```{r}
+ggplot(fragmentos, aes(dfrag, Riqueza_obs)) +
+    geom_point(size = 4, alpha = 0.7) +
+    geom_smooth(method = "glm.nb", formula = y~x, se = TRUE) +
+    labs(x = "Distância para o fragmento mais próximo", 
+         y = "Riqueza observada") 
+```
+
+A reta predita pelo modelo é muito similar ao que tivemos com o modelo Poisson.
+
+No entanto, agora que sabemos que este modelo com binomial negativa foi corretamente especificado e podemos confiar nos parâmetros estimados.
+
+**Dados de contagem: modelos quasi-Poisson**
+
+Uma outra alternativa para ajustar modelos GLM a dados de contagem seria a quasi-Poisson.
+
+Dependendo do valor do dispersion parameter, pode ser útil escolher este tipo de modelo.
+
+```{r}
+mod_quasipois <- glm(Riqueza_obs ~ dfrag, family = quasipoisson(link = "log"), data = fragmentos)
+```
+
+**Diagnose dos resíduos**
+
+A função resid não leva em conta a sobredispersão e temos de calcular manualmente o parâmetro de dispersão e inclui-lo no plot.
+
+Portanto, não podemos realizar a diagnose de modelos quasi-Poisson apenas com a função plot como fazíamos até agora.
+
+Então, calculamos primeiramente os resíduos de Pearson e depois dividindo-o pela raiz quadrada do parâmetro de dispersão.
+
+```{r}
+EP <- resid(mod_quasipois, type = "pearson")
+ED <- resid(mod_quasipois, type = "deviance")
+mu <- predict(mod_quasipois, type = "response")
+E <- fragmentos$Riqueza_obs - mu
+EP2 <- E / sqrt(1.65662 * mu) # dispersion parameter da quasipoisson
+op <- par(mfrow = c(2, 2))
+plot(x = mu, y = E, main = "Response residuals")
+plot(x = mu, y = EP, main = "Pearson residuals")
+plot(x = mu, y = EP2, main = "Pearson residuals scaled")
+plot(x = mu, y = ED, main = "Deviance residuals")
+par(op)
+par(mfrow = c(1, 1))
+```
+
+Não existe um padrão claro nos resíduos, muito similar ao que tínhamos anteriormente.
+
+Devido às limitações de distribuições "quasi" e dado que já temos um modelo adequado com binomial negativa, sugerimos interpretar apenas o modelo anterior com binomial negativa.
+
+```{r}
+summary(mod_quasipois)
+
+```
+
+```{r}
+summary(mod_pois)
+```

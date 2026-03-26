@@ -1,0 +1,271 @@
+---
+title: "Lista1"
+author: "Matheus Oliveira"
+date: "2026-03-15"
+output: html_document
+---
+
+## Exercício 1
+
+### Determinar a probabilidade do usuário de comprar uma SUV, baseado em sua idade e salário.
+
+```{r}
+library(readr)
+library(ggplot2)
+```
+
+#### Carregando a base
+
+```{r}
+dados <- read_csv("C:/Users/Matheus/Desktop/Arquivos_PUC/Modelos de Regressão/Dados/SUV_Network_Ads.csv")
+dados
+```
+
+#### Análise Descritiva
+
+```{r}
+summary(dados)
+```
+
+```{r}
+str(dados)
+```
+
+```{r}
+dados$Purchased <- as.factor(dados$Purchased)
+```
+
+```{r}
+table(dados$Purchased)
+```
+
+```{r}
+ggplot(dados, 
+       aes(x = Purchased, y = Age)
+       ) + geom_boxplot()
+
+ggplot(dados, 
+       aes(x = Purchased, y = EstimatedSalary)
+       ) + geom_boxplot()
+```
+
+#### Modelo de Regressão Logística
+
+```{r}
+modelo <- glm(Purchased ~ Age + EstimatedSalary, family=binomial, data=dados)
+summary(modelo)
+```
+
+#### Razão de Verossimilhança
+
+```{r}
+anova(modelo, test="Chisq")
+```
+
+#### Resíduos Deviance
+
+```{r}
+resp <- data.frame(indice = 1:nrow(dados),
+                   residuos = residuals(modelo, type = "deviance"))
+
+ggplot(resp, aes(x = sample(indice), y = residuos)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  labs(x = "Índice", y = "Resíduos")
+```
+
+```{r}
+deviance_residuals <- residuals(modelo, type = 'deviance')
+deviance <- sum(deviance_residuals^2)
+deviance_p_value <- 1 - pchisq(deviance, df.residual(modelo))
+cat("Deviance:", deviance, "p-value:", deviance_p_value, "\n")
+```
+
+#### Normalidade dos resíduos
+
+```{r}
+library(statmod)
+residuos_q <- qresid(modelo)
+shapiro.test(residuos_q)
+```
+
+#### Curva ROC e AUC
+
+```{r}
+library(pROC)
+roc_obj <- roc(as.numeric(dados$Purchased) - 1, fitted(modelo))
+plot(roc_obj)
+auc(roc_obj)
+```
+
+#### Análise do modelo
+
+```{r}
+predicao <- predict(modelo, type = "response")
+
+table(dados$Purchased, predicao > 0.5)
+```
+
+#### ODDS
+
+```{r}
+exp(cbind(OR = coef(modelo), confint(modelo)))
+```
+
+**Interpretação de resultado:**
+
+-   Para cada ano a mais de `idade`, a chance de comprar a SUV aumenta em **26,3%** - OR 1.26
+-   Para cada R\$ 1,00 a mais de `salário`, a chance de comprar uma SUV aumenta em **0,0036%** - OR 1.000036
+-   Reescalando: a cada R\$ 10.000 a mais de salário, a chance de compra aumenta em **43,3%** - OR 1.43
+
+## Exercício 2
+
+### Determine o impacto das variáveis ses e write, no tipo de programa (prog) dos alunos da base. (prog \~ses + wrie)
+
+### Faça uma análise detalhada os odds em relação a probabilidade de cada tipo de programa, considerando todos os níveis.  
+
+```{r}
+library(nnet)
+library(ResourceSelection)
+library(broom)
+library(multcomp)
+library(readxl)
+library(car)
+library(DescTools)
+library(effects)
+library(tidyverse)
+```
+
+#### Carregando a base
+
+```{r}
+dados2 <- read_csv("C:/Users/Matheus/Desktop/Arquivos_PUC/Modelos de Regressão/Dados/dados_lista_2_multinominal-1.csv")
+summary(dados2)
+```
+
+```{r}
+dados2
+```
+
+#### Análise da base de dados
+
+```{r}
+dados_filtrados <- dados2 %>%
+  dplyr::select(ses, prog, write)
+```
+
+```{r}
+dados_filtrados
+```
+
+```{r}
+dados2 %>%
+  count(ses) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ggplot(aes(x = "", y = n, fill = ses)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Distribuição por 'Ses'",
+       fill = "SES") +
+  geom_text(aes(label = paste0(round(pct, 1), "%")), position = position_stack(vjust = 0.5)) +
+  theme_void()
+```
+
+```{r}
+dados2 %>%
+  count(prog) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ggplot(aes(x = "", y = n, fill = prog)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Distribuição por 'prog'",
+       fill = "prog") +
+  geom_text(aes(label = paste0(round(pct, 1), "%")), position = position_stack(vjust = 0.5)) +
+  theme_void()
+```
+
+```{r}
+dados2 %>% count(prog, ses)
+```
+
+```{r}
+ggplot(dados2, aes(x = prog, y = write, fill = prog)) +
+  geom_boxplot() +
+  labs(title = "Distribuição de escrita por programa",
+       x = "Programa", y = "Nota de escrita") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(dados2, aes(x = write)) + 
+  geom_histogram(aes(y = after_stat(density)), fill = "lightblue", color = "white") + 
+  stat_function(fun = dnorm, args = list(mean = mean(dados2$write), sd = sd(dados2$write)), color = "red", linewidth = 1) +
+  labs(title = "Distribuição das pontuações de escrita",
+       x = "Escrita",
+       y = "Densidade") + 
+  theme_minimal()
+```
+
+#### Construção do modelo
+
+```{r}
+str(dados2)
+```
+
+```{r}
+# install.packages('mnet')
+library(nnet)
+
+dados2$prog <- relevel(factor(dados2$prog), ref = "academic")
+
+modelo_multi <- multinom(prog ~ ses + write, data = dados2)
+summary(modelo_multi)
+```
+
+#### Análise dos pressupostos e validação do modelo
+
+```{r}
+z <- summary(modelo_multi)$coefficients / summary(modelo_multi)$standard.errors
+p_valores <- 2 * (1 - pnorm(abs(z)))
+p_valores
+```
+
+```{r}
+# Modelo nulo
+
+modelo_nulo <- multinom(prog ~ 1, data = dados2)
+
+pseudo_r2 <- 1 - (logLik(modelo_multi) / logLik(modelo_nulo))
+pseudo_r2
+```
+
+```{r}
+anova(modelo_nulo, modelo_multi, test = "Chisq")
+```
+
+```{r}
+pred <- predict(modelo_multi)
+table(predito = pred, observado = dados2$prog)
+```
+
+#### Análise do modelo
+
+```{r}
+exp(coef(modelo_multi))
+```
+
+#### Interpretação das ODDS
+
+**General x Academic:**
+
+-   Alunos com `seslow` têm **3.2x** mais chance de estar em `general` do que em `academic`
+-   Para cada ponto a mais em `write`, a chance de estar em `general` vs `academic` diminui **6%**
+
+**Vocation x Academic**
+
+-   Alunos com `sesmiddle` têm **3.58x** mais chance de estar em `vocation` do que em `academic`
+-   Para cada ponto a mais em `write`, a chance de estar em `vocation` vs `academic` diminui **11%**
+
+**Conclusão:**
+
+A nota de escrita (`write`) é o preditor mais forte — alunos com notas altas tendem ao programa `academic` independente do nível socioeconômico. O `ses` influencia, mas de forma secundária.

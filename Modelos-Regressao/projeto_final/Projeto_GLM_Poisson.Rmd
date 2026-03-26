@@ -1,0 +1,568 @@
+---
+title: "Projeto Final - Modelos Lineares Generalizados (GLM)"
+subtitle: "Regressão de Poisson e Binomial Negativa aplicada a colisões de veículos em NYC"
+author: "Matheus"
+date: "2026-03-20"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+## 1. Introdução e Contextualização
+
+**Objetivo:** Ajustar um modelo de regressão para dados de contagem
+(GLM) utilizando a base de dados de colisões de veículos motorizados da
+cidade de Nova York (NYC Motor Vehicle Collisions).
+
+**Variável resposta:** Número de pessoas feridas por colisão (variável
+de contagem).
+
+**Variáveis explicativas:** Bairro (borough), período do dia, dia da
+semana, fator contribuinte do veículo e tipo de veículo.
+
+**Modelo proposto:** Regressão de Poisson como ponto de partida, com
+possível migração para Binomial Negativa caso seja detectada
+superdispersão.
+
+A escolha do modelo Poisson se justifica porque a variável resposta é
+uma contagem (valores inteiros não-negativos: 0, 1, 2, 3...), que é
+exatamente o tipo de dado para o qual a distribuição de Poisson foi
+desenvolvida.
+
+## 2. Carregamento dos dados e pacotes
+
+```{r message=FALSE, warning=FALSE}
+# Pacotes necessários
+library(readr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(scales)
+library(stats)
+library(AER)
+library(MASS)
+```
+
+```{r message=FALSE}
+# Carregar a base de dados
+dados <- read_csv("C:/Users/Matheus/Desktop/Arquivos_PUC/Modelos de Regressão/Dados/Motor_Vehicle_Collisions.csv")
+```
+
+```{r}
+str(dados)
+```
+
+A base possui 2.247.820 registros e 34 colunas, cobrindo colisões de
+veículos em toda a cidade de Nova York.
+
+## 3. Processamento de Dados
+
+### 3.1 Renomear colunas
+
+Renomeamos as colunas para nomes mais práticos em português, sem
+espaços, facilitando a manipulação no R.
+
+```{r}
+dados <- dados %>%
+  rename(
+    data_acidente = `CRASH DATE`,
+    hora_acidente = `CRASH TIME`,
+    bairro = BOROUGH,
+    latitude = LATITUDE,
+    longitude = LONGITUDE,
+    feridos = `NUMBER OF PERSONS INJURED`,
+    mortos = `NUMBER OF PERSONS KILLED`,
+    fator_veiculo1 = `CONTRIBUTING FACTOR VEHICLE 1`,
+    tipo_veiculo1 = `VEHICLE TYPE CODE 1`
+  )
+```
+
+### 3.2 Converter data para formato Date
+
+A coluna `data_acidente` veio como texto. Usamos `mdy()` do pacote
+`lubridate` para converter, pois o formato original é mês/dia/ano
+(padrão americano).
+
+```{r}
+dados <- dados %>%
+  mutate(data_acidente = mdy(data_acidente))
+
+# Verificar a conversão
+class(dados$data_acidente)
+head(dados$data_acidente, 10)
+```
+
+### 3.3 Criar variáveis derivadas
+
+Extraímos informações úteis da data e hora para usar como variáveis
+explicativas no modelo.
+
+```{r}
+dados <- dados %>%
+  mutate(
+    ano = year(data_acidente),
+    mes = month(data_acidente),
+    dia_semana = wday(data_acidente, label = TRUE),
+    hora = hour(hora_acidente)
+  )
+
+head(dados)
+```
+
+### 3.4 Criar período do dia
+
+Categorizamos a hora em faixas que fazem sentido para análise de
+trânsito.
+
+```{r}
+dados <- dados %>%
+  mutate(
+    periodo = case_when(
+      hora >= 6  & hora < 12 ~ "Manhã",
+      hora >= 12 & hora < 18 ~ "Tarde",
+      hora >= 18 & hora < 22 ~ "Noite",
+      TRUE                   ~ "Madrugada"
+    )
+  )
+
+table(dados$periodo)
+```
+
+### 3.5 Limpeza de dados
+
+Removemos linhas com NAs na variável resposta e no bairro, além de
+registros com fator contribuinte "Unspecified" que não agregam
+informação.
+
+```{r}
+dados_limpos <- dados %>%
+  filter(
+    !is.na(feridos),
+    !is.na(bairro),
+    fator_veiculo1 != "Unspecified"
+  )
+
+cat("Antes:", nrow(dados), "linhas\n")
+cat("Depois:", nrow(dados_limpos), "linhas\n")
+cat("Removidas:", nrow(dados) - nrow(dados_limpos), "linhas\n")
+```
+
+### 3.6 Selecionar colunas relevantes
+
+Mantemos apenas as colunas que serão usadas na análise, tornando o
+dataset mais leve e organizado.
+
+```{r}
+dados_limpos <- dados_limpos %>%
+  dplyr::select(
+    data_acidente, hora_acidente, bairro, feridos, mortos,
+    fator_veiculo1, tipo_veiculo1, ano, mes, dia_semana, hora,
+    periodo
+  )
+
+str(dados_limpos)
+```
+
+### 3.7 Tratar NAs restantes
+
+```{r}
+# mortos: apenas 6 NAs
+# tipo_veiculo1: 6499 NAs
+
+dados_limpos <- dados_limpos %>%
+  filter(!is.na(mortos)) %>%
+  mutate(tipo_veiculo1 = ifelse(is.na(tipo_veiculo1), "Desconhecido", tipo_veiculo1))
+
+# Conferir que não restam NAs
+colSums(is.na(dados_limpos))
+cat("Base final:", nrow(dados_limpos), "linhas x", ncol(dados_limpos), "colunas\n")
+```
+
+## 4. Análise Descritiva
+
+### 4.1 Variável resposta: feridos
+
+```{r}
+summary(dados_limpos$feridos)
+
+cat("Média:", mean(dados_limpos$feridos), "\n")
+cat("Variância:", var(dados_limpos$feridos), "\n")
+```
+
+A média (0.34) e a variância (0.51) da variável resposta já fornecem um
+indício de **superdispersão** (variância \> média), o que será testado
+formalmente na etapa de validação de pressupostos.
+
+### 4.2 Distribuição da variável resposta
+
+```{r}
+table(dados_limpos$feridos)
+```
+
+A grande maioria das colisões não gera feridos, com queda na frequência
+conforme o número de feridos aumenta.
+
+```{r}
+ggplot(dados_limpos %>% filter(feridos <= 5), aes(x = feridos)) +
+  geom_bar(fill = "steelblue") +
+  scale_y_continuous(labels = number_format(big.mark = ".")) +
+  labs(
+    title = "Distribuição do Número de Feridos por Colisão",
+    x = "Número de Feridos",
+    y = "Frequência"
+  ) +
+  theme_minimal()
+```
+
+### 4.3 Variáveis categóricas
+
+```{r}
+# Frequência por bairro
+table(dados_limpos$bairro)
+
+# Frequência por período
+table(dados_limpos$periodo)
+
+# Top 10 fatores contribuintes
+sort(table(dados_limpos$fator_veiculo1), decreasing = TRUE)[1:10]
+
+# Top 10 tipos de veículo
+sort(table(dados_limpos$tipo_veiculo1), decreasing = TRUE)[1:10]
+```
+
+### 4.4 Gráficos descritivos
+
+```{r}
+# Média de feridos por bairro
+ggplot(dados_limpos, aes(x = bairro, y = feridos)) +
+  stat_summary(fun = mean, geom = "bar", fill = "steelblue") +
+  labs(
+    title = "Média de Feridos por Bairro",
+    x = "Bairro",
+    y = "Média de Feridos"
+  ) +
+  theme_minimal()
+```
+
+Bronx e Brooklyn apresentam as maiores médias de feridos por colisão
+(\~0.40), enquanto Manhattan é o mais baixo (\~0.25).
+
+```{r}
+# Média de feridos por período do dia
+ggplot(dados_limpos, aes(x = periodo, y = feridos)) +
+  stat_summary(fun = mean, geom = "bar", fill = "coral") +
+  labs(
+    title = "Média de Feridos por Período do Dia",
+    x = "Período",
+    y = "Média de Feridos"
+  ) +
+  theme_minimal()
+```
+
+Noite e Madrugada têm médias mais altas que Manhã e Tarde. Embora a
+Tarde tenha mais acidentes em volume, quando acontecem à noite/madrugada
+são mais graves (menor visibilidade, possível álcool, velocidades
+maiores). **Mais acidentes ≠ mais feridos por acidente.**
+
+## 5. Análise de Correlação
+
+### 5.1 Correlação entre variáveis numéricas
+
+```{r}
+cor(dados_limpos[, c("feridos", "mortos", "hora")])
+```
+
+As correlações entre as variáveis numéricas são praticamente nulas (0.02
+entre feridos e mortos, -0.01 entre mortos e hora). Isso é positivo,
+pois indica **ausência de multicolinearidade** entre as variáveis
+numéricas.
+
+## 6. Preparação para o Modelo
+
+### 6.1 Converter variáveis para factor e agrupar categorias com muitos níveis
+
+As variáveis `fator_veiculo1` (60 níveis) e `tipo_veiculo1` (1236
+níveis) possuem categorias demais para o modelo. Mantemos as 5 mais
+frequentes e agrupamos o restante como "Outros".
+
+```{r}
+# Reconstruir dados_modelo do zero
+dados_modelo <- dados_limpos %>%
+  mutate(
+    bairro     = as.factor(bairro),
+    periodo    = as.factor(periodo),
+    dia_semana = as.factor(dia_semana)
+  )
+
+# --- Tipos de veículo ---
+dados_modelo <- dados_modelo %>%
+  mutate(tipo_veiculo1 = case_when(
+    tipo_veiculo1 %in% c("Sedan", "4 dr sedan") ~ "Sedan",
+    tipo_veiculo1 %in% c("Station Wagon/Sport Utility Vehicle", 
+                          "SPORT UTILITY / STATION WAGON") ~ "SUV",
+    tipo_veiculo1 == "PASSENGER VEHICLE" ~ "Veículo de Passageiro",
+    tipo_veiculo1 %in% c("Taxi", "TAXI") ~ "Táxi",
+    tipo_veiculo1 %in% c("Pick-up Truck", "PICK-UP TRUCK") ~ "Caminhonete",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(tipo_veiculo1))
+
+# --- Fatores contribuintes ---
+dados_modelo <- dados_modelo %>%
+  mutate(fator_veiculo1 = case_when(
+    fator_veiculo1 == "Driver Inattention/Distraction" ~ "Desatenção do Motorista",
+    fator_veiculo1 == "Failure to Yield Right-of-Way" ~ "Não Cedeu Preferência",
+    fator_veiculo1 == "Following Too Closely" ~ "Seguia Muito Próximo",
+    fator_veiculo1 == "Backing Unsafely" ~ "Marcha Ré Insegura",
+    TRUE                                               ~ NA_character_
+  )) %>%
+  filter(!is.na(fator_veiculo1))
+
+# --- Bairros ---
+dados_modelo <- dados_modelo %>%
+  mutate(bairro = case_when(
+    bairro == "BRONX" ~ "Bronx",
+    bairro == "BROOKLYN" ~ "Brooklyn",
+    bairro == "MANHATTAN" ~ "Manhattan",
+    bairro == "QUEENS" ~ "Queens",
+    bairro == "STATEN ISLAND" ~ "Staten Island"
+  ))
+
+# --- Converter para factor ---
+dados_modelo <- dados_modelo %>%
+  mutate(
+    bairro = as.factor(bairro),
+    fator_veiculo1 = as.factor(fator_veiculo1),
+    tipo_veiculo1 = as.factor(tipo_veiculo1)
+  )
+
+# --- Conferir ---
+cat("Linhas:", nrow(dados_modelo), "\n\n")
+table(dados_modelo$bairro)
+table(dados_modelo$fator_veiculo1)
+table(dados_modelo$tipo_veiculo1)
+```
+
+```{r}
+# --- Gráfico 1: Bairro ---
+ggplot(dados_modelo, aes(x = reorder(bairro, bairro, length))) +
+  geom_bar(fill = "steelblue") +
+  scale_y_continuous(labels = number_format(big.mark = ".")) +
+  coord_flip() +
+  labs(title = "Quantidade de Colisões por Bairro",
+       x = "Bairro", y = "Frequência") +
+  theme_minimal()
+
+# --- Gráfico 2: Período do Dia ---
+ggplot(dados_modelo, aes(x = reorder(periodo, periodo, length))) +
+  geom_bar(fill = "coral") +
+  scale_y_continuous(labels = number_format(big.mark = ".")) +
+  coord_flip() +
+  labs(title = "Quantidade de Colisões por Período do Dia",
+       x = "Período", y = "Frequência") +
+  theme_minimal()
+
+# --- Gráfico 3: Fator Contribuinte ---
+ggplot(dados_modelo, aes(x = reorder(fator_veiculo1, fator_veiculo1, length))) +
+  geom_bar(fill = "darkgreen") +
+  scale_y_continuous(labels = number_format(big.mark = ".")) +
+  coord_flip() +
+  labs(title = "Quantidade de Colisões por Fator Contribuinte",
+       x = "Fator Contribuinte", y = "Frequência") +
+  theme_minimal()
+
+# --- Gráfico 4: Tipo de Veículo ---
+ggplot(dados_modelo, aes(x = reorder(tipo_veiculo1, tipo_veiculo1, length))) +
+  geom_bar(fill = "darkorange") +
+  scale_y_continuous(labels = number_format(big.mark = ".")) +
+  coord_flip() +
+  labs(title = "Quantidade de Colisões por Tipo de Veículo",
+       x = "Tipo de Veículo", y = "Frequência") +
+  theme_minimal()
+```
+
+## 7. Ajuste do Modelo Poisson
+
+```{r}
+modelo_poisson <- glm(feridos ~ bairro + periodo + dia_semana +
+                        fator_veiculo1 + tipo_veiculo1,
+                      family = poisson(link = "log"),
+                      data = dados_modelo)
+
+summary(modelo_poisson)
+```
+
+## 8. Validação de Pressupostos
+
+### 8.1 Razão Deviance / Graus de Liberdade
+
+```{r}
+razao <- modelo_poisson$deviance / modelo_poisson$df.residual
+cat("Deviance / GL:", razao, "\n")
+```
+
+A razão Deviance/GL = 0.97, valor próximo de 1, o que indica um bom
+ajuste preliminar. Porém, em bases de dados grandes (\~981 mil linhas),
+esse indicador sozinho não é conclusivo.
+
+### 8.2 Teste de Equidispersão
+
+-   H0: Existe equidispersão (Poisson é adequado)
+-   H1: Superdispersão e/ou subdispersão
+-   Aceita H0 quando p-valor \> 0.05
+
+```{r}
+dispersiontest(modelo_poisson, alternative = "two.sided")
+```
+
+O teste retornou p-valor \< 0.05, portanto **rejeitamos H0**. Existe
+**superdispersão** nos dados, com dispersão estimada de 1.45 — ou seja,
+a variância é 45% maior do que o modelo Poisson espera. **Conclusão:** o
+modelo Poisson não é adequado. Precisamos ajustar um modelo **Binomial
+Negativo**.
+
+### 8.3 Teste Qui-Quadrado de Pearson
+
+-   H0: O modelo é adequado
+-   H1: O modelo não é adequado
+-   Aceita H0 quando p-valor \> 0.05
+
+```{r}
+pchisq(sum(modelo_poisson$residuals^2),
+       df = modelo_poisson$df.residual,
+       lower.tail = FALSE)
+```
+
+O p-valor ≈ 0, portanto **rejeitamos H0**. Isso reforça que o modelo
+Poisson não se ajusta adequadamente aos dados.
+
+### 8.4 Análise Gráfica dos Resíduos
+
+```{r}
+par(mfrow = c(2, 2))
+plot(modelo_poisson)
+```
+
+-   **Residuals vs Fitted:** presença de pontos extremos (outliers).
+
+-   **Q-Q plot:** forte desvio da linha teórica — porém, normalidade dos
+    resíduos **não é pressuposto do GLM**, então desconsideramos esse
+    gráfico.
+
+-   **Scale-Location**:
+
+-   **Residuals vs Leverage:** algumas observações são potencialmente
+    influentes (alta alavancagem).
+
+## 9. Ajuste do Modelo Binomial Negativo
+
+Como o teste de equidispersão rejeitou a hipótese nula, ajustamos um
+modelo Binomial Negativo, que é a extensão natural do Poisson para dados
+com superdispersão.
+
+```{r}
+modelo_bn <- glm.nb(feridos ~ bairro + periodo + dia_semana +
+                       fator_veiculo1 + tipo_veiculo1,
+                     data = dados_modelo)
+
+summary(modelo_bn)
+```
+
+### 9.1 Comparação entre modelos
+
+```{r}
+cat("Deviance / GL (Binomial Negativa):", modelo_bn$deviance / modelo_bn$df.residual, "\n")
+cat("AIC Poisson:", AIC(modelo_poisson), "\n")
+cat("AIC Binomial Negativa:", AIC(modelo_bn), "\n")
+```
+
+O AIC da Binomial Negativa (1.468.280) é **menor** que o do Poisson
+(1.504.413), confirmando que a **Binomial Negativa é o modelo mais
+adequado** para esses dados. A razão Deviance/GL = 0.73, próxima de 1,
+indicando bom ajuste.
+
+O parâmetro Theta = 1.20 é o parâmetro de dispersão da Binomial
+Negativa, sendo que quanto menor o Theta, maior a superdispersão.
+
+## 10. Interpretação do Modelo Final
+
+### 10.1 Tabela de IRR (Incidence Rate Ratio)
+
+O IRR (Taxa de Incidência Relativa) indica quantas vezes o número
+esperado de feridos muda em relação à categoria de referência. É
+calculado como exp(β).
+
+-   **IRR \> 1:** aumenta o número esperado de feridos
+-   **IRR \< 1:** diminui o número esperado de feridos
+-   **IRR = 1:** sem efeito
+
+```{r}
+tabela_irr <- cbind(
+  exp(coef(modelo_bn)),
+  exp(summary(modelo_bn)$coeff[,1] - (1.96 * summary(modelo_bn)$coeff[,2])),
+  exp(summary(modelo_bn)$coeff[,1] + (1.96 * summary(modelo_bn)$coeff[,2]))
+)
+colnames(tabela_irr) <- c("IRR", "L.I (2.5%)", "L.S (97.5%)")
+
+tabela_irr
+```
+
+### 10.2 Interpretação dos coeficientes
+
+#### Bairro (referência: BRONX)
+
+Todos os bairros apresentam IRR \< 1, ou seja, têm menos feridos por
+colisão que o Bronx. O destaque é **Manhattan (IRR = 0.61)**: colisões
+em Manhattan geram cerca de **39% menos feridos** do que no Bronx.
+
+#### Período do dia (referência: Madrugada)
+
+-   **Noite (IRR = 1.02):** ligeiramente mais feridos que a Madrugada.
+-   **Manhã (IRR = 0.78):** cerca de **22% menos feridos** que a
+    Madrugada.
+-   **Tarde (IRR = 0.83):** cerca de **17% menos feridos** que a
+    Madrugada.
+
+A Madrugada e a Noite são os períodos mais perigosos em termos de
+gravidade, possivelmente por menor visibilidade, velocidades maiores e
+influência de álcool.
+
+#### Fator contribuinte (referência: Marcha Ré Insegura)
+
+-   **Não Cedeu Preferência (IRR = 4.24):** gera **4,24 vezes mais
+    feridos** que "Marcha Ré Insegura".
+-   **Desatenção do Motorista (IRR = 2.61):** gera **2,6 vezes mais
+    feridos**.
+-   **Seguia Muito Próximo (IRR = 2.61):** resultado semelhante à
+    desatenção.
+
+#### Tipo de veículo (referência: Outros)
+
+-   **Sedan (IRR = 1.01):** sem diferença significativa (p = 0.23).
+-   **Veículo de Passageiro (IRR = 0.75):** **25% menos feridos**.
+-   **SUV (IRR = 0.74):** **26% menos feridos**, possivelmente por serem
+    veículos maiores que oferecem mais proteção aos ocupantes.
+
+## 11. Conclusão
+
+O projeto demonstrou a aplicação de Modelos Lineares Generalizados (GLM)
+para dados de contagem utilizando a base de colisões de veículos de NYC.
+
+O modelo de **Poisson** foi inicialmente ajustado, porém o teste de
+equidispersão revelou **superdispersão** nos dados (dispersão = 1.45),
+violando o pressuposto fundamental do Poisson.
+
+O modelo de **Binomial Negativa** foi então ajustado como alternativa,
+apresentando AIC menor (1.468.280 vs 1.504.413) e melhor adequação aos
+dados.
+
+Os principais achados foram:
+
+-   **Manhattan** é o bairro com menor gravidade de colisões (39% menos
+    feridos que o Bronx).
+-   **Madrugada e Noite** são os períodos mais perigosos.
+-   **Não Cedeu Preferência** é o fator contribuinte mais grave, gerando
+    4,24 vezes mais feridos.
+-   **SUVs e veículos de passageiro** estão associados a menos feridos
+    por colisão.

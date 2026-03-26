@@ -1,0 +1,274 @@
+---
+title: "Exemplo Regressão Logística"
+output: html_notebook
+---
+
+# Regressão binária
+
+**Carregando a base de dados**
+
+O banco de dados do pacote aplore3 e é chamado lowbwt. No conjunto temos 11 variáveis com informações referentes a 189 partos.
+
+```{r}
+#install.packages('aplore3')
+#install.packages('ResourceSelection')
+library(aplore3)
+library(ResourceSelection)
+library(stats)
+data(lowbwt)
+lowbwt
+```
+
+-   ID: Código de identificação
+
+-   Low: Baixo peso ao nascer (1: \>= 2.500, 2: \< 2.500 g)
+
+-   Age: Idade da mãe (anos)
+
+-   Lwt: Peso da mãe na última menstruação (Libras)
+
+-   Race: Raça (1: Branca, 2: Preta, 3: Outra)
+
+-   Smoke: Tabagismo durante a gravidez (1: Não, 2: Sim)
+
+-   Plt: Histórico de trabalho de parto prematuro (1: Nenhum, 2: Um, 3: Dois, etc)
+
+-   Ht: Histórico de hipertensão (1: Não, 2: Sim)
+
+-   Ui: Presença de irritabilidade uterina (1: Não, 2: Sim)
+
+-   ftv: Número de consultas médicas durante o primeiro trimestre (1: nenhuma, 2: uma, 3: duas, etc.)
+
+-   bwt: Peso ao nascer registrado (gramas)
+
+# Análise Descritiva
+
+Para a regressão logística iremos utilizar as 4 variáveis:
+
+**low:** Indicador de peso baixo ao nascer (1: \> = 2500g, 2: \< 2500g).
+
+**age:** Idade da mãe em anos.
+
+**lwt:** Peso da mãe no último período menstrual em libras.
+
+**smoke:** Indicador de fumo durante a gravidez (1: Não, 2: Sim).
+
+Sendo low a variável resposta, age e lwt covariáveis preditoras numéricas e smoke uma covariável preditora categórica (fator).
+
+Para realizar a anlise decritiva iremos iniciar realizando boxplots das idades das mães pelo peso do bebê.
+
+```{r}
+library(ggplot2)
+theme_set(theme_bw())
+
+ggplot(data = lowbwt, aes(x = low, y = age)) + 
+  geom_boxplot() + 
+  labs(x = "Peso do bebê", y = "Idade")
+```
+
+É possível perceber que não há uma diferença significativa entre os dois grupos. Ou seja, provavelmente a idade da mãe não deve ser significativa no modelo.
+
+Em um segundo boxplot, temos o peso da mãe e o peso do bebe ao nascer.
+
+```{r}
+ggplot(data = lowbwt, aes(x = low, y = lwt)) + 
+  geom_boxplot() +    
+  labs(x = "Peso do bebê", y = "Peso da mãe (libras)")
+```
+
+Agora iremos analisar se a mãe fumou pelo peso do bebê.
+
+```{r}
+table(lowbwt$smoke, lowbwt$low)
+```
+
+**Tranformando todas as variáveis em Dummies.**
+
+Obs.: É importante verificar se as variáveis fatores estão realmente como fatores.
+
+```{r}
+class(lowbwt$low)
+```
+
+```{r}
+class(lowbwt$smoke)
+```
+
+```{r}
+levels(lowbwt$low) = c(0, 1)
+levels(lowbwt$smoke) = c(0, 1)
+```
+
+## Modelagem
+
+Queremos estimar a probabilidade de um bebê ter um peso menor que 2500 g ao nascer, a partir da idade da mãe, do peso dela no último período menstrual e se ela fumou durante a gravidez.
+
+O glm usando o argumento family = binomial, por default usa a função de ligação logito.
+
+```{r}
+ajuste1 <- glm(low ~ age, family = binomial, data = lowbwt)
+```
+
+Resumo das estatísticas do modelo
+
+```{r}
+summary(ajuste1)
+```
+
+Considerando um nível de 5% de significância, a idade da mãe não influencia no modelo, já que seu p-valor é igual a 0, 105 para testar a hipótese de que o respectivo parâmetro é igual a zero, usando a estatística de Wald.
+
+Vamos Repetir o processo com o peso da mãe.
+
+```{r}
+ajuste2 <- glm(low ~ lwt, family = binomial, data = lowbwt)
+summary(ajuste2)
+```
+
+Considerando 5% de significância, a estatística Wald mostra que o peso da mãe é significativo para o modelo (p=0.0227).
+
+O terceiro ajuste usa a variável indicadora de fumo da mãe durante o parto.
+
+```{r}
+ajuste3 <- glm(low ~ smoke, family = binomial, data = lowbwt)
+summary(ajuste3)
+```
+
+As mães fumantes apresentam uma probabilidade de ter um filho mais leve maior que as não fumantes (p=0.0276).
+
+realizar um ajuste com as duas variáveis que foram significativas
+
+```{r}
+ajuste4 <- glm(low ~ lwt + smoke, family = binomial, data = lowbwt)
+summary(ajuste4)
+```
+
+Vamos utilizar a tabela ANOVA com testes da máxima verossimilhança para verificar a significância do modelo completo.
+
+```{r}
+anova(ajuste4, test = "Chisq")
+```
+
+```{r}
+anova(ajuste3, ajuste4, test = "Chisq")
+```
+
+Considerando ainda um nível de 5% de significância, o modelo com as variáveis lwt e smoke mostrou-se significativo.
+
+## Análise de Resíduos
+
+Análise do resíduo por Pearson.
+
+1º : gerar o gráfico de resíduos e verificar se tem valores acima de 2.
+
+```{r}
+resp <- data.frame(indice = 1:nrow(lowbwt),
+                   residuos = residuals(ajuste4, type = "deviance"))
+
+ggplot(resp, aes(x = sample(indice), y = residuos)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  labs(x = "Índice", y = "Resíduos")
+```
+
+Como não temos valores que passam de 2 ou -2, no geral, os resíduos estão bem comportados.
+
+```{r}
+library(statmod)
+residuos <- qresid(ajuste4) #residuos quantilicos 
+ajustados <- predict(ajuste4) #valores ajustados 
+
+shapiro.test(residuos)
+```
+
+## Testes de adequação do modelo
+
+### 1. Pearson Chi-Square Test
+
+**Hipótese Testada:**
+
+-   $H_0$: O modelo ajusta bem os dados.
+
+-   $H_a$: O modelo não ajusta bem os dados.
+
+**Condição de Aceitação/Rejeição:**
+
+-   Calcula-se a estatística do teste qui-quadrado de Pearson, que segue uma distribuição qui-quadrado com $n - p$ graus de liberdade.
+
+-   **Aceitação de** $H_0$: Se o valor $p$ é maior que $\alpha$, aceitamos $H_0$ e concluímos que o modelo ajusta bem os dados.
+
+-   **Rejeição de** $H_0$: Se o valor $p$ é menor que $\alpha$, rejeitamos $H_0$ e concluímos que o modelo não ajusta bem os dados.
+
+```{r}
+# Pearson Chi-Square Test
+pearson_residuals <- residuals(ajuste4, type = "pearson")
+pearson_chi2 <- sum(pearson_residuals^2)
+pearson_p_value <- 1 - pchisq(pearson_chi2, df.residual(ajuste4))
+cat("Pearson Chi-Square Test: Chi2 =", pearson_chi2, "p-value =", pearson_p_value, "\n")
+```
+
+### 2. Deviance Residuals
+
+**Hipótese Testada:**
+
+-   $H_0$: O modelo ajusta bem os dados.
+
+-   $H_a$: O modelo não ajusta bem os dados.
+
+**Condição de Aceitação/Rejeição:**
+
+-   A deviance total é comparada com uma distribuição qui-quadrado com $n - p$ graus de liberdade, onde $n$ é o número de observações e $p$ é o número de parâmetros no modelo.
+
+-   **Aceitação de** $H_0$: Se o valor $p$ calculado a partir da deviance é maior que $\alpha$, aceitamos $H_0$ e concluímos que o modelo ajusta bem os dados.
+
+-   **Rejeição de** $H_0$: Se o valor $p$ é menor que $\alpha$, rejeitamos $H_0$ e concluímos que o modelo não ajusta bem os dados.
+
+```{r}
+# Deviance Residuals
+deviance_residuals <- residuals(ajuste4, type = "deviance")
+deviance <- sum(deviance_residuals^2)
+deviance_p_value <- 1 - pchisq(deviance, df.residual(ajuste4))
+cat("Deviance:", deviance, "p-value:", deviance_p_value, "\n")
+```
+
+### 3. ROC Curve and AUC
+
+**Hipótese Testada:** Avalia a capacidade do modelo de discriminar entre as classes.
+
+**Condição de Aceitação/Rejeição:** - **Curva ROC**: Traça a taxa de verdadeiros positivos (sensibilidade) contra a taxa de falsos positivos (1 - especificidade) para vários limiares de classificação.
+
+**AUC (Área Sob a Curva)**: Um valor próximo de 1 indica excelente discriminação, enquanto um valor próximo de 0.5 indica discriminação aleatória. -
+
+**Avaliação do Modelo**: Um modelo com AUC maior é considerado melhor em discriminar entre as classes.
+
+```{r}
+# ROC Curve
+library(pROC)
+y <- as.numeric(lowbwt$low)
+yhat <- as.numeric(ajuste4$fitted.values)
+
+
+roc_obj <- roc(y, yhat)
+plot(roc_obj, main = "ROC Curve", col = "blue")
+auc(roc_obj)
+```
+
+## Predição
+
+Para a matriz de confusão é necessário usar a função predict e utilizar um critério de separação. Nesse caso, será utilizado 0.3 como critério, ou seja, se a probabilidade ajustada for maior que 0.3, será considerado que tal mãe teve um filho com menor peso, caso contrário, será considerado que tal mãe teve um filho com maior peso.
+
+```{r}
+predicao = predict(ajuste4, type = "response")
+table(lowbwt$low, predicao>0.5)
+```
+
+## Interpretação dos Resultados
+
+```{r}
+exp(cbind(OR = coef(ajuste4), confint(ajuste4)))
+```
+
+```{r}
+summary(ajuste4)
+```
+
+A gravida fumar aumenta em 96% a chance do filho ter um peso menor que 2500.

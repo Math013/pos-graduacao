@@ -1,0 +1,581 @@
+---
+title: "Aula prática de Regressão Multinomial"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+  chunk_output_type: inline
+---
+
+**Carregando a base de dados:**
+
+```{r}
+install.packages('nnet')
+install.packages('ResourceSelection')
+install.packages('broom')
+install.packages('multcomp')
+install.packages('DescTools')
+install.packages('effects')
+library(tidyverse)
+library(nnet) # multinomial logistic regression
+library(ResourceSelection)
+library(broom)
+library(multcomp)
+library(readxl)
+library(car)  # para VIF
+library(DescTools)
+library(effects)
+
+dados <- read_excel("dados_exemplo_multinomial.xlsx")
+```
+
+**Analise de base de dados:**
+
+Base de dados de experimento de florescimento de diferentes variedades
+de planta.
+
+-   **Flowered:** contagem de quantas floresceram
+
+-   **number:** número de plantas para cada observação
+
+-   **dose:** Dose de hormonio de crescimento aplicada
+
+-   **variety:** Variedade , categorica com 5 niveis
+
+Observe que no contexto de uma variavel binomial flowered será o numero
+de sucesso number sera o numero de tentativas
+
+Esse modelo sera por tanto um modelo que utilizará a proporção.
+
+```{r}
+dados %>%
+  mutate (prop = flowered/number) -> dados
+
+dados
+
+```
+
+```{r}
+summary(dados)
+
+```
+
+Criando grafico em relação a proporçao e variedade
+
+```{r}
+ggplot(dados, aes(x = dose,y = prop, color = variety)) +
+  geom_point() +
+  labs(title = "Variedade das Plantas em Relação à Proporção de Flowered/Number",
+       x = "Dosagem de hormônio",
+       y = "Proporção",
+       color = "Variedade") +
+  theme_minimal()
+```
+
+Primeira coisa que devemos fazer quando temos um conjunto de dados como
+esse, onde temos o numero de tentativas, e contamos o numero de sucesso,
+nessas tentativas. Se o numero de tentativas nao é balanceado devemos
+fornecer a informação para o modelo.
+
+O que irá entrar como a nossa variável resposta no nosso modelo:
+
+```{r}
+yb <- cbind(sucesso = dados$flowered,
+            falha = dados$number - dados$flowered)
+
+yb
+```
+
+yb sera a variavel resposta da nossa binomial , e combina duas colunas,
+sucesso e fracasso.
+
+### Regressão Binomial (GLM)
+
+**Variável resposta**: proporção de plantas que floresceram
+(`flowered / number`)
+
+**Objetivo**: modelar a **probabilidade de florescimento** em função da
+`dose`, `variety` e sua interação.
+
+**Interpretação dos coeficientes**:
+
+-   Os coeficientes indicam o efeito de `dose`, `variety` e da interação
+    entre ambos na **chance** (odds) de florescimento.
+
+-   A razão de chances `exp(coef)` indica o quanto a chance de florescer
+    **aumenta ou diminui** com uma unidade de mudança na dose ou entre
+    variedades.
+
+**Exemplo de pergunta respondida**:
+
+> "Qual o efeito da dose sobre a chance de florescimento na variedade
+> B?"
+
+### Construção modelo 1
+
+(sucesso, falha) \~ dose + variedade + intereção (dose e variedade)
+
+```{r}
+modelo1 <- glm(yb ~ dose + variety + dose:variety, data = dados, family = binomial(link = "logit"))
+```
+
+```{r}
+summary(modelo1)
+```
+
+**Análise de resíduos - Deviance**
+
+```{r}
+resp <- data.frame(indice = 1:nrow(yb),
+                   residuos = residuals(modelo1, type = "deviance"))
+
+ggplot(resp, aes(x = sample(indice), y = residuos)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  labs(x = "Índice", y = "Resíduos")
+```
+
+Temos 2 valores que passam de 2 ou -2, no geral, os resíduos estão bem
+comportados e aleatórios.
+
+✅ Padrões comuns para resíduos padronizados Limite Interpretação Uso
+comum ±2 Observação é potencialmente atípica Exploratória, diagnóstico
+inicial ±3 Observação é provavelmente um outlier real Confirmação de
+influência relevante
+
+📌 Quando usar ±2 Em análises exploratórias iniciais de resíduos.
+
+Quando o número de observações é pequeno (n \< 100).
+
+Para sensibilidade maior, detectando pontos suspeitos cedo.
+
+Ex: análise de resíduos em GLM com poucos dados.
+
+📌 Quando usar ±3 Em análises mais conservadoras (evitar falsos
+positivos).
+
+Com amostras grandes (n \> 100--200), onde ±2 detecta muitos falsos
+outliers.
+
+Quando os valores extremos podem distorcer o modelo significativamente.
+
+Ex: regressão linear/multinomial aplicada a dados administrativos de
+grande volume.
+
+# Modelo 2
+
+```{r}
+modelo2 <- glm(yb ~dose + variety, data = dados, family = binomial)  
+```
+
+**Análise de resíduos - Deviance**
+
+```{r}
+resp <- data.frame(indice = 1:nrow(yb),
+                   residuos = residuals(modelo2, type = "deviance"))
+
+ggplot(resp, aes(x = sample(indice), y = residuos)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  labs(x = "Índice", y = "Resíduos")  
+```
+
+```{r}
+anova(modelo2, modelo1, test = "Chisq")
+#summary(modelo2)
+```
+
+Comparação de modelos devemos utilizar a deviance.
+
+O modelo 2 , é sem interação e teve o deviance nos desvios de 96.8 , e o
+modelo1 tem um deviance de 51.08.
+
+Logo o modelo 01 , que tem a interação das duas variaveis e explica
+melhor.
+
+**Coeficientes**
+
+```{r}
+coef(modelo1)
+```
+
+Razão de chance
+
+```{r}
+odds_binom <- exp(coef(modelo1))
+odds_binom 
+```
+
+Os valores em `odds_binom` representam a razão de chances para
+florescimento de acordo com o modelo1 :
+
+-   Valores \> 1 indicam aumento na chance de florescimento em relação à
+    referência (variedade A, dose = 0).
+
+-   Valores \< 1 indicam diminuição da chance.
+
+-   A interação `dose:varietyX` modifica o efeito da dose
+    especificamente para a variedade X, em relação à variedade de
+    referência.
+
+Valor do intercepto:
+
+A variedade A (referencia) - a chance da planta flourescer quando a dose
+é 0.
+
+Dose:
+
+Entao é a razão de chance , o quanto eu aumento de chance para a
+variedade A sobreviver quando aumento a dose em uma unidade.
+
+-   Variedade B : A variedade B tem 21 x mais chance de crescer que a
+    Variedade A
+
+-   Variedade C : A variedade C tem 3 x mais chance de crescer que a
+    Variedade A
+
+-   VariedadeD : A variedade D tem 23 x mais chance de crescer que a
+    Variedade A
+
+-   VariedadeE : A variedade E tem 0.48 menos chance de crescer que a
+    Variedade A
+
+-   dose:variedade B : Proporção de aumento na chance da variavel B
+    aumentar , quando temos o acrescimo de 1 undiade de dose em
+    comparação a variedade A
+
+Calculando a probabilidade
+
+```{r}
+predito <- predict(modelo1, type = "response")
+
+predito
+```
+
+```{r}
+bind_cols(dados,predito) -> dados1
+colnames(dados1)
+dados1 %>%
+  rename(predito = "...6" ) -> dados1
+dados1
+```
+
+## Testes de Validação (GLM)
+
+### 1. Teste de Hosmer-Lemeshow
+
+-   **Hipótese nula (H0)**: O modelo ajusta bem os dados (as
+    probabilidades previstas são calibradas).
+-   **Hipótese alternativa (H1)**: O modelo **não** se ajusta bem aos
+    dados.
+-   **Rejeitar H0 (p \< 0.05)** indica mau ajuste.
+
+```{r}
+# Validação do modelo1
+# Teste de Hosmer-Lemeshow
+hl <- hoslem.test(dados$flowered, fitted(modelo1), g = 10)
+hl
+```
+
+**Resultado**: X-squared = 27508, df = 8, p \< 2.2e-16. → Rejeita H0 →
+Ajuste ruim.
+
+### 2. Teste de Pearson
+
+-   Soma dos quadrados dos resíduos de Pearson.
+-   **H0**: Modelo ajusta bem (resíduos ≡ ruído aleatório)
+-   **H1**: Modelo não ajusta bem.
+-   Compara com distribuição Qui-quadrado com `df.residual()` graus de
+    liberdade.
+
+```{r}
+# Teste de Pearson e Deviance
+pearson <- sum(residuals(modelo1, type = "pearson")^2)
+df_pearson <- df.residual(modelo1)
+p_pearson <- pchisq(pearson, df_pearson, lower.tail = FALSE)
+cat("\nPearson Chi-squared: ", pearson, " df =", df_pearson, " p-value =", round(p_pearson, 5), "\n")
+```
+
+**Resultado**: 45.87 com 20 gl, p = 0.001 → Rejeita H0 → Ajuste
+inadequado.
+
+### 3. Deviance (log-verossimilhança)
+
+-   Mede a discrepância entre os dados observados e os preditos.
+-   Quanto menor, melhor o ajuste.
+-   Comparado com qui-quadrado para avaliar significância de termos.
+
+```{r}
+# Teste de Deviance
+
+deviance_val <- deviance(modelo1)
+df_deviance <- df.residual(modelo1)
+p_deviance <- pchisq(deviance_val, df_deviance, lower.tail = FALSE)
+
+
+cat("Deviance: ", deviance_val, " df =", df_deviance, " p-value =", round(p_deviance, 5), "\n")
+```
+
+**Resultado**: 51.08 com 20 gl, p = 0.0004 → Rejeita H0 → Indica mau
+ajuste.
+
+### 4. Outliers
+
+-   Resíduos padronizados \> 2 ou \< -2 são potenciais outliers.
+-   Devem ser investigados pois podem influenciar os coeficientes.
+
+```{r}
+# Outliers
+residuos_padronizados <- rstandard(modelo1)
+outliers <- which(abs(residuos_padronizados) > 2)
+outliers
+
+plot(1:length(residuos_padronizados), residuos_padronizados,
+     pch = 19, col = ifelse(1:length(residuos_padronizados) %in% outliers, "red", "black"),
+     main = "Resíduos Padronizados", ylab = "Resíduos", xlab = "Índice")
+abline(h = c(-2, 2), col = "blue", lty = 2)
+abline(h = 0, col = "gray")
+```
+
+Observações com resíduos padronizados fora de ±2:
+
+-   Índices: 6, 9, 10, 15, 18, 19, 20 → potenciais influenciadores.
+
+### 5. Multicolinearidade
+
+-   Verifica redundância entre variáveis explicativas com `vif()`.
+-   **VIF \> 5** indica colinearidade preocupante; **\> 10** é crítico.
+-   Colinearidade afeta estabilidade e interpretação dos coeficientes.
+
+```{r}
+# Multicolinearidade
+vif_model <- vif(modelo1)
+vif_model
+```
+
+Alerta para **alta colinearidade** em `dose`. Ideal revisar variáveis
+explicativas ou usar regularização.
+
+```{r}
+ggplot(dados, aes(x = dose, y = prop, color = variety)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE) +  # Adicionando a curva suavizada sem faixas de confiança
+  labs(title = "Variedade das Plantas em Relação à Proporção de Flowered/Number",
+       x = "Dosagem de hormônio",
+       y = "Proporção",
+       color = "Variedade") +
+  theme_minimal()
+```
+
+A linhas são os ajustes dos modelos na escala de probabilidade e
+proporção
+
+### Regressão Multinomial
+
+**Variável resposta**: `variety`, uma variável **categórica** com 5
+níveis.
+
+**Objetivo**: modelar a **probabilidade de ocorrência de cada
+variedade** com base em `dose`, `flowered` e `number`.
+
+**Interpretação dos coeficientes**:
+
+-   Cada nível de variedade (exceto a de referência) tem um conjunto de
+    coeficientes que descrevem como as variáveis preditoras alteram as
+    **odds relativas** de pertencer àquela variedade em relação à
+    referência.
+
+**Exemplo de pergunta respondida**:
+
+> "Dada uma dose e número de florescimento, qual a variedade mais
+> provável da planta?"
+
+### Regressão multinomial com variety como resposta
+
+```{r}
+modelo_variety <- multinom(variety ~ dose + prop, data = dados)
+```
+
+```{r}
+summary(modelo_variety)
+```
+
+Cada linha do `modelo_variety` representa a **log-odds** de estar
+naquela variedade (B, C, D, E) em relação à variedade de referência (A).
+
+\- Ex: `exp(coef)` para dose em B indica como a dose afeta a **chance
+relativa** de ser classificado como B vs. A.
+
+```{r}
+odds_variety <- exp(coef(modelo_variety))
+odds_variety
+```
+
+**Análise de resíduos - Deviance**
+
+```{r}
+residuos <- residuals(modelo_variety, type = "deviance")
+residuos_df <- as.data.frame(residuos)
+residuos_df <- pivot_longer(residuos_df, everything(), names_to = "classe", values_to = "residuo")
+ggplot(residuos_df, aes(x = classe, y = residuo)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Resíduos de Deviance por Submodelo (Classe vs Referência)",
+       x = "Classe", y = "Resíduo Deviance") +
+  geom_hline(yintercept = 0, color = "red", linetype = 2)
+
+```
+
+```{r}
+predicted_class <- predict(modelo_variety)
+dados$residuos <- rowSums(residuals(modelo_variety, type = "deviance")^2)
+
+ggplot(dados, aes(x = 1:nrow(dados), y = residuos, color = variety)) +
+  geom_point(size = 3) +
+  labs(title = "Resíduos de Deviance por Observação", x = "Índice", y = "Resíduo", color = "Classe Predita") +
+  theme_minimal()
+```
+
+**Coeficientes**
+
+```{r}
+coef(modelo_variety)
+```
+
+Razão de chance
+
+```{r}
+odds_binom <- exp(coef(modelo_variety))
+odds_binom 
+```
+
+Validação (GLM)
+
+```{r}
+dados$variety <- factor(dados$variety)
+```
+
+```{r}
+ajuste_submodelos <- lapply(levels(dados$variety)[-1], function(cl) {
+  bin_data <- dados %>%
+    mutate(resp = ifelse(variety == cl, 1, 0))
+  glm_fit <- glm(resp ~ dose + prop, family = binomial, data = bin_data)
+  list(
+    class = cl,
+    pearson = sum(residuals(glm_fit, type = "pearson")^2),
+    df_pearson = df.residual(glm_fit),
+    p_pearson = pchisq(sum(residuals(glm_fit, type = "pearson")^2), df.residual(glm_fit), lower.tail = FALSE),
+    deviance = deviance(glm_fit),
+    df_dev = df.residual(glm_fit),
+    p_dev = pchisq(deviance(glm_fit), df.residual(glm_fit), lower.tail = FALSE),
+    hl = tryCatch(hoslem.test(bin_data$resp, fitted(glm_fit), g = 10), error = function(e) NULL)
+    #,r2 = PseudoR2(glm_fit, which = "McFadden")
+  )
+})
+```
+
+### 1. Teste de Hosmer-Lemeshow
+
+-   **Hipótese nula (H0)**: O modelo ajusta bem os dados (as
+    probabilidades previstas são calibradas).
+-   **Hipótese alternativa (H1)**: O modelo **não** se ajusta bem aos
+    dados.
+-   **Rejeitar H0 (p \< 0.05)** indica mau ajuste.
+
+### 2. Teste de Pearson
+
+-   Soma dos quadrados dos resíduos de Pearson.
+-   **H0**: Modelo ajusta bem (resíduos ≡ ruído aleatório)
+-   **H1**: Modelo não ajusta bem.
+-   Compara com distribuição Qui-quadrado com `df.residual()` graus de
+    liberdade.
+
+### 3. Deviance (log-verossimilhança)
+
+-   Mede a discrepância entre os dados observados e os preditos.
+-   Quanto menor, melhor o ajuste.
+-   Comparado com qui-quadrado para avaliar significância de termos.
+
+```{r}
+for (res in ajuste_submodelos) {
+  cat("\nClasse:", res$class, "\n")
+  cat("Pearson X²:", round(res$pearson, 3), "df:", res$df_pearson, "p:", round(res$p_pearson, 5), "\n")
+  cat("Deviance:", round(res$deviance, 3), "df:", res$df_dev, "p:", round(res$p_dev, 5), "\n")
+  print(res$hl)
+  #cat("Pseudo R2 McFadden:", round(res$r2, 4), "\n")
+}
+```
+
+### 4. Outliers
+
+-   Resíduos padronizados \> 2 ou \< -2 são potenciais outliers.
+-   Devem ser investigados pois podem influenciar os coeficientes.
+
+```{r}
+# Outliers
+residuos_padronizados <- rstandard(modelo1)
+outliers <- which(abs(residuos_padronizados) > 2)
+outliers
+
+plot(1:length(residuos_padronizados), residuos_padronizados,
+     pch = 19, col = ifelse(1:length(residuos_padronizados) %in% outliers, "red", "black"),
+     main = "Resíduos Padronizados", ylab = "Resíduos", xlab = "Índice")
+abline(h = c(-2, 2), col = "blue", lty = 2)
+abline(h = 0, col = "gray")
+```
+
+Observações com resíduos padronizados fora de ±2:
+
+-   Índices: 6, 9, 10, 15, 18, 19, 20 → potenciais influenciadores.
+
+### Efeitos Marginais
+
+-   Permite entender o impacto de `dose` e `prop` sobre a probabilidade
+    de cada classe
+-   Visualizados com `effects::allEffects()`
+
+```{r}
+
+efeitos <- allEffects(modelo_variety)
+plot(efeitos)
+
+```
+
+```{r}
+sum_model <- summary(modelo_variety)
+print(sum_model) 
+cat("\nOdds Ratio (modelo_variety):\n") 
+print(odds_variety) 
+```
+
+### Interpretação dos odds
+
+-   Valores \> 1: aumentam a chance de pertencer àquela classe
+-   Valores \< 1: reduzem a chance relativa de classificação
+-   Interpretados para cada classe em relação à categoria de referência
+
+```{r}
+# Interpretação dos odds
+interpret_odds <- odds_variety
+cat("\nInterpretação das Razões de Chances:\n")
+for (classe in rownames(interpret_odds)) {
+  cat("\nClasse:", classe, "\n")
+  cat("Dose: Cada unidade adicional de dose aumenta /diminui a chance relativa de ser ", classe, " em ", round(interpret_odds[classe, "dose"], 2), " vezes comparado à referência.\n")
+  cat("Prop: Cada unidade adicional de proporção altera a chance relativa de ser ", classe, " em ", round(interpret_odds[classe, "prop"], 2), " vezes.\n")
+}
+```
+
+```{r}
+# Mudança de referência (exemplo)
+dados$variety <- relevel(dados$variety, ref = "C")
+modelo_variety_refC <- multinom(variety ~ dose + prop, data = dados)
+summary(modelo_variety_refC)
+```
+
+| Característica | `modelo1` (GLM Binomial) | `modelo_variety` (Multinomial) |
+|----|----|----|
+| Resposta | Proporção de sucesso ( `flowered / number`) | Categoria (`variety`) |
+| Tipo de inferência | Estima **probabilidade de florescimento** | Estima **probabilidade de ocorrência da variedade de plantas** |
+| Aplicação típica | Analisar efeito da dose no florescimento | Classificar a variedade com base nos efeitos observados |
+| Pergunta respondida | "Qual a chance de florescer dado X?" | "Qual variedade se espera dado Y?" |
+
+### 

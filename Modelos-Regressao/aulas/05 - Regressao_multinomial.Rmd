@@ -1,0 +1,206 @@
+---
+title: "Regressão Multinomial"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+**Carregando a base de dados:**
+
+```{r}
+library(tidyverse)
+#install.packages('ResourceSelection')
+library(ResourceSelection)
+library(stats)
+dados <- readxl::read_excel("C:/Users/Matheus/Desktop/Arquivos_PUC/Modelos de Regressão/Dados/dados_exemplo_multinomial.xlsx")
+dados
+```
+
+**Analise de base de dados:**
+
+Base de dados de experimento de florescimento de diferentes variedades
+de planta.
+
+-   **Flowered:** contagem de quantas floresceram
+
+-   **number:** numero de plantas para cada observação
+
+-   **dose:** Dose de hormonio de crescimento aplicada
+
+-   **variety:** Variedade , categorica com 5 niveis
+
+Observe que no contexto de uma variavel binomial flowered será o numero
+de sucesso number sera o numero de tentativas
+
+Esse modelo sera por tanto um modelo que utilizará a proporção.
+
+```{r}
+dados %>%
+  mutate (prop = flowered/number) -> dados
+
+dados
+
+```
+
+```{r}
+summary(dados)
+
+```
+
+Criando grafico em relação a proporçao e variedade
+
+```{r}
+ggplot(dados, aes(x = dose,y = prop, color = variety)) +
+  geom_point() +
+  labs(title = "Variedade das Plantas em Relação à Proporção de Flowered/Number",
+       x = "Dosagem de hormônio",
+       y = "Proporção",
+       color = "Variedade") +
+  theme_minimal()
+```
+
+Primeira coisa que devemos fazer quando temos um conjunto de dados como
+esse, onde temos o numero de tentativas, e contamos o numero de sucesso,
+nessas tentativas. Se o numero de tentativas nao é balanceado devemos
+fornecer a informação para o modelo.
+
+O que irá entrar como a nossa variável resposta no nosso modelo:
+
+```{r}
+yb <- cbind(sucesso = dados$flowered,
+            falha = dados$number - dados$flowered)
+
+
+knitr::kable(yb[1:10,])
+
+yb
+```
+
+yb sera a variavel resposta da nossa binomial , e combina duas colunas,
+sucesso e fracasso.
+
+### Construção modelo 1
+
+(sucesso, falha) \~dose + variedade + intereção (dose e variedade)
+
+```{r}
+modelo1 <- glm(yb ~ dose + variety + dose:variety, data = dados, family = binomial(link = "logit"))
+```
+
+```{r}
+summary(modelo1)
+```
+
+**Análise de resíduos - Deviance**
+
+```{r}
+resp <- data.frame(indice = 1:nrow(yb),
+                   residuos = residuals(modelo1, type = "deviance"))
+
+ggplot(resp, aes(x = sample(indice), y = residuos)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  labs(x = "Índice", y = "Resíduos")
+```
+
+Temos 2 valores que passam de 2 ou -2, no geral, os resíduos estão bem
+comportados e aleatórios.
+
+# Fazendo um segundo modelo
+
+```{r}
+modelo2 <- glm(yb ~dose + variety, data = dados, family = binomial)
+```
+
+**Análise de resíduos - Deviance**
+
+```{r}
+resp <- data.frame(indice = 1:nrow(yb),
+                   residuos = residuals(modelo2, type = "deviance"))
+
+ggplot(resp, aes(x = sample(indice), y = residuos)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  labs(x = "Índice", y = "Resíduos")
+```
+
+```{r}
+anova(modelo2, modelo1, test = "Chisq")
+```
+
+Comparação de modelos devemos utilizar a deviance.
+
+O modelo 2 , é sem interação e teve o deviance nos desvios de 96.8 , e o
+modelo1 tem um deviance de 51.08.
+
+Logo o modelo 01 , que tem a interação das duas variaveis e explica
+melhor.
+
+**Coeficientes**
+
+```{r}
+coef(modelo1)
+```
+
+Razão de chance
+
+```{r}
+exp(coef(modelo1))
+```
+
+Valor do intercepto:
+
+A variedade A (referencia) - a chance da planta flourescer quando a dose
+é 0.
+
+Dose:
+
+Entao é a razão de chance , o quanto eu aumento de chance para a
+variedade A sobreviver quando aumento a dose em uma unidade.
+
+VariedadeB : A variedade B tem 21 x mais chance de crescer que a
+Variedade A
+
+Variedadec : A variedade B tem 3 x mais chance de crescer que a
+Variedade A
+
+VariedadeD : A variedade B tem 23 x mais chance de crescer que a
+Variedade A
+
+VariedadeE : A variedade B tem 0.48 menos chance de crescer que a
+Variedade A
+
+dose:variedade B Proporção que eu tenho de aumento na chance da variavel
+B aumentar , quando temos o acrescimo de 1 undiade de dose em comparação
+a variedade A
+
+Calculando a probabilidade
+
+```{r}
+predito <- predict(modelo1, type = "response")
+
+predito
+```
+
+```{r}
+bind_cols(dados,predito) -> dados1
+colnames(dados1)
+dados1 %>%
+  rename(predito = "...6" ) -> dados1
+dados1
+```
+
+```{r}
+ggplot(dados, aes(x = dose, y = prop, color = variety)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE) +  # Adicionando a curva suavizada sem faixas de confiança
+  labs(title = "Variedade das Plantas em Relação à Proporção de Flowered/Number",
+       x = "Dosagem de hormônio",
+       y = "Proporção",
+       color = "Variedade") +
+  theme_minimal()
+```
+
+A linhas são os ajustes dos modelos na escala de probabilidade e
+proporção

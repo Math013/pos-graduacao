@@ -1,0 +1,462 @@
+---
+title: "Modelos Lineares Generalizados (GLMs) para Variáveis Contínuas Positivas - Exemplo de Turb"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+## Modelos Lineares Generalizados (GLMs) para Variáveis Contínuas Positivas - Exemplo de Turbinas
+
+Este material explora a aplicação de Modelos Lineares Generalizados (GLMs) em dados contínuos e positivos, usando um estudo de caso sobre o desempenho de turbinas de avião.
+
+### 1. Preparação e Exploração Inicial dos Dados
+
+**Objetivo:** Entender as características básicas dos dados antes de construir qualquer modelo.
+
+**Detalhes Teóricos:**
+
+-   **Dados Contínuos Positivos:** Variáveis como tempo, peso, altura, etc., que só assumem valores maiores que zero.
+    Isso é crucial porque muitas distribuições comuns (como a Normal) permitem valores negativos, o que não faz sentido para esses dados.
+
+-   **Variáveis Categóricas:** Variáveis que representam grupos ou categorias (e.g., tipos de turbina).
+    No R, elas são frequentemente representadas como `factor`.
+
+-   **Boxplot:** Uma ferramenta visual poderosa para comparar a distribuição (mediana, quartis, dispersão e outliers) de uma variável contínua entre diferentes grupos.
+
+-   **Média, Variância e Coeficiente de Variação (CV)**
+
+```{r}
+# Limpa todas as variáveis do ambiente de trabalho para garantir um novo começo.
+rm(list = ls(all= TRUE))
+
+# Define os tipos de turbina como um fator (variável categórica).
+# Serão 5 tipos de turbina, cada um com 10 observações.
+turb <- factor(rep(c("1","2","3","4","5"), times = (c(10,10,10,10,10))))
+
+# Define os tempos observados até a perda de velocidade (em milhões de ciclos).
+tempo <- c(3.03,5.53,5.6,9.3,9.92,12.51,12.95,15.21,16.04,16.84, # Turbina 1
+           3.19,4.26,4.47,4.53,4.67,4.69,5.78,6.79,9.37,12.75, # Turbina 2
+           3.46,5.22,5.69,6.54,9.16,9.4,10.19,10.71,12.58,13.41, # Turbina 3
+           5.88,6.74,6.9,6.98,7.21,8.14,8.59,9.8,12.28,25.46, # Turbina 4
+           6.43,9.97,10.39,13.55,14.45,14.72,16.81,18.39,20.84,21.51) # Turbina 5
+
+# Cria um data frame combinando as variáveis 'turb' e 'tempo'.
+dados <- data.frame(turb,tempo)
+
+
+```
+
+```{r}
+
+# Gera um boxplot do tempo em função do tipo de turbina.
+# Isso ajuda a visualizar diferenças nas medianas, dispersão e outliers entre os grupos.
+with(dados, boxplot(tempo ~ turb, xlab = "Tipo de Turbina", 
+                    ylab = "Tempo até perda de velocidade (em milhoes de ciclos)",
+                    main = "Boxplot do Tempo até Perda de Velocidade por Tipo de Turbina"))
+```
+
+```{r}
+# Calcula a média do 'tempo' para cada 'turbina'.
+medias <- with(dados, tapply(tempo,turb, mean)); medias
+
+# Calcula a variância do 'tempo' para cada 'turbina'.
+variancias <- with(dados, tapply(tempo,turb, var)); variancias
+
+# Calcula o Coeficiente de Variação (CV) para cada turbina.
+# CV = (Desvio Padrão / Média). Ajuda a comparar a variabilidade relativa.
+cvs <- sqrt(variancias)/medias; cvs
+```
+
+------------------------------------------------------------------------
+
+### 2. Modelo 1: Regressão Linear Clássica (OLS)
+
+**Objetivo:** Ajustar um modelo linear tradicional e verificar suas suposições para entender suas limitações.
+
+**Detalhes Teóricos:**
+
+\* **Modelo Linear Clássico (MLC) / Mínimos Quadrados Ordinários (OLS):** Assume que a média da variável resposta ($E[Y]$) é uma função linear das preditoras.
+
+\* **Suposições Chave do MLC:** 1.
+**Linearidade:** A relação é linear.
+
+2\.
+**Independência dos Erros:** Erros não correlacionados.
+
+3\.
+**Normalidade dos Erros:** Os erros ($\epsilon$) seguem uma distribuição Normal (o que implica que $Y$ é Normal para cada preditora).
+4.
+**Homocedasticidade:** A variância dos erros é constante ($\sigma^2$).
+\* **Gráficos de Diagnóstico (`plot.lm`):** \* **Resíduos vs. Ajustados:** Busca por padrões (como funil, curva) que indicam heterocedasticidade ou falta de linearidade.
+O ideal é uma nuvem de pontos aleatória em torno de zero.
+\* **Normal Q-Q:** Avalia a normalidade dos resíduos.
+Os pontos devem seguir aproximadamente uma linha reta.
+Desvios indicam não-normalidade.
+\* **Scale-Location:** Também verifica a homocedasticidade.
+A linha vermelha deve ser horizontal.
+\* **Teste de Shapiro-Wilk:** Testa formalmente a hipótese nula de normalidade dos resíduos.
+Um **p-valor baixo** (e.g., \< 0.05) leva à rejeição da normalidade.
+\* **AIC (Critério de Informação de Akaike):** Uma métrica para comparar a qualidade de modelos.
+**Menores valores de AIC indicam modelos preferíveis**, pois penalizam a complexidade do modelo em relação ao seu ajuste.
+
+```{r}
+# Ajusta um Modelo Linear Clássico usando a função lm().
+ajuste0 <- lm(tempo ~ turb, data = dados)
+
+# Exibe o resumo detalhado do modelo.
+summary(ajuste0)
+
+# Configura a janela gráfica para 2 linhas e 2 colunas para exibir os gráficos de diagnóstico.
+par(mfrow = c(2,2))
+# Gera os 4 gráficos de diagnóstico padrão para o objeto lm.
+# Estes gráficos nos ajudam a verificar as suposições de normalidade e homocedasticidade dos resíduos.
+plot(ajuste0,pch=19)
+
+# Realiza o teste de Shapiro-Wilk para testar a normalidade dos resíduos.
+# H0: Os resíduos são normalmente distribuídos.
+# Ha: Os resíduos NÃO são normalmente distribuídos.
+shapiro.test(ajuste0$residuals)
+
+# Calcula o AIC para o Modelo 1 (OLS).
+AIC(ajuste0)
+```
+
+------------------------------------------------------------------------
+
+### 3. Modelos Lineares Generalizados (GLMs)
+
+**Objetivo:** Explorar modelos mais flexíveis que não exigem normalidade ou homocedasticidade estrita dos erros, e que são mais adequados para dados contínuos positivos.
+
+**Detalhes Teóricos dos GLMs:** Os GLMs estendem o Modelo Linear Clássico, permitindo:
+
+1\.
+**Componente Aleatória (Distribuição):** A variável resposta pode seguir distribuições diferentes da Normal (e.g., Gamma, Normal Inversa, Poisson, Binomial), adequadas à natureza dos dados.
+
+2\.
+**Componente Sistemática (Preditor Linear):** A parte linear do modelo ($\eta = \beta_0 + \beta_1 X_1 + \dots + \beta_p X_p$).
+
+3\.
+**Função de Ligação (Link Function):** Conecta a média da variável resposta ($E[Y]$) ao preditor linear.
+Garante que a média esteja na escala correta da distribuição.
+
+-   **Ligação Identidade (**$\text{link}=\text{"identity"}$): $E[Y] = \eta$.
+    A média é diretamente modelada pelo preditor linear.
+    Pode levar a previsões negativas para variáveis positivas.
+
+-   **Ligação Logarítmica (**$\text{link}=\text{"log"}$): $\log(E[Y]) = \eta \implies E[Y] = e^{\eta}$.
+    A média é modelada no espaço logarítmico.
+    Garante previsões positivas e interpretação multiplicativa dos coeficientes (e.g., $e^\beta$ é o fator de mudança na média esperada).
+
+-   **Resíduos Quantílicos (`qresid` da biblioteca `statmod`):** São um tipo de resíduo padronizado para GLMs.
+    Se o modelo GLM estiver bem especificado, os resíduos quantílicos devem ser aproximadamente normalmente distribuídos e homocedásticos.
+    Isso os torna úteis para diagnósticos gráficos e testes de normalidade, similar aos resíduos em `lm`.
+
+------------------------------------------------------------------------
+
+#### 3.1. Modelo 2: GLM Gaussiano com Ligação Logarítmica
+
+**Detalhes Teóricos:**
+
+\* **Família Gaussiana:** Embora o MLC seja Gaussiano, o GLM com família Gaussiana permite funções de ligação diferentes da identidade.
+A variância ainda é considerada constante.
+
+\* **Ligação Logarítmica:** Modelamos $\log(E[\text{tempo}])$.
+Isso garante que as previsões de tempo sejam sempre positivas, o que é coerente com a natureza dos nossos dados.
+
+```{r}
+# Carregar a biblioteca 'statmod' para calcular resíduos quantílicos.
+library(statmod)
+
+# Ajusta um GLM com família Gaussiana e função de ligação "log" (logarítmica).
+# A variável resposta (tempo) é modelada na sua escala original, mas sua média esperada é ligada via log.
+ajuste_glm_gaussian_log <- glm(tempo ~ turb, family = gaussian(link = "log"), data = dados)
+
+# Exibe o resumo do modelo.
+summary(ajuste_glm_gaussian_log)
+
+```
+
+```{r}
+# Gera os gráficos de diagnóstico para o GLM (baseados em resíduos de Deviance).
+par(mfrow = c(2,2))
+plot(ajuste_glm_gaussian_log,pch=19)
+```
+
+```{r}
+# Calcula os resíduos quantílicos do modelo.
+residuos_quantilicos_gaussian_log <- qresid(ajuste_glm_gaussian_log)
+
+# Gerando o QQ-Plot dos resíduos quantílicos para avaliar a normalidade.
+# Se o modelo estiver bem especificado, estes resíduos devem ser aproximadamente normais.
+qqnorm(residuos_quantilicos_gaussian_log, pch = 19, 
+       main = "QQ-Plot Resíduos Quantílicos (GLM Gaussiano/Log Link)")
+qqline(residuos_quantilicos_gaussian_log, col = "red")
+```
+
+```{r}
+# Testando a normalidade dos resíduos quantílicos.
+shapiro.test(residuos_quantilicos_gaussian_log)
+
+```
+
+```{r}
+# Calcula o AIC para o GLM Gaussiano com ligação logarítmica.
+AIC(ajuste_glm_gaussian_log)
+```
+
+------------------------------------------------------------------------
+
+#### 3.2. Modelo 3: GLM Gamma com Ligação Identidade
+
+**Detalhes Teóricos:** \* **Família Gamma:** Adequada para variáveis contínuas e estritamente positivas.
+A principal característica é que a **variância é proporcional ao quadrado da média** ($\text{Var}(Y) = \phi \cdot \mu^2$), onde $\mu$ é a média e $\phi$ é o parâmetro de dispersão.
+Isso é útil para dados com heterocedasticidade.
+\* **Ligação Identidade:** $\text{E}[\text{tempo}] = \eta$.
+A média é modelada diretamente pela combinação linear das preditoras.
+Pode gerar previsões negativas se o preditor linear for muito baixo.
+
+```{r}
+# Ajusta um GLM com família Gamma e função de ligação "identity".
+ajuste1 <- glm(tempo ~turb, family = "Gamma"(link = "identity"), data = dados)
+
+# Exibe o resumo do modelo.
+summary(ajuste1)
+```
+
+```{r}
+# Analisa a Deviance do modelo, usando o teste F.
+# Isso testa a significância da variável 'turb' no modelo.
+anova(ajuste1, test = "F")
+```
+
+```{r}
+# Gera os gráficos de diagnóstico para o GLM Gamma (baseados em resíduos de Deviance).
+par(mfrow = c(2,2))
+plot(ajuste1,pch=19)
+```
+
+```{r}
+# Calcula os resíduos quantílicos para o GLM Gamma.
+residuos_quantilicos_gamma_id <- qresid(ajuste1)
+
+# Gerando o QQ-Plot dos resíduos quantílicos.
+qqnorm(residuos_quantilicos_gamma_id, pch = 19, 
+       main = "QQ-Plot Resíduos Quantílicos (GLM Gamma/Identity Link)")
+qqline(residuos_quantilicos_gamma_id, col = "red")
+```
+
+```{r}
+# Testando a normalidade dos resíduos quantílicos.
+shapiro.test(residuos_quantilicos_gamma_id)
+
+```
+
+```{r}
+
+# Calcula o AIC para o GLM Gamma com ligação identidade.
+AIC(ajuste1)
+```
+
+------------------------------------------------------------------------
+
+#### 3.3. Modelo 4: GLM Gamma com Ligação Logarítmica
+
+**Detalhes Teóricos:** \* **Família Gamma:** Mesmas características do Modelo 3.
+\* **Ligação Logarítmica:** $\log(\text{E}[\text{tempo}]) = \eta$.
+Esta é a **ligação canônica** para a família Gamma e é geralmente preferível para dados positivos, pois garante que as previsões da média sejam sempre positivas.
+
+```{r}
+# Ajusta um GLM com família Gamma e função de ligação "log" (logarítmica).
+ajuste_glm_gamma_log <- glm(tempo ~ turb, family = Gamma(link = "log"), data = dados)
+
+# Exibe o resumo do modelo.
+summary(ajuste_glm_gamma_log)
+
+# Gera os gráficos de diagnóstico.
+par(mfrow = c(2,2))
+plot(ajuste_glm_gamma_log,pch=19)
+
+# Calcula os resíduos quantílicos.
+residuos_quantilicos_gamma_log <- qresid(ajuste_glm_gamma_log)
+
+# Gerando o QQ-Plot dos resíduos quantílicos.
+qqnorm(residuos_quantilicos_gamma_log, pch = 19, 
+       main = "QQ-Plot Resíduos Quantílicos (GLM Gamma/Log Link)")
+qqline(residuos_quantilicos_gamma_log, col = "red")
+
+# Testando a normalidade dos resíduos quantílicos.
+shapiro.test(residuos_quantilicos_gamma_log)
+
+# Calcula o AIC.
+AIC(ajuste_glm_gamma_log)
+```
+
+------------------------------------------------------------------------
+
+### 4. Agrupamento de Turbinas e Reavaliação (Modelo 5)
+
+**Objetivo:** Simplificar o modelo agrupando turbinas com tempos de vida estatisticamente similares.
+
+**Detalhes Teóricos:**
+
+-   **Agrupamento por Coeficientes:** Se os coeficientes de certas categorias não são significativamente diferentes do nível de referência (ou entre si), podemos agrupá-las para criar um modelo mais parcimonioso e mais fácil de interpretar.
+
+-   **Comparação de Modelos Aninhados (`anova`):** A função `anova()` pode ser usada para comparar dois modelos, onde um é uma versão mais simples (aninhada) do outro.
+    Um **p-valor alto** (e.g., \> 0.05) sugere que o modelo mais simples é tão bom quanto o mais complexo, indicando que o agrupamento é aceitável.
+
+```{r}
+# Cria uma nova coluna 'turb2' no data frame 'dados'.
+dados$turb2 <- dados$turb
+
+# Renomeia os níveis de 'turb2' para agrupar as turbinas.
+# Turbinas 1, 3 e 4 são agrupadas como 'TG1' (Grupo 1).
+# Turbina 2 é 'T2'.
+# Turbina 5 é 'T5'.
+levels(dados$turb2) <- c('TG1','T2','TG1','TG1', 'T5')
+
+# Exibe as primeiras linhas do data frame com a nova coluna 'turb2'.
+head(dados)
+
+```
+
+```{r}
+# Ajusta um GLM com família Gamma e função de ligação "identity" usando a variável agrupada 'turb2'.
+ajuste2 <- glm(tempo ~turb2, family = "Gamma"(link = "identity"), data = dados)
+
+# Exibe o resumo do modelo agrupado.
+summary(ajuste2)
+
+```
+
+```{r}
+# Compara o modelo agrupado (ajuste2) com o modelo sem agrupamento (ajuste1) usando o teste F.
+# Isso verifica se o agrupamento causou uma perda significativa de ajuste.
+anova(ajuste2,ajuste1, test = "F")
+
+# Gera os gráficos de diagnóstico para o modelo agrupado.
+par(mfrow = c(2,2))
+plot(ajuste2,pch=19)
+
+
+```
+
+```{r}
+# Calcula os resíduos quantílicos do modelo agrupado.
+residuos_quantilicos_ajuste2 <- qresid(ajuste2)
+
+# Gerando o QQ-Plot dos resíduos quantílicos para o modelo agrupado.
+qqnorm(residuos_quantilicos_ajuste2, pch = 19, 
+       main = "QQ-Plot Resíduos Quantílicos (GLM Gamma/Identity Link - Agrupado)")
+qqline(residuos_quantilicos_ajuste2, col = "red")
+
+```
+
+```{r}
+# Testando a normalidade dos resíduos quantílicos do modelo agrupado.
+shapiro.test(residuos_quantilicos_ajuste2)
+
+# Calcula o AIC para o modelo agrupado.
+AIC(ajuste2)
+```
+
+------------------------------------------------------------------------
+
+### 5. Modelo 6: GLM Normal Inversa com Ligação Identidade
+
+**Objetivo:** Explorar outra família de distribuição adequada para dados contínuos positivos.
+
+**Detalhes Teóricos:**
+
+\* **Família Normal Inversa (`inverse.gaussian`):** Adequada para variáveis contínuas e estritamente positivas.
+Caracteriza-se por ter a **variância proporcional ao cubo da média** ($\text{Var}(Y) = \phi \cdot \mu^3$).
+É frequentemente usada para modelar tempos de vida e dados com assimetria à direita.
+\* **Ligação Identidade:** $\text{E}[\text{tempo}] = \eta$.
+A média é modelada diretamente.
+
+```{r}
+# Ajusta um GLM com família Inverse Gaussian e função de ligação "identity".
+ajuste3 <- glm(tempo ~turb2, family = inverse.gaussian(link = "identity"), data = dados)
+
+# Exibe o resumo do modelo.
+summary(ajuste3)
+
+```
+
+```{r}
+# Gera os gráficos de diagnóstico.
+par(mfrow = c(2,2))
+plot(ajuste3,pch=19)
+```
+
+```{r}
+# Calcula os resíduos quantílicos.
+residuos_quantilicos_ajuste3 <- qresid(ajuste3)
+
+# Gerando o QQ-Plot dos resíduos quantílicos.
+qqnorm(residuos_quantilicos_ajuste3, pch = 19, 
+       main = "QQ-Plot Resíduos Quantílicos (GLM Normal Inversa/Identity Link)")
+qqline(residuos_quantilicos_ajuste3, col = "red")
+```
+
+```{r}
+# Testando a normalidade dos resíduos quantílicos.
+shapiro.test(residuos_quantilicos_ajuste3)
+
+# Calcula o AIC.
+AIC(ajuste3)
+```
+
+------------------------------------------------------------------------
+
+### 6. Modelo 7: GLM Normal Inversa com Ligação Logarítmica
+
+**Objetivo:** Ajustar o modelo Normal Inversa com sua ligação canônica (logarítmica).
+
+**Detalhes Teóricos:** \* **Família Normal Inversa:** Mesmas características do Modelo 6.
+\* **Ligação Logarítmica:** $\log(\text{E}[\text{tempo}]) = \eta$.
+Esta é a **ligação canônica** para a família Normal Inversa, garantindo que as previsões de tempo sejam sempre positivas.
+
+```{r}
+# Ajusta um GLM com família Inverse Gaussian e função de ligação "log".
+ajuste_glm_inversagaussian_log <- glm(tempo ~ turb2, family = inverse.gaussian(link = "log"), data = dados)
+
+# Exibe o resumo do modelo.
+summary(ajuste_glm_inversagaussian_log)
+
+# Gera os gráficos de diagnóstico.
+par(mfrow = c(2,2))
+plot(ajuste_glm_inversagaussian_log,pch=19)
+
+# Calcula os resíduos quantílicos.
+residuos_quantilicos_inversagaussian_log <- qresid(ajuste_glm_inversagaussian_log)
+
+# Gerando o QQ-Plot dos resíduos quantílicos.
+qqnorm(residuos_quantilicos_inversagaussian_log, pch = 19, 
+       main = "QQ-Plot Resíduos Quantílicos (GLM Normal Inversa/Log Link)")
+qqline(residuos_quantilicos_inversagaussian_log, col = "red")
+
+# Testando a normalidade dos resíduos quantílicos.
+shapiro.test(residuos_quantilicos_inversagaussian_log)
+
+# Calcula o AIC.
+AIC(ajuste_glm_inversagaussian_log)
+```
+
+------------------------------------------------------------------------
+
+### 7. Comparação Final de Modelos (AIC)
+
+**Objetivo:** Usar o AIC para selecionar o melhor modelo entre todas as opções ajustadas.
+
+**Detalhes Teóricos:** \* **Critério de Informação de Akaike (AIC):** Um valor que estima a qualidade relativa de modelos estatísticos.
+Ele equilibra o quão bem o modelo se ajusta aos dados (verossimilhança) com a sua complexidade (número de parâmetros).
+\* **Regra de Ouro:** **O modelo com o MENOR AIC é geralmente o preferido**, pois ele representa um bom equilíbrio entre o ajuste e a parcimônia.
+
+```{r}
+# Compara os AICs de todos os modelos ajustados.
+# O modelo com o menor AIC é considerado o melhor.
+AIC(ajuste0, ajuste_glm_gaussian_log, ajuste1, ajuste2, ajuste3, ajuste_glm_inversagaussian_log)
+```
+
+Melhor modelo foi o GLM com família Gamma e função de ligação "identity"

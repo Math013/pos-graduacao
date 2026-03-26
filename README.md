@@ -1,6 +1,6 @@
 # 📊 Pós-Graduação em Ciência de Dados – PUC
 
-Este repositório concentra **aulas, exercícios e projetos finais** desenvolvidos ao longo da Pós-Graduação em **Ciência de Dados (PUC)**, com foco em **estatística aplicada, probabilidade, inferência estatística e programação em Python**.
+Este repositório concentra **aulas, exercícios e projetos finais** desenvolvidos ao longo da Pós-Graduação em **Ciência de Dados (PUC)**, com foco em **estatística aplicada, probabilidade, inferência estatística, programação em Python e modelos preditivos**.
 
 O objetivo é manter um **repositório organizado, versionado e reprodutível**, seguindo boas práticas de Git e servindo tanto para **uso acadêmico** quanto como **portfólio técnico**.
 
@@ -10,8 +10,12 @@ O objetivo é manter um **repositório organizado, versionado e reprodutível**,
 
 ```text
 ├── Analise-Descritiva-Probabilidade
+├── Data-Discovery-Analytics
+├── Estudos-Extras
 ├── Inferencia-Estatistica
+├── Modelos-Regressao
 ├── Python-Ciencia-de-Dados
+├── Series-Temporais
 └── Tecnicas-Amostragem-Regressao-Linear
 ```
 
@@ -140,12 +144,90 @@ Tecnicas-Amostragem-Regressao-Linear/
 - `index/` contém **rascunhos e versões intermediárias**
 - `projeto_final/` contém a **entrega oficial**
 
-# Estudos Extras
+---
 
-Este diretório contém estudos complementares e experimentais,
-realizados como reforço aos conteúdos da pós-graduação.
+## 🔹 Modelos de Regressão
+📂 `Modelos-Regressao`
 
-Não corresponde a entregas formais das disciplinas.
+### Conteúdos abordados
+- Regressão logística binária e multinomial
+- Modelos lineares generalizados (GLM)
+- Regressão de Poisson e modelos de contagem
+- Avaliação de modelos e análise de resíduos
+- Transformações de variáveis (Box-Cox)
+
+### Estrutura interna
+```text
+Modelos-Regressao/
+├── aulas
+├── exercicios
+├── dados
+└── projeto_final
+```
+
+### Tecnologias
+- Python (statsmodels, sklearn)
+- R
+- Jupyter Notebook
+- RMarkdown
+
+---
+
+## 🔹 Séries Temporais
+📂 `Series-Temporais`
+
+### Conteúdos abordados
+- Decomposição de séries temporais
+- Modelos ARMA, ARIMA, SARIMA e AutoARIMA
+- Métodos Naïve e médias
+- APIs financeiras (Banco Central, YFinance, B3)
+
+### Estrutura interna
+```text
+Series-Temporais/
+├── aulas
+└── dados
+```
+
+### Tecnologias
+- Python (statsmodels, pmdarima)
+- R
+- Jupyter Notebook
+- RMarkdown
+
+---
+
+## 🔹 Data Discovery e Analytics
+📂 `Data-Discovery-Analytics`
+
+### Conteúdos abordados
+- Análise exploratória de dados (EDA)
+- Modelos de churn e classificação
+- Análise de bases reais (vendas, dengue, fraude)
+
+### Estrutura interna
+```text
+Data-Discovery-Analytics/
+├── aulas
+└── dados
+```
+
+### Tecnologias
+- Python (pandas, sklearn)
+- Jupyter Notebook
+
+---
+
+## 📚 Estudos Extras
+📂 `Estudos-Extras`
+
+Estudos complementares e experimentais realizados como reforço aos conteúdos da pós-graduação. Não corresponde a entregas formais das disciplinas.
+
+### Estrutura interna
+```text
+Estudos-Extras/
+└── Estatistica
+```
 
 ### Tecnologias
 - Python
