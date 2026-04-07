@@ -1,0 +1,191 @@
+---
+title: "R Notebook"
+author: "Matheus Oliveira"
+date: "2026-03-28"
+output: html_notebook
+---
+
+```{r}
+library(readr)      # leitura de CSVs
+library(dplyr)      # manipulação de dados
+library(lubridate)  # manipulação de datas
+library(ggplot2)    # gráficos
+library(scales)     # formatação de eixos
+library(corrplot)   # matriz de correlação
+library(stats)      # ajuste GLM
+library(AER)        # teste de equidispersão
+library(MASS)       # modelo Binomial Negativo
+```
+
+#### Leitura da base
+
+```{r}
+dados <- read.csv(
+    'C:/Users/Matheus/Desktop/Arquivos_PUC/Modelos de Regressão/Dados/RIKZ.txt',
+    sep = '\t',
+    header = TRUE,
+    )
+
+dados
+```
+
+#### Estrutura da base
+
+```{r}
+str(dados)
+```
+
+#### Resumo da base
+
+```{r}
+summary(dados)
+```
+
+#### Contagem de linhas nulas
+
+```{r}
+colSums(is.na(dados))
+```
+
+#### Matriz de correlação
+
+```{r}
+matriz <- cor(dados)
+par(bg = "white")
+corrplot(
+  matriz,
+  method = 'color',
+  tl.col = "black",
+  addCoef.col = "black",
+  col = colorRampPalette(c("#D73027", "#FFFFFF", "#4575B4"))(200)
+)
+help(corrplot)
+```
+
+#### Categorizando a coluna "Beach"
+
+```{r}
+dados$Beach <- as.factor(dados$Beach)
+```
+
+#### Verificar equidispersão
+
+```{r}
+media <- mean(dados$Richness)
+variancia <- var(dados$Richness)
+
+if (media > variancia){
+  cat(' Subdispersão', '\n', 'Media:', media, '\n', 'Variância:', variancia)
+} else if (media < variancia){
+  cat(' Superdispersão', '\n', 'Media:', media, '\n', 'Variância:', variancia)
+} else {
+  cat(' Equidispersão', '\n', 'Media:', media, '\n', 'Variância:', variancia)
+}
+```
+
+```{r}
+# Visualizar Richness por Beach
+ggplot(dados, aes(x = Beach, y = Richness, fill = Beach)) +
+  geom_boxplot() +
+  labs(x = "Beach", y = "Richness") +
+  theme_minimal()
+
+# Visualizar Richness vs NAP colorido por Beach
+ggplot(dados, aes(x = NAP, y = Richness, color = Beach)) +
+  geom_point(size = 3) +
+  labs(x = "NAP", y = "Richness") +
+  theme_minimal()
+```
+
+```{r}
+# Modelo 1: com interação
+modelo1 <- glm(Richness ~ NAP * Beach, family = poisson(link = "log"), data = dados)
+
+# Modelo 2: sem interação (aditivo)
+modelo2 <- glm(Richness ~ NAP + Beach, family = poisson(link = "log"), data = dados)
+```
+
+```{r}
+summary(modelo1)
+```
+
+```{r}
+summary(modelo2)
+```
+
+#### Comparação de modelos
+
+```{r}
+anova(modelo2, modelo1, test = "Chisq")
+
+par(mfrow = c(2, 2))
+plot(modelo1)
+
+par(mfrow = c(2, 2))
+plot(modelo2)
+```
+
+A partir da comparação utilizando o ANOVA, o teste demonstrou que o **modelo 1 (com interação)** é significativamente melhor que o modelo 2. A interação entre NAP e Beach mostrou que o NAP altera de praia pra praia.
+
+#### Dispersão
+
+```{r}
+deviance(modelo1) / df.residual(modelo1)
+deviance(modelo2) / df.residual(modelo2)
+```
+
+```{r}
+library(AER)
+dispersiontest(modelo1, alternative = "two.sided")
+dispersiontest(modelo2, alternative = "two.sided")
+```
+
+#### Quasi-Poisson
+
+```{r}
+# Quasi-Poisson
+modelo1_quasi <- glm(Richness ~ NAP * Beach, family = quasipoisson(link = "log"), data = dados)
+modelo2_quasi <- glm(Richness ~ NAP + Beach, family = quasipoisson(link = "log"), data = dados)
+
+summary(modelo1_quasi)
+summary(modelo2_quasi)
+```
+
+#### Binomial Negativa
+
+```{r}
+
+# Binomial Negativa
+library(MASS)
+modelo1_nb <- glm.nb(Richness ~ NAP * Beach, data = dados)
+modelo2_nb <- glm.nb(Richness ~ NAP + Beach, data = dados)
+
+summary(modelo1_nb)
+summary(modelo2_nb)
+```
+
+#### Comparação de modelos (Quasi-Poisson x Binomial Negativa)
+
+```{r}
+anova(modelo2_nb, modelo1_nb, test = "Chisq")
+```
+
+#### Análise dos Resíduos
+
+```{r}
+# Diagnóstico do modelo final
+par(mfrow = c(2, 2))
+plot(modelo1_nb)
+
+# Dispersion parameter
+deviance(modelo1_nb) / df.residual(modelo1_nb)
+
+# Resíduos quantílicos
+library(statmod)
+residuos <- qresid(modelo1_nb)
+shapiro.test(residuos)
+
+par(mfrow = c(1, 1))
+qqnorm(residuos, pch = 20, col = "blue")
+qqline(residuos)
+```
