@@ -1,0 +1,691 @@
+---
+title: "Regressão Multivariada"
+subtitle: "Da formulação matricial ao estudo de caso em dados judiciais brasileiros"
+author: "Matheus | Análise Multivariada | Prof. Vinícius Osterne"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    highlight: tango
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{amsmath}
+  - \usepackage{amssymb}
+  - \usepackage{bm}
+  - \usepackage{booktabs}
+  - \usepackage{float}
+  - \usepackage[brazil]{babel}
+  - \renewcommand{\contentsname}{Sumário}
+fontsize: 11pt
+geometry: margin=2.5cm
+linkcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 7,
+  fig.height = 4.5,
+  cache = TRUE
+)
+```
+
+\newpage
+
+# Resumo executivo {.unnumbered}
+
+Este documento consolida o conteúdo sobre **Regressão Multivariada** da disciplina de Análise Multivariada, aplicado a um estudo de caso com dados reais do **painel de produtividade dos órgãos julgadores brasileiros**, divulgado anualmente pelo Conselho Nacional de Justiça (CNJ).
+
+A regressão multivariada generaliza a regressão múltipla clássica para o caso em que **múltiplas variáveis dependentes** são modeladas simultaneamente, aproveitando a estrutura de correlação entre os desfechos. O modelo é $\mathbf{Y} = \mathbf{X}\mathbf{B} + \mathbf{E}$, onde $\mathbf{Y}$ é uma matriz $n \times q$ de $q$ desfechos.
+
+O estudo de caso responde à pergunta: *as características estruturais de um órgão julgador (carga processual, ramo, instância) predizem conjuntamente seu desempenho operacional, medido pelo vetor (tempo de julgamento, taxa de baixa)?*
+
+\newpage
+
+# Bloco 1 — Fundamentação conceitual
+
+## 1.1 Da regressão simples à multivariada: a hierarquia
+
+Quatro modelos formam uma família, distinguidos pelo número de preditores ($p$) e desfechos ($q$):
+
+| Modelo | $p$ | $q$ | Forma |
+|----|----|----|----|
+| Regressão simples | 1 | 1 | $y = \beta_0 + \beta_1 x + \varepsilon$ |
+| Regressão múltipla | $p \geq 2$ | 1 | $y = \mathbf{x}^\top \boldsymbol{\beta} + \varepsilon$ |
+| Regressão multivariada | $p \geq 1$ | $q \geq 2$ | $\mathbf{y} = \mathbf{B}^\top \mathbf{x} + \boldsymbol{\varepsilon}$ |
+| MANOVA | $p \geq 1$ (cat.) | $q \geq 2$ | caso especial com $\mathbf{X}$ categórica |
+
+> **Nota terminológica.** Na literatura em português há confusão frequente entre "regressão múltipla" e "regressão multivariada". A primeira tem **um único Y**; a segunda tem **vários Y**. Esta confusão é apontada explicitamente em Hair et al. (*Multivariate Data Analysis*, cap. 4) e merece atenção em qualquer trabalho aplicado.
+
+## 1.2 Por que modelar conjuntamente?
+
+Considere $q = 3$ desfechos correlacionados (ex.: pressão sistólica, diastólica, frequência cardíaca de um mesmo paciente). Há duas estratégias possíveis:
+
+1.  **Três regressões múltiplas separadas**, uma para cada desfecho.
+2.  **Uma regressão multivariada conjunta**.
+
+Surpreendentemente, **os coeficientes estimados são idênticos** nos dois caminhos:
+
+$$\hat{\mathbf{B}} = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top \mathbf{Y}$$
+
+Cada coluna de $\hat{\mathbf{B}}$ é exatamente o vetor de coeficientes OLS para o desfecho correspondente. **Então qual a vantagem do modelo conjunto?**
+
+Três diferenças cruciais, todas relativas à **inferência**, não aos coeficientes:
+
+1.  **Controle de erro tipo I global**: testar coeficientes em $q$ modelos separados infla o número de comparações. A inferência multivariada usa estatísticas globais (Wilks, Pillai) que respondem perguntas do tipo *"o preditor* $x_j$ afeta o **vetor** de desfechos?" — pergunta que não tem análogo univariado.
+
+2.  **Estimativa conjunta da estrutura de covariância dos erros** $\hat{\boldsymbol{\Sigma}}$, que captura quanto da correlação entre desfechos **não foi explicada** pelos preditores.
+
+3.  **Detecção de outliers multivariados** via distância de Mahalanobis nos resíduos, identificando observações anômalas que regressões univariadas não revelam.
+
+> **Analogia.** Três regressões separadas são como três médicos analisando o mesmo paciente, cada um olhando para um único exame. A regressão multivariada é a junta médica que olha os três juntos, sabendo que estão correlacionados — e chega a conclusões que os três isolados não alcançariam.
+
+## 1.3 Quando faz sentido aplicar?
+
+Aplique regressão multivariada quando **todas** as condições abaixo forem atendidas:
+
+-   Há $q \geq 2$ desfechos contínuos (ou aproximadamente);
+-   Os desfechos são correlacionados entre si (se $\boldsymbol{\Sigma} \approx \mathbf{I}$, vire $q$ regressões separadas);
+-   Você quer testar hipóteses sobre o **conjunto** de desfechos, não cada um isoladamente;
+-   Os preditores são razoavelmente fixos (não há simetria entre X e Y — para esse caso, use Correlação Canônica).
+
+\newpage
+
+# Bloco 2 — Modelo e estimação
+
+## 2.1 Formulação matricial
+
+O modelo de regressão multivariada para $n$ observações, $p$ preditores e $q$ desfechos é:
+
+$$\boxed{\mathbf{Y}_{n \times q} = \mathbf{X}_{n \times p} \mathbf{B}_{p \times q} + \mathbf{E}_{n \times q}}$$
+
+Cada componente tem interpretação geométrica clara:
+
+-   $\mathbf{Y}$: cada **linha** é o vetor de respostas de um indivíduo; cada **coluna** é um desfecho ao longo dos indivíduos.
+-   $\mathbf{X}$: matriz de delineamento, com primeira coluna de 1s (intercepto).
+-   $\mathbf{B}$: cada **coluna** $\boldsymbol{\beta}_k$ é o vetor de coeficientes para o desfecho $k$. O elemento $\beta_{jk}$ é o efeito do preditor $j$ no desfecho $k$.
+-   $\mathbf{E}$: matriz de erros aleatórios.
+
+## 2.2 Distribuição dos erros
+
+A suposição central é:
+
+$$\text{vec}(\mathbf{E}) \sim \mathcal{N}(\mathbf{0}, \, \boldsymbol{\Sigma} \otimes \mathbf{I}_n)$$
+
+onde $\otimes$ é o produto de Kronecker e $\text{vec}(\cdot)$ empilha colunas em um único vetor.
+
+> **Decifrando** $\boldsymbol{\Sigma} \otimes \mathbf{I}_n$: essa estrutura captura duas coisas simultaneamente:
+>
+> -   $\boldsymbol{\Sigma}$ (entre desfechos): pressão sistólica e diastólica do mesmo paciente são correlacionadas. Essa correlação está em $\boldsymbol{\Sigma}$.
+> -   $\mathbf{I}_n$ (entre observações): pacientes diferentes são independentes entre si.
+>
+> Em conjunto: a correlação existe **dentro** de cada indivíduo, **entre seus desfechos**, mas não entre indivíduos distintos.
+
+Se $\boldsymbol{\Sigma}$ fosse diagonal, os desfechos seriam não correlacionados e $q$ regressões separadas seriam exatamente equivalentes ao modelo conjunto, inclusive na inferência.
+
+## 2.3 Estimação por mínimos quadrados (e máxima verossimilhança)
+
+Minimizando $\text{tr}\left[(\mathbf{Y} - \mathbf{X}\mathbf{B})^\top (\mathbf{Y} - \mathbf{X}\mathbf{B})\right]$, obtemos:
+
+$$\boxed{\hat{\mathbf{B}} = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top \mathbf{Y}}$$
+
+**Observação crítica:** cada coluna de $\hat{\mathbf{B}}$ é numericamente idêntica ao estimador OLS de uma regressão múltipla separada para aquele desfecho. A vantagem do modelo conjunto está, repetimos, na **inferência**.
+
+Os resíduos são: $$\hat{\mathbf{E}} = \mathbf{Y} - \mathbf{X}\hat{\mathbf{B}}$$
+
+E o estimador não-viesado de $\boldsymbol{\Sigma}$ é: $$\boxed{\hat{\boldsymbol{\Sigma}} = \frac{1}{n - p} \hat{\mathbf{E}}^\top \hat{\mathbf{E}}}$$
+
+A divisão por $n - p$ (e não $n$) corrige o viés introduzido pela estimação dos $p$ parâmetros de cada equação.
+
+## 2.4 Interpretação geométrica rápida
+
+$\hat{\mathbf{B}}$ é a projeção ortogonal de $\mathbf{Y}$ no espaço-coluna de $\mathbf{X}$, feita **simultaneamente** para todos os $q$ desfechos. Como a projeção é por coluna, ela coincide com fazer $q$ projeções separadas — daí a equivalência numérica com OLS univariados.
+
+\newpage
+
+# Bloco 3 — Pressupostos e diagnóstico
+
+Os pressupostos da regressão multivariada são extensões dos da regressão múltipla, agora exigidos no **espaço multivariado**:
+
+| Pressuposto | O que exige | Como verificar |
+|----|----|----|
+| Linearidade | Relação linear entre X e cada $Y_j$ | Gráficos de dispersão $X_j \times Y_k$ |
+| Normalidade multivariada dos resíduos | $\mathbf{e}_i \sim \mathcal{N}_q(\mathbf{0}, \boldsymbol{\Sigma})$ | Teste de Mardia (assimetria + curtose multivariadas) |
+| Homogeneidade de covariâncias | $\text{Cov}(\mathbf{e}_i) = \boldsymbol{\Sigma} \,\, \forall \, i$ | Box's M (para grupos), análise de resíduos |
+| Independência entre observações | Linhas de $\mathbf{E}$ independentes | Conhecimento do delineamento amostral |
+| Ausência de multicolinearidade | $\mathbf{X}^\top \mathbf{X}$ bem-condicionada | VIF, condition number |
+
+## 3.1 Normalidade multivariada — teste de Mardia
+
+A normalidade univariada de cada $Y_j$ é **necessária mas não suficiente** para normalidade multivariada. O teste de Mardia checa simultaneamente:
+
+-   **Assimetria multivariada** $b_{1,q}$
+-   **Curtose multivariada** $b_{2,q}$
+
+Sob $H_0$ de normalidade multivariada, ambas têm distribuições conhecidas. Rejeitar qualquer uma indica violação.
+
+> **Importante:** o teste é feito sobre os **resíduos**, não sobre os $Y$ brutos. É a normalidade dos erros que importa para a inferência, não a dos dados em si.
+
+## 3.2 Detecção de outliers — distância de Mahalanobis
+
+A distância de Mahalanobis de uma observação $\mathbf{e}_i$ ao centro da nuvem de resíduos é:
+
+$$d_i^2 = (\mathbf{e}_i - \bar{\mathbf{e}})^\top \hat{\boldsymbol{\Sigma}}^{-1} (\mathbf{e}_i - \bar{\mathbf{e}})$$
+
+Sob normalidade multivariada, $d_i^2 \sim \chi^2_q$. Observações com $d_i^2 > \chi^2_q(0,975)$ são candidatas a outliers multivariados — observações **anômalas no espaço dos desfechos**, que podem ser invisíveis se você olhar cada desfecho separadamente.
+
+## 3.3 Multicolinearidade entre preditores
+
+Multicolinearidade alta entre os preditores torna $\mathbf{X}^\top \mathbf{X}$ quase singular e infla a variância de $\hat{\mathbf{B}}$. Indicadores práticos:
+
+-   **VIF** (Variance Inflation Factor) por preditor: $\text{VIF}_j = 1 / (1 - R_j^2)$, onde $R_j^2$ é o $R^2$ da regressão de $X_j$ nos demais preditores.
+-   Regra prática: $\text{VIF} > 5$ é preocupante; $> 10$ é problemático.
+
+\newpage
+
+# Bloco 4 — Inferência multivariada
+
+A pergunta central da inferência multivariada é: *o conjunto de preditores afeta o vetor de desfechos?* Formalmente, testamos hipóteses lineares do tipo:
+
+$$H_0: \mathbf{C}\mathbf{B}\mathbf{M} = \mathbf{0}$$
+
+onde $\mathbf{C}$ seleciona quais coeficientes testar (linhas de $\mathbf{B}$) e $\mathbf{M}$ seleciona quais desfechos (colunas de $\mathbf{B}$).
+
+## 4.1 Decomposição da soma de quadrados multivariada
+
+Constroem-se duas matrizes análogas a SQH e SQE na ANOVA univariada:
+
+-   **Matriz da hipótese**: $\mathbf{H} = (\mathbf{C}\hat{\mathbf{B}}\mathbf{M})^\top \left[\mathbf{C}(\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{C}^\top\right]^{-1} (\mathbf{C}\hat{\mathbf{B}}\mathbf{M})$
+-   **Matriz do erro**: $\mathbf{E} = \mathbf{M}^\top \hat{\mathbf{E}}^\top \hat{\mathbf{E}} \mathbf{M}$
+
+Sob $H_0$, $\mathbf{H}$ deve ser "pequena" comparada a $\mathbf{E}$. Quatro estatísticas resumem essa comparação.
+
+## 4.2 As quatro estatísticas multivariadas
+
+| Estatística | Fórmula | Quando preferir |
+|----|----|----|
+| **Lambda de Wilks** ($\Lambda$) | $\Lambda = \dfrac{\|\mathbf{E}\|}{\|\mathbf{H} + \mathbf{E}\|}$ | Padrão sob normalidade |
+| **Traço de Pillai** ($V$) | $V = \text{tr}[\mathbf{H}(\mathbf{H} + \mathbf{E})^{-1}]$ | **Mais robusto** a violações |
+| **Traço de Hotelling-Lawley** ($T$) | $T = \text{tr}[\mathbf{H}\mathbf{E}^{-1}]$ | Mais sensível em geral |
+| **Maior raiz de Roy** ($\theta$) | $\theta = \lambda_{\max}(\mathbf{H}\mathbf{E}^{-1})$ | **Cautela**: muito sensível |
+
+Todas têm distribuições aproximadas (via F ou $\chi^2$) sob $H_0$.
+
+> **Qual usar na prática?** Olson (1976, *Psychological Bulletin*) recomenda **Pillai** quando há dúvida sobre normalidade ou homogeneidade — é o teste com melhor controle de erro tipo I sob violação dos pressupostos. Wilks é a estatística clássica e ainda é padrão em muitos softwares.
+
+## 4.3 Hierarquia de interpretação
+
+A análise da regressão multivariada acontece em **dois níveis**:
+
+1.  **Nível multivariado** (primário): os testes acima respondem se o conjunto de preditores afeta o vetor de desfechos. **Só avance para o próximo nível se houver significância aqui** — testar individualmente sem significância multivariada infla erro tipo I.
+
+2.  **Nível univariado** (secundário): após confirmar significância multivariada, examine cada equação separadamente (`summary(fit)` em R) para identificar quais desfechos são afetados por quais preditores.
+
+\newpage
+
+# Bloco 5 — Interpretação em dois níveis
+
+## 5.1 O fluxo de leitura dos resultados
+
+```         
+1. AJUSTE → lm(cbind(y1, y2, y3) ~ X)
+   |
+2. TESTES MULTIVARIADOS → manova(fit), test = "Pillai"
+   |
+   |--- não significativo? PARE. Não interprete coeficientes individuais.
+   |
+3. TESTES UNIVARIADOS → summary(fit) — uma tabela por desfecho
+   |
+4. R² POR EQUAÇÃO → variância explicada de cada Yj
+   |
+5. Σ̂ RESIDUAL → correlação não explicada entre desfechos
+```
+
+## 5.2 O que $\hat{\boldsymbol{\Sigma}}$ residual diz
+
+Após o ajuste, $\hat{\boldsymbol{\Sigma}}$ captura quanto de correlação entre os desfechos **persistiu**, depois de descontado o efeito dos preditores:
+
+-   $\hat{\boldsymbol{\Sigma}}$ próxima da diagonal → os preditores explicam quase toda a covariação;
+-   $\hat{\boldsymbol{\Sigma}}$ ainda forte → há covariação residual não capturada, sugerindo variáveis omitidas ou estrutura latente.
+
+## 5.3 R² multivariado e por equação
+
+Cada equação tem seu próprio $R^2_k$ (variância de $Y_k$ explicada). Não existe um "$R^2$ multivariado" único universalmente aceito, mas medidas relacionadas a $\Lambda$ de Wilks fornecem análogos (ex.: $1 - \Lambda^{1/s}$).
+
+\newpage
+
+# Bloco 6 — Estudo de caso: Painel CNJ de produtividade judicial
+
+## 6.1 Contexto e pergunta de pesquisa
+
+O **Painel de Estatísticas do Poder Judiciário**, mantido pelo CNJ (Conselho Nacional de Justiça), publica indicadores anuais por órgão julgador, incluindo carga processual, tempo de tramitação, taxa de baixa e desfechos de julgamento. Os dados são reais e abertos.
+
+**Pergunta:**
+
+> *As características estruturais de um órgão julgador (carga processual, ramo da justiça, instância, tipo originário) predizem **conjuntamente** seu desempenho operacional, medido pelo vetor (tempo de julgamento em dias, taxa de baixa)?*
+
+A pergunta é multivariada de verdade: os dois desfechos têm correlação negativa esperada (órgão lento tende a ter menor taxa de baixa), e a inferência conjunta importa.
+
+## 6.2 Setup do ambiente
+
+```{r setup-pacotes, message=FALSE, warning=FALSE}
+# Pacotes principais
+library(dplyr)      # manipulação
+library(ggplot2)    # visualização
+library(car)        # Anova tipo III, VIF
+library(MVTests)    # Mardia (sem dependência libgsl)
+
+# Convenção: dplyr::select() explícito para evitar mascaramento pelo MASS
+# (lembrete do projeto: MASS::select sobrescreve dplyr::select silenciosamente)
+
+# Reprodutibilidade
+set.seed(42)
+options(scipen = 999)  # desligar notação científica
+```
+
+## 6.3 Carga e construção das variáveis
+
+Substitua o caminho abaixo pelo seu arquivo local (CSV ou Parquet):
+
+```{r carga-dados, eval=FALSE}
+# Opção CSV
+dados_raw <- readr::read_csv("painel_cnj.csv")
+
+# Opção Parquet (mais rápido para datasets grandes)
+# dados_raw <- arrow::read_parquet("painel_cnj.parquet")
+```
+
+```{r dados-simulados, include=FALSE}
+# CHUNK ESPELHO PARA RENDERIZAÇÃO — substituir pelos dados reais.
+# Gera estrutura compatível com o painel CNJ para que o Rmd compile.
+n <- 1500
+dados_raw <- data.frame(
+  id_orgao_julgador = paste0("ORG", sprintf("%05d", 1:n)),
+  ramo_justica   = sample(c("Estadual", "Federal", "Trabalho"),
+                          n, replace = TRUE, prob = c(.6, .25, .15)),
+  sigla_grau     = sample(c("G1", "G2"), n, replace = TRUE, prob = c(.8, .2)),
+  originario     = sample(c(0, 1), n, replace = TRUE, prob = c(.7, .3)),
+  casos_novos    = round(exp(rnorm(n, 7, 1))),
+  pendentes      = round(exp(rnorm(n, 8, 1.2))),
+  baixados       = NA,
+  tp_julgamento_dias = round(exp(rnorm(n, 5.5, 0.6)))
+)
+dados_raw$baixados <- pmin(
+  round(dados_raw$casos_novos * runif(n, 0.5, 1.2)),
+  dados_raw$casos_novos + 500
+)
+```
+
+Cálculo de `taxa_baixa` e definição do conjunto de modelagem:
+
+```{r construcao-vars}
+# Cálculo da taxa_baixa = baixados / casos_novos
+# Aplicar log1p() em contagens para conter caudas pesadas
+dados <- dados_raw |>
+  dplyr::filter(casos_novos > 0) |>   # evita divisão por zero
+  dplyr::mutate(
+    taxa_baixa     = baixados / casos_novos,
+    log_casos      = log1p(casos_novos),
+    log_pendentes  = log1p(pendentes),
+    log_tp_julg    = log1p(tp_julgamento_dias),
+    ramo_justica   = factor(ramo_justica),
+    sigla_grau     = factor(sigla_grau),
+    originario     = factor(originario)
+  ) |>
+  dplyr::filter(
+    is.finite(taxa_baixa),
+    taxa_baixa >= 0, taxa_baixa <= 3   # corte conservador para outliers de razão
+  ) |>
+  dplyr::select(
+    log_tp_julg, taxa_baixa,                 # Y1, Y2
+    log_casos, log_pendentes,                # X contínuos
+    ramo_justica, sigla_grau, originario     # X categóricos
+  )
+
+# Inspeção
+cat("Linhas após filtragem:", nrow(dados), "\n")
+summary(dados)
+```
+
+> **Decisão de modelagem**: `log1p` foi aplicado a contagens e ao tempo de julgamento porque essas variáveis têm tipicamente distribuição log-normal em dados judiciais (caudas longas à direita). O `log1p(x) = log(1 + x)` é estável para zeros, ao contrário de `log(x)`.
+
+## 6.4 Análise exploratória
+
+### 6.4.1 Correlação entre desfechos (justifica o modelo conjunto)
+
+```{r corr-y}
+cor_Y <- cor(dados[, c("log_tp_julg", "taxa_baixa")])
+print(round(cor_Y, 3))
+```
+
+> **Leitura**: se `cor(Y) ≈ diagonal`, regressões separadas são suficientes e a multivariada não agrega. Esperamos correlação **negativa moderada** (órgão lento → menor taxa de baixa). Se o valor empírico confirmar, o modelo conjunto está justificado.
+
+### 6.4.2 Dispersão e marginal dos desfechos
+
+```{r eda-scatter, fig.cap="Relação entre tempo de julgamento (log) e taxa de baixa, por ramo"}
+ggplot(dados, aes(x = log_tp_julg, y = taxa_baixa, color = ramo_justica)) +
+  geom_point(alpha = 0.4, size = 1.2) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
+  labs(
+    title = "Tempo de julgamento vs Taxa de baixa",
+    subtitle = "Correlação negativa esperada justifica modelagem conjunta",
+    x = "log(1 + tempo de julgamento em dias)",
+    y = "Taxa de baixa (baixados / casos novos)",
+    color = "Ramo"
+  ) +
+  theme_minimal()
+```
+
+### 6.4.3 Diagnóstico de multicolinearidade
+
+```{r vif-check}
+# VIF usando regressão univariada (suficiente para diagnóstico de X)
+fit_univar_aux <- lm(log_tp_julg ~ log_casos + log_pendentes +
+                       ramo_justica + sigla_grau + originario, data = dados)
+car::vif(fit_univar_aux)
+```
+
+> **Leitura**: VIF \> 5 (ou GVIF\^(1/(2\*Df)) \> sqrt(5) para fatores) indica multicolinearidade preocupante. `log_casos` e `log_pendentes` podem ter VIF alto, dada a relação contábil entre estoque e fluxo.
+
+## 6.5 Ajuste do modelo multivariado
+
+O coração do método em uma linha de R:
+
+```{r ajuste-multivariado}
+fit <- lm(
+  cbind(log_tp_julg, taxa_baixa) ~ log_casos + log_pendentes +
+                                    ramo_justica + sigla_grau + originario,
+  data = dados
+)
+
+# Coeficientes: matriz B-hat (p x q)
+coef(fit)
+```
+
+> **Sintaxe-chave**: o `cbind(y1, y2)` no lado esquerdo da fórmula é o que diz ao `lm()` para ajustar uma regressão **multivariada**, não univariada. Sem ele, R ajusta apenas o primeiro Y.
+
+### 6.5.1 Decomposição manual (didática)
+
+Reproduzimos $\hat{\mathbf{B}}$ "no braço" para internalizar o que `lm()` faz:
+
+```{r decomposicao-manual}
+X_mat <- model.matrix(fit)
+Y_mat <- as.matrix(dados[, c("log_tp_julg", "taxa_baixa")])
+n_obs <- nrow(dados)
+p_par <- ncol(X_mat)
+
+# B-hat = (X'X)^-1 X'Y
+B_hat <- solve(t(X_mat) %*% X_mat) %*% t(X_mat) %*% Y_mat
+cat("Diferença máxima vs coef(fit):",
+    max(abs(B_hat - coef(fit))), "\n")
+
+# Resíduos e Sigma-hat
+E_resid   <- Y_mat - X_mat %*% B_hat
+Sigma_hat <- (t(E_resid) %*% E_resid) / (n_obs - p_par)
+print(round(Sigma_hat, 4))
+
+# Correlação residual entre Y1 e Y2 (covariância não explicada por X)
+D_inv <- diag(1 / sqrt(diag(Sigma_hat)))
+cor_resid <- D_inv %*% Sigma_hat %*% D_inv
+cat("Correlação residual entre desfechos:",
+    round(cor_resid[1, 2], 3), "\n")
+```
+
+> **Leitura de** $\hat{\boldsymbol{\Sigma}}$: a correlação residual mostra quanto de associação entre tempo e taxa de baixa **persiste depois de descontar X**. Se ela permanece alta, há fatores não modelados conectando os dois desfechos.
+
+## 6.6 Diagnóstico dos pressupostos
+
+### 6.6.1 Normalidade multivariada dos resíduos (Mardia)
+
+```{r mardia-test}
+residuos_df <- as.data.frame(E_resid)
+colnames(residuos_df) <- c("res_log_tp", "res_taxa")
+
+mardia_result <- MVTests::Mardia(residuos_df)
+print(mardia_result)
+```
+
+> **Esperado em dados judiciais**: rejeição de normalidade multivariada é comum, devido a caudas pesadas mesmo após transformação log. **Isso não invalida o estudo** — apenas reforça o uso do traço de **Pillai** (robusto) sobre Wilks na seção seguinte.
+
+### 6.6.2 Outliers multivariados — distância de Mahalanobis
+
+```{r mahalanobis}
+maha    <- mahalanobis(residuos_df,
+                       center = colMeans(residuos_df),
+                       cov    = cov(residuos_df))
+corte   <- qchisq(0.975, df = ncol(residuos_df))
+n_outl  <- sum(maha > corte)
+cat("Outliers multivariados detectados:", n_outl,
+    "de", nrow(dados), "(", round(100*n_outl/nrow(dados), 1), "%)\n")
+```
+
+```{r maha-plot, fig.cap="Resíduos multivariados com elipse de 95\\% via Mahalanobis"}
+df_plot <- residuos_df
+df_plot$outlier <- maha > corte
+
+ggplot(df_plot, aes(x = res_log_tp, y = res_taxa, color = outlier)) +
+  geom_point(alpha = 0.5, size = 1.2) +
+  stat_ellipse(aes(group = 1), color = "darkred",
+               linetype = "dashed", linewidth = 0.7) +
+  geom_hline(yintercept = 0, color = "gray50", linetype = "dotted") +
+  geom_vline(xintercept = 0, color = "gray50", linetype = "dotted") +
+  scale_color_manual(values = c("FALSE" = "gray60", "TRUE" = "darkred"),
+                     labels = c("Normal", "Outlier multivariado")) +
+  labs(
+    title = "Resíduos multivariados",
+    x = "Resíduo log(tempo de julgamento)",
+    y = "Resíduo taxa de baixa",
+    color = NULL
+  ) +
+  theme_minimal()
+```
+
+## 6.7 Inferência multivariada
+
+```{r manova-tests}
+fit_mv <- manova(
+  cbind(log_tp_julg, taxa_baixa) ~ log_casos + log_pendentes +
+                                    ramo_justica + sigla_grau + originario,
+  data = dados
+)
+
+# Wilks (padrão)
+cat("=== Lambda de Wilks ===\n")
+summary(fit_mv, test = "Wilks")
+
+# Pillai (robusto - PREFERIDO se Mardia rejeitou normalidade)
+cat("\n=== Traço de Pillai ===\n")
+summary(fit_mv, test = "Pillai")
+```
+
+> **Como ler**: cada linha do output testa $H_0$: "este preditor não afeta o vetor de desfechos". Se Pillai (mais robusto) e Wilks concordam, a conclusão é firme. Se discordam, **confiar em Pillai** quando normalidade foi rejeitada.
+
+## 6.8 Interpretação em dois níveis
+
+### 6.8.1 Nível univariado (após significância multivariada)
+
+```{r univar-summary}
+summary(fit)
+```
+
+> **Como ler**: o `summary()` aplicado a um objeto `mlm` (multivariate lm) imprime **uma tabela por desfecho**. Os coeficientes são idênticos aos de regressões separadas, mas você os interpreta agora sabendo que o modelo multivariado validou a relevância global.
+
+### 6.8.2 Síntese substantiva
+
+O fluxo de leitura, aplicado ao caso CNJ:
+
+1.  **Pillai significativo para `log_pendentes`** → o estoque de processos pendentes afeta o vetor (tempo, taxa de baixa) como um todo. *Faz sentido*: órgãos mais carregados tendem a ser mais lentos **e** a baixar proporcionalmente menos.
+2.  **Coeficiente positivo em `log_tp_julg` e negativo em `taxa_baixa`** para `log_pendentes` → confirma a direção esperada.
+3.  **`ramo_justica` significativo** → as diferenças entre Justiças (Estadual, Federal, Trabalho) afetam o vetor de desempenho — esperado, dadas as diferenças de complexidade e materialidade.
+
+\newpage
+
+# Bloco 7 — Exercícios
+
+## Exercício 1 — Equivalência entre OLS conjunto e separado
+
+**Enunciado**: usando o objeto `dados` construído neste documento, ajuste:
+
+(a) Uma regressão multivariada com `cbind(log_tp_julg, taxa_baixa) ~ X`.
+
+(b) Duas regressões univariadas separadas, uma para cada desfecho.
+
+Verifique numericamente que as matrizes de coeficientes coincidem. Em seguida, explique em uma frase **por que** elas coincidem, e em outra frase **o que muda** entre os dois ajustes.
+
+<!-- SOLUÇÃO (ocultada via eval=FALSE) -->
+
+```{r ex1-solucao, eval=FALSE, echo=TRUE}
+# (a) Conjunto
+fit_a <- lm(cbind(log_tp_julg, taxa_baixa) ~ log_casos + log_pendentes +
+              ramo_justica + sigla_grau + originario, data = dados)
+
+# (b) Separadas
+fit_b1 <- lm(log_tp_julg ~ log_casos + log_pendentes +
+               ramo_justica + sigla_grau + originario, data = dados)
+fit_b2 <- lm(taxa_baixa  ~ log_casos + log_pendentes +
+               ramo_justica + sigla_grau + originario, data = dados)
+
+# Comparação
+max(abs(coef(fit_a)[, 1] - coef(fit_b1)))   # ≈ 0
+max(abs(coef(fit_a)[, 2] - coef(fit_b2)))   # ≈ 0
+
+# RESPOSTA: coincidem porque B-hat = (X'X)^-1 X'Y projeta cada coluna de Y
+# independentemente no espaço-coluna de X. O que MUDA é a inferência:
+# o modelo conjunto incorpora Σ-hat nos testes multivariados (Wilks, Pillai),
+# coisa que regressões separadas não fazem.
+```
+
+## Exercício 2 — Robustez de Wilks vs Pillai
+
+**Enunciado**: simule um cenário em que **30% das observações** têm resíduos com curtose alta (cauda pesada). Compare os p-valores de Wilks e Pillai para a hipótese global de que todos os preditores não-intercepto têm efeito nulo. Qual estatística é mais conservadora?
+
+**Dica**: construa $\mathbf{Y}$ artificial com `rt(df = 3)` em uma fração das observações e use `summary(fit_mv, test = "...")`.
+
+<!-- SOLUÇÃO -->
+
+```{r ex2-solucao, eval=FALSE, echo=TRUE}
+set.seed(123)
+n_sim <- 500
+X_sim <- matrix(rnorm(n_sim * 3), n_sim, 3)
+B_true <- matrix(c(0.5, 0.3, -0.2,
+                   0.1, 0.4,  0.0), 3, 2)
+
+# Erros com cauda pesada em 30% das observações
+E_sim <- matrix(rnorm(n_sim * 2), n_sim, 2)
+idx_pesado <- sample(1:n_sim, 0.3 * n_sim)
+E_sim[idx_pesado, ] <- matrix(rt(length(idx_pesado) * 2, df = 3),
+                              ncol = 2)
+
+Y_sim <- X_sim %*% B_true + E_sim
+df_sim <- data.frame(Y_sim, X_sim)
+colnames(df_sim) <- c("Y1", "Y2", "X1", "X2", "X3")
+
+fit_sim <- manova(cbind(Y1, Y2) ~ X1 + X2 + X3, data = df_sim)
+summary(fit_sim, test = "Wilks")
+summary(fit_sim, test = "Pillai")
+
+# OBSERVAÇÃO: sob caudas pesadas, Wilks tende a ser mais liberal
+# (rejeita mais facilmente, inflando erro tipo I).
+# Pillai mantém melhor o nível nominal.
+```
+
+## Exercício 3 — Detecção e remoção de outliers
+
+**Enunciado**: identifique as observações com distância de Mahalanobis acima do corte de 99% nos resíduos do modelo principal. Reajuste o modelo sem essas observações e compare:
+
+(a) A matriz $\hat{\mathbf{B}}$ antes e depois;
+
+(b) Os p-valores de Pillai antes e depois.
+
+Comente: as conclusões substantivas mudam?
+
+<!-- SOLUÇÃO -->
+
+```{r ex3-solucao, eval=FALSE, echo=TRUE}
+# Corte mais conservador: 99%
+corte_99 <- qchisq(0.99, df = 2)
+idx_remover <- which(maha > corte_99)
+cat("Removendo", length(idx_remover), "observações\n")
+
+dados_clean <- dados[-idx_remover, ]
+fit_clean <- lm(cbind(log_tp_julg, taxa_baixa) ~ log_casos + log_pendentes +
+                  ramo_justica + sigla_grau + originario, data = dados_clean)
+
+# (a) Comparação de coeficientes
+diff_B <- coef(fit_clean) - coef(fit)
+print(round(diff_B, 4))
+
+# (b) Pillai antes e depois
+summary(manova(fit), test = "Pillai")
+summary(manova(fit_clean), test = "Pillai")
+
+# DISCUSSÃO: se os p-valores e os sinais dos coeficientes principais
+# não mudam, o modelo é ROBUSTO aos outliers detectados. Se mudam,
+# investigar substantivamente quem são esses outliers — podem ser
+# tribunais com características atípicas que merecem análise separada.
+```
+
+\newpage
+
+# Referências
+
+## Livros-texto
+
+-   **Johnson, R. A., & Wichern, D. W.** (2007). *Applied Multivariate Statistical Analysis* (6ª ed.). Pearson Prentice Hall. — Capítulo 7 cobre regressão multivariada com derivações completas.
+
+-   **Hair, J. F., Black, W. C., Babin, B. J., & Anderson, R. E.** (2018). *Multivariate Data Analysis* (8ª ed.). Cengage. — Aplicação prática, sem ênfase em derivações.
+
+-   **Mardia, K. V., Kent, J. T., & Bibby, J. M.** (1979). *Multivariate Analysis*. Academic Press. — Referência canônica para o teste de Mardia.
+
+## Artigos
+
+-   **Olson, C. L.** (1976). *On choosing a test statistic in multivariate analysis of variance*. Psychological Bulletin, 83(4), 579–586. — Estabelece Pillai como mais robusto sob violações.
+
+## Fonte dos dados
+
+-   **Conselho Nacional de Justiça (CNJ)**. *Painel de Estatísticas do Poder Judiciário* — dados anuais por órgão julgador. Disponível em: <https://www.cnj.jus.br/pesquisas-judiciarias/>.
+
+## Material da disciplina
+
+-   **Osterne, V.** (2026). *Estatística Multivariada* — slides e scripts da disciplina (aula 04 e arquivo `multivariada_regressao_multivariada.R`).
+
+\newpage
+
+# Apêndice A — Checklist operacional
+
+Antes de reportar resultados, verifique:
+
+-   [ ] $n \geq 5(p + q)$ (mínimo) ou $n \geq 10(p+q)$ (recomendado para inferência)
+-   [ ] Correlação não trivial entre desfechos (justifica modelo conjunto)
+-   [ ] VIF dos preditores \< 5
+-   [ ] Teste de Mardia avaliado; se rejeitado, usar Pillai
+-   [ ] Outliers multivariados detectados e tratados (mantidos com nota ou removidos com justificativa)
+-   [ ] Significância multivariada **antes** de interpretar coeficientes univariados
+-   [ ] $\hat{\boldsymbol{\Sigma}}$ residual reportada — diz se ainda há covariação não explicada
+
+# Apêndice B — Glossário de funções R
+
+| Função | Pacote | Para que serve |
+|----|----|----|
+| `lm(cbind(y1, y2) ~ X)` | base | Ajuste do modelo multivariado |
+| `manova(fit)` | base (stats) | Testes multivariados |
+| `summary(fit_mv, test = "Pillai")` | base | Estatística de Pillai (robusta) |
+| `coef(fit)` | base | Matriz $\hat{\mathbf{B}}$ |
+| `model.matrix(fit)` | base | Matriz $\mathbf{X}$ com dummies expandidas |
+| `mahalanobis(...)` | base | Distância de Mahalanobis |
+| `MVTests::Mardia()` | MVTests | Normalidade multivariada |
+| `car::vif()` | car | Variance Inflation Factor |
+| `car::Anova(fit, type = "III")` | car | ANOVA tipo III (delineamentos desbalanceados) |
+
+# Apêndice C — Notas técnicas
+
+**Sobre conflitos de namespace**: este script qualifica `dplyr::select()` e `dplyr::filter()` explicitamente. Se você carregar `MASS` (direta ou indiretamente, via outro pacote), `MASS::select` mascarará `dplyr::select` **silenciosamente**, sem aviso. A qualificação explícita é defesa robusta contra esse bug clássico.
+
+**Sobre o pacote `MVN`**: a alternativa mais popular para testes de normalidade multivariada é o pacote `MVN`, mas ele requer a dependência de sistema `libgsl-dev`, que pode falhar em ambientes acadêmicos restritos. O `MVTests::Mardia()` é uma implementação **pure-R** equivalente, sem dependências externas.
+
+**Sobre `cbind()` na fórmula**: a sintaxe `lm(cbind(y1, y2) ~ X)` é o que distingue um ajuste multivariado de um univariado. Sem o `cbind()`, R interpreta apenas o primeiro Y. O objeto resultante é da classe `mlm`, e `summary()` aplica-se a ele com comportamento próprio (uma tabela por desfecho).

@@ -1,0 +1,1048 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Regressão Multivariada: Perfil de Usuários Vulneráveis em Sinistros de Trânsito},
+  pdfauthor={Matheus},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Regressão Multivariada: Perfil de Usuários Vulneráveis em
+Sinistros de Trânsito}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Infosiga.SP --- Sistema de Informações Gerenciais de Sinistros
+de Trânsito (2022--2025)}
+\author{Matheus}
+\date{02 de June de 2026}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\section{Introdução}\label{introduuxe7uxe3o}
+
+\subsection{Tema}\label{tema}
+
+Este trabalho aplica \textbf{regressão linear multivariada} a dados de
+sinistros de trânsito do estado de São Paulo. O objetivo é investigar se
+fatores estruturais --- tipo de via, região administrativa, volume de
+sinistros e tempo --- afetam de forma diferenciada três categorias de
+usuário vulnerável: \textbf{pedestres, ciclistas e motociclistas}.
+
+A escolha do tema decorre da disponibilidade pública de dados ricos do
+\textbf{Infosiga.SP}, mantido pela Coordenadoria Geral de Segurança
+Viária do Detran-SP, e da adequação natural do problema à regressão
+multivariada: três desfechos correlacionados, medidos sobre as mesmas
+unidades, com fatores estruturais comuns como preditores.
+
+\subsection{A estrutura do problema}\label{a-estrutura-do-problema}
+
+A pergunta poderia, em princípio, ser respondida por três regressões
+univariadas independentes --- uma por resposta. Essa abordagem, contudo,
+ignora que os três desfechos são correlacionados (emergem do mesmo
+sistema viário) e que testar o efeito de um fator sobre o vetor de
+respostas \textbf{como um todo} exige estatísticas que considerem a
+covariância entre elas (Wilks, Pillai, Lawley-Hotelling, Roy). A
+regressão multivariada fornece esse arcabouço.
+
+\subsection{Variáveis-resposta}\label{variuxe1veis-resposta}
+
+As três respostas, todas em escala \(\log(1+y)\) para estabilização de
+variância:
+
+\begin{itemize}
+\tightlist
+\item
+  \(Y_1\): nº de sinistros não fatais com \textbf{pedestres} envolvidos
+\item
+  \(Y_2\): nº de sinistros não fatais com \textbf{ciclistas} envolvidos
+\item
+  \(Y_3\): nº de sinistros não fatais com \textbf{motociclistas}
+  envolvidos
+\end{itemize}
+
+\begin{quote}
+\textbf{Nota de interpretação.} \(Y_k\) conta sinistros em que a
+categoria \(k\) esteve \emph{presente}, não necessariamente em que ela
+foi a vítima ferida. Esta limitação é retomada na Seção
+\ref{limitacoes}.
+\end{quote}
+
+\newpage
+
+\section{Preparação dos dados}\label{preparauxe7uxe3o-dos-dados}
+
+A base do Infosiga é distribuída em formato \emph{parquet}, com uma
+linha por sinistro registrado. A unidade de análise do modelo será a
+\textbf{célula}, definida pelo cruzamento de região administrativa
+\(\times\) ano-mês \(\times\) tipo de via.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(arrow)     }\CommentTok{\# leitura de parquet}
+\FunctionTok{library}\NormalTok{(dplyr)     }\CommentTok{\# manipulação}
+\FunctionTok{library}\NormalTok{(car)       }\CommentTok{\# vif()}
+\FunctionTok{library}\NormalTok{(ggplot2)   }\CommentTok{\# gráficos}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Leitura e diagnóstico
+inicial}\label{leitura-e-diagnuxf3stico-inicial}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sinistros }\OtherTok{\textless{}{-}} \FunctionTok{read\_parquet}\NormalTok{(}\StringTok{"C:/Users/Matheus/Desktop/Arquivos\_PUC/sinistros\_2022{-}2026.parquet"}\NormalTok{)}
+
+\FunctionTok{dim}\NormalTok{(sinistros)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 841984     48
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{table}\NormalTok{(sinistros}\SpecialCharTok{$}\NormalTok{tipo\_registro)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##        NOTIFICACAO     SINISTRO FATAL SINISTRO NAO FATAL 
+##             302310              23527             516147
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{table}\NormalTok{(sinistros}\SpecialCharTok{$}\NormalTok{tipo\_via)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## ESTRADAS E RODOVIAS      NAO DISPONIVEL        VIAS URBANAS 
+##              134646                3186              704152
+\end{verbatim}
+
+A base traz \textbf{841.984 sinistros} entre 2022 e 2025, em 48
+variáveis. Convivem três tipos de registro: não fatais (com vítimas
+feridas, 61\%), notificações (registros sem boletim formal, 36\%) e
+fatais (3\%). Quanto à via, predominam as urbanas (84\%) sobre estradas
+e rodovias (16\%).
+
+\subsection{Filtros}\label{filtros}
+
+Mantêm-se apenas sinistros \textbf{não fatais} com tipo de via
+conhecido. Fatais são categoria substantivamente distinta (óbitos, não
+ferimentos); notificações carregam viés de subnotificação.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{base }\OtherTok{\textless{}{-}}\NormalTok{ sinistros }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}
+\NormalTok{    tipo\_registro }\SpecialCharTok{==} \StringTok{"SINISTRO NAO FATAL"}\NormalTok{,}
+\NormalTok{    tipo\_via }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"VIAS URBANAS"}\NormalTok{, }\StringTok{"ESTRADAS E RODOVIAS"}\NormalTok{)}
+\NormalTok{  )}
+
+\FunctionTok{dim}\NormalTok{(base)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 516126     48
+\end{verbatim}
+
+Restam \textbf{516.126 sinistros} (61\% da base original).
+
+\subsection{Construção das respostas e
+agregação}\label{construuxe7uxe3o-das-respostas-e-agregauxe7uxe3o}
+
+As colunas \texttt{qtd\_pedestre}, \texttt{qtd\_bicicleta} e
+\texttt{qtd\_motocicleta} registram o número de envolvidos de cada
+categoria, mas usam \texttt{NA} (não zero) quando a categoria não
+aparece no sinistro. Ou seja, \textbf{\texttt{NA} significa ``categoria
+ausente''}. Por isso, a operação correta para construir as respostas
+agregadas é contar \emph{quantos sinistros tiveram cada categoria
+presente} (contar não-\texttt{NA}), não somar valores.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{celulas }\OtherTok{\textless{}{-}}\NormalTok{ base }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{tem\_pedestre    =} \FunctionTok{as.integer}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(qtd\_pedestre)),}
+    \AttributeTok{tem\_bicicleta   =} \FunctionTok{as.integer}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(qtd\_bicicleta)),}
+    \AttributeTok{tem\_motocicleta =} \FunctionTok{as.integer}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(qtd\_motocicleta))}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(regiao\_administrativa, ano\_mes\_sinistro, tipo\_via) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}
+    \AttributeTok{n\_sinistros =} \FunctionTok{n}\NormalTok{(),}
+    \AttributeTok{y1\_ped =} \FunctionTok{sum}\NormalTok{(tem\_pedestre),}
+    \AttributeTok{y2\_cic =} \FunctionTok{sum}\NormalTok{(tem\_bicicleta),}
+    \AttributeTok{y3\_mot =} \FunctionTok{sum}\NormalTok{(tem\_motocicleta),}
+    \AttributeTok{.groups =} \StringTok{"drop"}
+\NormalTok{  )}
+
+\FunctionTok{dim}\NormalTok{(celulas)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1664    7
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(celulas, }\DecValTok{6}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 7
+##   regiao_administrativa ano_mes_sinistro tipo_via      n_sinistros y1_ped y2_cic
+##   <chr>                 <chr>            <chr>               <int>  <int>  <int>
+## 1 ARAÇATUBA             2022/01          ESTRADAS E R~          24      0      0
+## 2 ARAÇATUBA             2022/01          VIAS URBANAS          188      6     13
+## 3 ARAÇATUBA             2022/02          ESTRADAS E R~          20      0      1
+## 4 ARAÇATUBA             2022/02          VIAS URBANAS          252      6     18
+## 5 ARAÇATUBA             2022/03          ESTRADAS E R~          40      0      3
+## 6 ARAÇATUBA             2022/03          VIAS URBANAS          315     10     33
+## # i 1 more variable: y3_mot <int>
+\end{verbatim}
+
+A agregação produz \textbf{1.664 células}.
+
+\subsection{Filtro de robustez e variáveis
+derivadas}\label{filtro-de-robustez-e-variuxe1veis-derivadas}
+
+Células com pouquíssimos sinistros tornam as contagens instáveis.
+Aplica-se um piso de \textbf{30 sinistros por célula}. Em seguida,
+constroem-se as respostas em escala log, o controle de exposição
+\texttt{log\_n}, o índice de tempo \texttt{t} (meses desde jan/2022) e o
+fator de região com referência na Metropolitana de São Paulo.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{celulas\_f }\OtherTok{\textless{}{-}}\NormalTok{ celulas }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(n\_sinistros }\SpecialCharTok{\textgreater{}=} \DecValTok{30}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{log\_y1 =} \FunctionTok{log1p}\NormalTok{(y1\_ped),}
+    \AttributeTok{log\_y2 =} \FunctionTok{log1p}\NormalTok{(y2\_cic),}
+    \AttributeTok{log\_y3 =} \FunctionTok{log1p}\NormalTok{(y3\_mot),}
+    \AttributeTok{log\_n  =} \FunctionTok{log}\NormalTok{(n\_sinistros),}
+    \AttributeTok{ano    =} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{substr}\NormalTok{(ano\_mes\_sinistro, }\DecValTok{1}\NormalTok{, }\DecValTok{4}\NormalTok{)),}
+    \AttributeTok{mes    =} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{substr}\NormalTok{(ano\_mes\_sinistro, }\DecValTok{6}\NormalTok{, }\DecValTok{7}\NormalTok{)),}
+    \AttributeTok{t      =}\NormalTok{ (ano }\SpecialCharTok{{-}} \DecValTok{2022}\NormalTok{) }\SpecialCharTok{*} \DecValTok{12} \SpecialCharTok{+}\NormalTok{ mes,}
+    \AttributeTok{regiao =} \FunctionTok{relevel}\NormalTok{(}\FunctionTok{factor}\NormalTok{(regiao\_administrativa),}
+                     \AttributeTok{ref =} \StringTok{"METROPOLITANA DE SÃO PAULO"}\NormalTok{),}
+    \AttributeTok{tipo\_via =} \FunctionTok{factor}\NormalTok{(tipo\_via)}
+\NormalTok{  )}
+
+\FunctionTok{dim}\NormalTok{(celulas\_f)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1433   15
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(celulas\_f}\SpecialCharTok{$}\NormalTok{n\_sinistros)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    30.0    62.0   202.0   356.9   368.0  4196.0
+\end{verbatim}
+
+Sobram \textbf{1.433 células} (86\% da agregação), com mediana de 202
+sinistros por célula --- tamanho confortável para inferência
+multivariada.
+
+\newpage
+
+\section{Análise descritiva}\label{anuxe1lise-descritiva}
+
+\subsection{Desfechos e
+correlações}\label{desfechos-e-correlauxe7uxf5es}
+
+A correlação entre os desfechos justifica o modelo conjunto; a
+correlação entre preditores antecipa a discussão de multicolinearidade.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Correlação entre as respostas (escala log): justifica o modelo conjunto}
+\FunctionTok{round}\NormalTok{(}\FunctionTok{cor}\NormalTok{(celulas\_f[, }\FunctionTok{c}\NormalTok{(}\StringTok{"log\_y1"}\NormalTok{, }\StringTok{"log\_y2"}\NormalTok{, }\StringTok{"log\_y3"}\NormalTok{)]), }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        log_y1 log_y2 log_y3
+## log_y1  1.000  0.792  0.926
+## log_y2  0.792  1.000  0.786
+## log_y3  0.926  0.786  1.000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Correlação dos desfechos com o controle de exposição}
+\FunctionTok{round}\NormalTok{(}\FunctionTok{cor}\NormalTok{(celulas\_f[, }\FunctionTok{c}\NormalTok{(}\StringTok{"log\_y1"}\NormalTok{, }\StringTok{"log\_y2"}\NormalTok{, }\StringTok{"log\_y3"}\NormalTok{, }\StringTok{"log\_n"}\NormalTok{)]), }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        log_y1 log_y2 log_y3 log_n
+## log_y1  1.000  0.792  0.926 0.927
+## log_y2  0.792  1.000  0.786 0.787
+## log_y3  0.926  0.786  1.000 0.984
+## log_n   0.927  0.787  0.984 1.000
+\end{verbatim}
+
+As três respostas exibem correlações altas (0,79 a 0,93). Boa parte
+dessa associação, porém, vem de um \textbf{componente comum de
+exposição}: as correlações de cada resposta com \texttt{log\_n} também
+são altíssimas (0,79 a 0,98). Esse é o motivo central de incluir
+\texttt{log\_n} como controle --- sem ele, o modelo atribuiria efeitos
+parecidos às três respostas, refletindo apenas o tamanho da célula.
+
+\subsection{Boxplots dos desfechos}\label{boxplots-dos-desfechos}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{vars\_desfecho }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"log\_y1"}\NormalTok{, }\StringTok{"log\_y2"}\NormalTok{, }\StringTok{"log\_y3"}\NormalTok{)}
+\NormalTok{rotulos }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\AttributeTok{log\_y1 =} \StringTok{"Pedestres"}\NormalTok{, }\AttributeTok{log\_y2 =} \StringTok{"Ciclistas"}\NormalTok{, }\AttributeTok{log\_y3 =} \StringTok{"Motociclistas"}\NormalTok{)}
+
+\NormalTok{df\_long }\OtherTok{\textless{}{-}} \FunctionTok{do.call}\NormalTok{(rbind, }\FunctionTok{lapply}\NormalTok{(vars\_desfecho, }\ControlFlowTok{function}\NormalTok{(v) \{}
+  \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{variavel =}\NormalTok{ rotulos[v], }\AttributeTok{valor =}\NormalTok{ celulas\_f[[v]])}
+\NormalTok{\}))}
+
+\FunctionTok{ggplot}\NormalTok{(df\_long, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ variavel, }\AttributeTok{y =}\NormalTok{ valor, }\AttributeTok{fill =}\NormalTok{ variavel)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{(}\AttributeTok{alpha =} \FloatTok{0.8}\NormalTok{, }\AttributeTok{outlier.color =} \StringTok{"white"}\NormalTok{,}
+               \AttributeTok{outlier.size =} \DecValTok{1}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.4}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"Pedestres"} \OtherTok{=}\NormalTok{ cor\_laranja,}
+                               \StringTok{"Ciclistas"} \OtherTok{=} \StringTok{"gray60"}\NormalTok{,}
+                               \StringTok{"Motociclistas"} \OtherTok{=}\NormalTok{ cor\_clara)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Distribuição dos desfechos (escala log)"}\NormalTok{,}
+       \AttributeTok{subtitle =} \StringTok{"Infosiga.SP — 1.433 células (região × mês × tipo de via)"}\NormalTok{,}
+       \AttributeTok{x =} \ConstantTok{NULL}\NormalTok{, }\AttributeTok{y =} \StringTok{"log(1 + nº de sinistros)"}\NormalTok{, }\AttributeTok{fill =} \ConstantTok{NULL}\NormalTok{) }\SpecialCharTok{+}
+\NormalTok{  tema\_escuro }\SpecialCharTok{+} \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"none"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{regressao_multivariada_sinistros_files/figure-latex/boxplot-desfechos-1} \end{center}
+
+Motociclistas têm nível muito superior (mediana em torno de 4,8 na
+escala log, contra \textasciitilde1,9 das demais), refletindo a presença
+massiva de motocicletas nos sinistros do estado.
+
+\subsection{Dispersão: preditor de exposição
+vs.~desfechos}\label{dispersuxe3o-preditor-de-exposiuxe7uxe3o-vs.-desfechos}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_sc }\OtherTok{\textless{}{-}} \FunctionTok{do.call}\NormalTok{(rbind, }\FunctionTok{lapply}\NormalTok{(vars\_desfecho, }\ControlFlowTok{function}\NormalTok{(v) \{}
+  \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{desfecho =}\NormalTok{ rotulos[v], }\AttributeTok{x =}\NormalTok{ celulas\_f}\SpecialCharTok{$}\NormalTok{log\_n, }\AttributeTok{y =}\NormalTok{ celulas\_f[[v]])}
+\NormalTok{\}))}
+
+\FunctionTok{ggplot}\NormalTok{(df\_sc, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{color =}\NormalTok{ cor\_laranja, }\AttributeTok{alpha =} \FloatTok{0.4}\NormalTok{, }\AttributeTok{size =} \FloatTok{1.2}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method =} \StringTok{"lm"}\NormalTok{, }\AttributeTok{color =} \StringTok{"white"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.7}\NormalTok{, }\AttributeTok{se =} \ConstantTok{FALSE}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{desfecho, }\AttributeTok{scales =} \StringTok{"free\_y"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Relação entre volume de sinistros (log\_n) e desfechos"}\NormalTok{,}
+       \AttributeTok{subtitle =} \StringTok{"Linha branca = tendência linear"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"log(nº de sinistros na célula)"}\NormalTok{, }\AttributeTok{y =} \ConstantTok{NULL}\NormalTok{) }\SpecialCharTok{+}
+\NormalTok{  tema\_escuro}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{regressao_multivariada_sinistros_files/figure-latex/scatter-exposicao-1} \end{center}
+
+A relação quase perfeita entre \texttt{log\_n} e motociclistas antecipa
+o \(R^2\) elevado dessa resposta --- sinistros com moto são quase uma
+fração fixa do total.
+
+\newpage
+
+\section{Diagnósticos
+pré-regressão}\label{diagnuxf3sticos-pruxe9-regressuxe3o}
+
+\subsection{Normalidade multivariada dos
+desfechos}\label{normalidade-multivariada-dos-desfechos}
+
+Avalia-se a normalidade multivariada via distância de Mahalanobis
+comparada à distribuição qui-quadrado de referência (teste de
+Kolmogorov-Smirnov).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Y\_desc }\OtherTok{\textless{}{-}} \FunctionTok{as.matrix}\NormalTok{(celulas\_f[, vars\_desfecho])}
+\NormalTok{xbar   }\OtherTok{\textless{}{-}} \FunctionTok{colMeans}\NormalTok{(Y\_desc)}
+\NormalTok{S\_inv  }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{cov}\NormalTok{(Y\_desc))}
+\NormalTok{d2     }\OtherTok{\textless{}{-}} \FunctionTok{apply}\NormalTok{(Y\_desc, }\DecValTok{1}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(x) }\FunctionTok{t}\NormalTok{(x }\SpecialCharTok{{-}}\NormalTok{ xbar) }\SpecialCharTok{\%*\%}\NormalTok{ S\_inv }\SpecialCharTok{\%*\%}\NormalTok{ (x }\SpecialCharTok{{-}}\NormalTok{ xbar))}
+
+\FunctionTok{ks.test}\NormalTok{(d2, }\StringTok{"pchisq"}\NormalTok{, }\AttributeTok{df =} \FunctionTok{length}\NormalTok{(vars\_desfecho))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Asymptotic one-sample Kolmogorov-Smirnov test
+## 
+## data:  d2
+## D = 0.081698, p-value = 9.847e-09
+## alternative hypothesis: two-sided
+\end{verbatim}
+
+O teste rejeita a normalidade multivariada (p \textless{} 0,001), o que
+é esperado dado o acúmulo de zeros em pedestres e ciclistas (células
+onde a categoria não apareceu). Como será discutido na Seção
+\ref{testes}, o traço de Pillai é robusto a esse tipo de desvio, e o
+tamanho amostral (\(n = 1433\)) sustenta a inferência assintótica.
+
+\newpage
+
+\section{Ajuste da regressão
+multivariada}\label{ajuste-da-regressuxe3o-multivariada}
+
+O ajuste usa \texttt{lm()} com \texttt{cbind()} no lado esquerdo da
+fórmula --- é o \texttt{cbind} que sinaliza ao R tratar-se de regressão
+multivariada (múltiplas respostas).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fit }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(}
+  \FunctionTok{cbind}\NormalTok{(log\_y1, log\_y2, log\_y3) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ tipo\_via }\SpecialCharTok{+}\NormalTok{ log\_n }\SpecialCharTok{+}\NormalTok{ t }\SpecialCharTok{+}\NormalTok{ regiao,}
+  \AttributeTok{data =}\NormalTok{ celulas\_f}
+\NormalTok{)}
+
+\FunctionTok{coef}\NormalTok{(fit)[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{, ]   }\CommentTok{\# coeficientes principais (uma coluna por desfecho)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                            log_y1      log_y2      log_y3
+## (Intercept)          -1.719314683 -3.63324424 0.236201581
+## tipo_viaVIAS URBANAS  0.925472962  0.43002339 0.499073419
+## log_n                 0.796212902  0.93484509 0.860969759
+## t                    -0.005969745 -0.01502966 0.002177758
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(fit)       }\CommentTok{\# resumo por equação (nível univariado)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Response log_y1 :
+## 
+## Call:
+## lm(formula = log_y1 ~ tipo_via + log_n + t + regiao, data = celulas_f)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.65404 -0.23067  0.02144  0.25106  1.35551 
+## 
+## Coefficients:
+##                               Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                 -1.7193147  0.2118265  -8.117 1.03e-15 ***
+## tipo_viaVIAS URBANAS         0.9254730  0.0491578  18.827  < 2e-16 ***
+## log_n                        0.7962129  0.0310835  25.615  < 2e-16 ***
+## t                           -0.0059697  0.0007627  -7.827 9.72e-15 ***
+## regiaoARAÇATUBA             -1.1601406  0.1004943 -11.544  < 2e-16 ***
+## regiaoBAIXADA SANTISTA      -0.5139060  0.0834543  -6.158 9.59e-10 ***
+## regiaoBARRETOS              -1.2678224  0.1221877 -10.376  < 2e-16 ***
+## regiaoBAURU                 -0.9503375  0.0953648  -9.965  < 2e-16 ***
+## regiaoCAMPINAS              -0.7879399  0.0593870 -13.268  < 2e-16 ***
+## regiaoCENTRAL               -0.9851522  0.0982039 -10.032  < 2e-16 ***
+## regiaoFRANCA                -0.9533106  0.1066232  -8.941  < 2e-16 ***
+## regiaoITAPEVA               -0.8032904  0.1229105  -6.536 8.82e-11 ***
+## regiaoMARÍLIA               -0.9470458  0.0928109 -10.204  < 2e-16 ***
+## regiaoPRESIDENTE PRUDENTE   -0.8428596  0.0961615  -8.765  < 2e-16 ***
+## regiaoREGISTRO              -0.7152983  0.1121388  -6.379 2.41e-10 ***
+## regiaoRIBEIRÃO PRETO        -0.9444608  0.0908164 -10.400  < 2e-16 ***
+## regiaoSÃO JOSÉ DO RIO PRETO -0.9752253  0.0804286 -12.125  < 2e-16 ***
+## regiaoSÃO JOSÉ DOS CAMPOS   -0.4510831  0.0735985  -6.129 1.14e-09 ***
+## regiaoSOROCABA              -0.7682588  0.0718980 -10.685  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.3987 on 1414 degrees of freedom
+## Multiple R-squared:  0.9178, Adjusted R-squared:  0.9168 
+## F-statistic: 877.5 on 18 and 1414 DF,  p-value: < 2.2e-16
+## 
+## 
+## Response log_y2 :
+## 
+## Call:
+## lm(formula = log_y2 ~ tipo_via + log_n + t + regiao, data = celulas_f)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.5678 -0.2452  0.0979  0.3820  1.4159 
+## 
+## Coefficients:
+##                              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                 -3.633244   0.335745 -10.821  < 2e-16 ***
+## tipo_viaVIAS URBANAS         0.430023   0.077915   5.519 4.05e-08 ***
+## log_n                        0.934845   0.049267  18.975  < 2e-16 ***
+## t                           -0.015030   0.001209 -12.433  < 2e-16 ***
+## regiaoARAÇATUBA              1.171452   0.159284   7.355 3.23e-13 ***
+## regiaoBAIXADA SANTISTA       1.296018   0.132275   9.798  < 2e-16 ***
+## regiaoBARRETOS               1.080150   0.193667   5.577 2.92e-08 ***
+## regiaoBAURU                  0.585675   0.151153   3.875 0.000112 ***
+## regiaoCAMPINAS               0.412457   0.094128   4.382 1.26e-05 ***
+## regiaoCENTRAL                0.804897   0.155653   5.171 2.66e-07 ***
+## regiaoFRANCA                 0.971343   0.168998   5.748 1.11e-08 ***
+## regiaoITAPEVA                0.748529   0.194813   3.842 0.000127 ***
+## regiaoMARÍLIA                0.894016   0.147105   6.077 1.57e-09 ***
+## regiaoPRESIDENTE PRUDENTE    0.916981   0.152416   6.016 2.27e-09 ***
+## regiaoREGISTRO               1.141556   0.177740   6.423 1.83e-10 ***
+## regiaoRIBEIRÃO PRETO         0.741484   0.143944   5.151 2.95e-07 ***
+## regiaoSÃO JOSÉ DO RIO PRETO  0.660414   0.127479   5.181 2.53e-07 ***
+## regiaoSÃO JOSÉ DOS CAMPOS    1.207607   0.116654  10.352  < 2e-16 ***
+## regiaoSOROCABA               0.354834   0.113958   3.114 0.001885 ** 
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.6319 on 1414 degrees of freedom
+## Multiple R-squared:  0.7571, Adjusted R-squared:  0.754 
+## F-statistic: 244.9 on 18 and 1414 DF,  p-value: < 2.2e-16
+## 
+## 
+## Response log_y3 :
+## 
+## Call:
+## lm(formula = log_y3 ~ tipo_via + log_n + t + regiao, data = celulas_f)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.72149 -0.08252  0.01434  0.10574  0.36105 
+## 
+## Coefficients:
+##                               Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                  0.2362016  0.0775062   3.048  0.00235 ** 
+## tipo_viaVIAS URBANAS         0.4990734  0.0179866  27.747  < 2e-16 ***
+## log_n                        0.8609698  0.0113733  75.701  < 2e-16 ***
+## t                            0.0021778  0.0002791   7.804 1.16e-14 ***
+## regiaoARAÇATUBA             -0.5201882  0.0367704 -14.147  < 2e-16 ***
+## regiaoBAIXADA SANTISTA      -0.2286650  0.0305355  -7.488 1.22e-13 ***
+## regiaoBARRETOS              -0.6521029  0.0447078 -14.586  < 2e-16 ***
+## regiaoBAURU                 -0.5774390  0.0348935 -16.549  < 2e-16 ***
+## regiaoCAMPINAS              -0.2265056  0.0217294 -10.424  < 2e-16 ***
+## regiaoCENTRAL               -0.5475471  0.0359323 -15.238  < 2e-16 ***
+## regiaoFRANCA                -0.5450004  0.0390129 -13.970  < 2e-16 ***
+## regiaoITAPEVA               -0.6998985  0.0449723 -15.563  < 2e-16 ***
+## regiaoMARÍLIA               -0.4594026  0.0339590 -13.528  < 2e-16 ***
+## regiaoPRESIDENTE PRUDENTE   -0.5191120  0.0351850 -14.754  < 2e-16 ***
+## regiaoREGISTRO              -0.9316263  0.0410310 -22.705  < 2e-16 ***
+## regiaoRIBEIRÃO PRETO        -0.4605570  0.0332293 -13.860  < 2e-16 ***
+## regiaoSÃO JOSÉ DO RIO PRETO -0.4065977  0.0294284 -13.817  < 2e-16 ***
+## regiaoSÃO JOSÉ DOS CAMPOS   -0.3188378  0.0269293 -11.840  < 2e-16 ***
+## regiaoSOROCABA              -0.3226215  0.0263071 -12.264  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1459 on 1414 degrees of freedom
+## Multiple R-squared:  0.9866, Adjusted R-squared:  0.9864 
+## F-statistic:  5784 on 18 and 1414 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+Os coeficientes de determinação são \textbf{0,92 (pedestres), 0,76
+(ciclistas) e 0,99 (motociclistas)}. O valor quase perfeito de
+motociclistas reflete o papel dominante de \texttt{log\_n}: como
+motocicletas estão na maioria dos sinistros, a contagem com moto é quase
+função determinística do total.
+
+Um ponto conceitual importante: cada coluna de \(\hat{\mathbf{B}}\) é
+\textbf{idêntica} à que se obteria ajustando aquela resposta
+isoladamente por OLS. A informação genuinamente multivariada não está
+nos coeficientes, e sim na matriz de covariância dos resíduos
+\(\hat{\boldsymbol{\Sigma}}\) --- base dos testes conjuntos.
+
+\newpage
+
+\section{Testes de hipótese multivariados}\label{testes}
+
+Os testes a seguir avaliam a significância conjunta de cada preditor
+sobre o vetor \((Y_1, Y_2, Y_3)\). Todas as quatro estatísticas derivam
+dos autovalores da matriz \(\mathbf{H}\mathbf{E}^{-1}\) (hipótese sobre
+erro), combinados de formas diferentes: Wilks via produto, Pillai via
+soma de proporções, Lawley-Hotelling via soma simples, Roy via maior
+autovalor.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fit\_manova }\OtherTok{\textless{}{-}} \FunctionTok{manova}\NormalTok{(}
+  \FunctionTok{cbind}\NormalTok{(log\_y1, log\_y2, log\_y3) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ tipo\_via }\SpecialCharTok{+}\NormalTok{ log\_n }\SpecialCharTok{+}\NormalTok{ t }\SpecialCharTok{+}\NormalTok{ regiao,}
+  \AttributeTok{data =}\NormalTok{ celulas\_f}
+\NormalTok{)}
+
+\FunctionTok{summary}\NormalTok{(fit\_manova, }\AttributeTok{test =} \StringTok{"Wilks"}\NormalTok{)             }\CommentTok{\# Lambda de Wilks}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df   Wilks approx F num Df den Df    Pr(>F)    
+## tipo_via     1 0.02651  17286.8      3 1412.0 < 2.2e-16 ***
+## log_n        1 0.01728  26768.0      3 1412.0 < 2.2e-16 ***
+## t            1 0.75802    150.2      3 1412.0 < 2.2e-16 ***
+## regiao      15 0.39237     34.5     45 4195.5 < 2.2e-16 ***
+## Residuals 1414                                             
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(fit\_manova, }\AttributeTok{test =} \StringTok{"Pillai"}\NormalTok{)            }\CommentTok{\# Traço de Pillai}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df  Pillai approx F num Df den Df    Pr(>F)    
+## tipo_via     1 0.97349  17286.8      3   1412 < 2.2e-16 ***
+## log_n        1 0.98272  26768.0      3   1412 < 2.2e-16 ***
+## t            1 0.24198    150.2      3   1412 < 2.2e-16 ***
+## regiao      15 0.77806     33.0     45   4242 < 2.2e-16 ***
+## Residuals 1414                                             
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(fit\_manova, }\AttributeTok{test =} \StringTok{"Hotelling{-}Lawley"}\NormalTok{)  }\CommentTok{\# Traço de Lawley{-}Hotelling}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df Hotelling-Lawley approx F num Df den Df    Pr(>F)    
+## tipo_via     1           36.728  17286.8      3   1412 < 2.2e-16 ***
+## log_n        1           56.873  26768.0      3   1412 < 2.2e-16 ***
+## t            1            0.319    150.2      3   1412 < 2.2e-16 ***
+## regiao      15            1.149     36.0     45   4232 < 2.2e-16 ***
+## Residuals 1414                                                      
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(fit\_manova, }\AttributeTok{test =} \StringTok{"Roy"}\NormalTok{)               }\CommentTok{\# Maior raiz de Roy}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             Df    Roy approx F num Df den Df    Pr(>F)    
+## tipo_via     1 36.728  17286.8      3   1412 < 2.2e-16 ***
+## log_n        1 56.873  26768.0      3   1412 < 2.2e-16 ***
+## t            1  0.319    150.2      3   1412 < 2.2e-16 ***
+## regiao      15  0.700     66.0     15   1414 < 2.2e-16 ***
+## Residuals 1414                                            
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\textbf{Todos os preditores são fortemente significativos (p \textless{}
+0,001) nas quatro estatísticas.} A concordância completa é esperada
+quando os efeitos são fortes e bem definidos; as quatro só divergem em
+situações limítrofes. O traço de Pillai é tomado como referência
+principal por sua robustez a desvios de normalidade (relevante dado o
+diagnóstico anterior).
+
+Atenção à \texttt{regiao}: por ser fator de 16 níveis, o teste avalia o
+\textbf{bloco inteiro} das 15 dummies de uma vez. A hipótese nula ---
+``nenhuma região difere da Metropolitana de São Paulo em nenhuma das
+respostas'' --- é rejeitada com folga, indicando heterogeneidade
+geográfica significativa.
+
+\begin{quote}
+\textbf{Nota técnica.} O \texttt{summary.manova} usa soma de quadrados
+sequencial (Tipo I), de modo que a estatística de cada termo depende da
+ordem de entrada na fórmula. A conclusão (todos significativos) é
+robusta à ordem.
+\end{quote}
+
+\newpage
+
+\section{\texorpdfstring{Decomposição manual: matrizes B, \(\Sigma\), H
+e
+E}{Decomposição manual: matrizes B, \textbackslash Sigma, H e E}}\label{decomposiuxe7uxe3o-manual-matrizes-b-sigma-h-e-e}
+
+Para explicitar a mecânica do modelo, reconstroem-se os estimadores a
+partir das matrizes, sem usar \texttt{lm()}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(fit)}
+\NormalTok{Y }\OtherTok{\textless{}{-}} \FunctionTok{as.matrix}\NormalTok{(celulas\_f[, vars\_desfecho])}
+\NormalTok{n }\OtherTok{\textless{}{-}} \FunctionTok{nrow}\NormalTok{(celulas\_f)}
+\NormalTok{p }\OtherTok{\textless{}{-}} \FunctionTok{ncol}\NormalTok{(X)}
+
+\CommentTok{\# Estimador de mínimos quadrados: B = (X\textquotesingle{}X)\^{}{-}1 X\textquotesingle{}Y}
+\NormalTok{B\_hat }\OtherTok{\textless{}{-}} \FunctionTok{solve}\NormalTok{(}\FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ X) }\SpecialCharTok{\%*\%} \FunctionTok{t}\NormalTok{(X) }\SpecialCharTok{\%*\%}\NormalTok{ Y}
+\FunctionTok{round}\NormalTok{(B\_hat[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{, ], }\DecValTok{3}\NormalTok{)   }\CommentTok{\# confere com coef(fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                      log_y1 log_y2 log_y3
+## (Intercept)          -1.719 -3.633  0.236
+## tipo_viaVIAS URBANAS  0.925  0.430  0.499
+## log_n                 0.796  0.935  0.861
+## t                    -0.006 -0.015  0.002
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Resíduos e matriz de covariância dos erros}
+\NormalTok{Y\_hat   }\OtherTok{\textless{}{-}}\NormalTok{ X }\SpecialCharTok{\%*\%}\NormalTok{ B\_hat}
+\NormalTok{E\_resid }\OtherTok{\textless{}{-}}\NormalTok{ Y }\SpecialCharTok{{-}}\NormalTok{ Y\_hat}
+\NormalTok{Sigma\_hat }\OtherTok{\textless{}{-}}\NormalTok{ (}\FunctionTok{t}\NormalTok{(E\_resid) }\SpecialCharTok{\%*\%}\NormalTok{ E\_resid) }\SpecialCharTok{/}\NormalTok{ (n }\SpecialCharTok{{-}}\NormalTok{ p)}
+\FunctionTok{round}\NormalTok{(Sigma\_hat, }\DecValTok{4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         log_y1 log_y2  log_y3
+## log_y1  0.1589 0.0199 -0.0071
+## log_y2  0.0199 0.3993  0.0004
+## log_y3 -0.0071 0.0004  0.0213
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Em escala de correlação}
+\FunctionTok{round}\NormalTok{(}\FunctionTok{cov2cor}\NormalTok{(Sigma\_hat), }\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        log_y1 log_y2 log_y3
+## log_y1  1.000  0.079 -0.123
+## log_y2  0.079  1.000  0.005
+## log_y3 -0.123  0.005  1.000
+\end{verbatim}
+
+A leitura de \(\hat{\boldsymbol{\Sigma}}\) é o \textbf{achado
+metodológico central}. Enquanto as respostas brutas tinham correlações
+de 0,79 a 0,93, a correlação entre os \textbf{resíduos} é praticamente
+nula (entre \(-0,12\) e \(0,08\)). Ou seja: quase toda a associação
+observada entre pedestres, ciclistas e motociclistas era efeito de
+escala (volume de circulação). Removido esse componente comum via
+\texttt{log\_n}, o que resta de cada resposta é praticamente ortogonal
+às demais --- não há um ``mecanismo de vulnerabilidade compartilhado''
+além da exposição.
+
+\newpage
+
+\section{Diagnóstico dos resíduos
+multivariados}\label{diagnuxf3stico-dos-resuxedduos-multivariados}
+
+\subsection{Colinearidade (VIF)}\label{colinearidade-vif}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# A matriz X é a mesma para as três respostas; o VIF independe da resposta}
+\FunctionTok{vif}\NormalTok{(}\FunctionTok{lm}\NormalTok{(log\_y1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ tipo\_via }\SpecialCharTok{+}\NormalTok{ log\_n }\SpecialCharTok{+}\NormalTok{ t }\SpecialCharTok{+}\NormalTok{ regiao, }\AttributeTok{data =}\NormalTok{ celulas\_f))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##               GVIF Df GVIF^(1/(2*Df))
+## tipo_via  5.370682  1        2.317473
+## log_n    10.841539  1        3.292649
+## t         1.152886  1        1.073725
+## regiao    8.233004 15        1.072800
+\end{verbatim}
+
+O VIF de \texttt{log\_n} é elevado (≈ 11), por colinearidade com as
+dummies de região (ambos capturam o ``tamanho'' da célula).
+\textbf{Optou-se por manter} \texttt{log\_n}: a colinearidade afeta a
+precisão dos coeficientes individuais de volume/região --- que não são o
+foco ---, mas não as previsões nem os testes conjuntos de Pillai/Wilks.
+O controle de exposição é conceitualmente necessário para colocar as
+regiões em base comparável.
+
+\subsection{Outliers multivariados (distância de
+Mahalanobis)}\label{outliers-multivariados-distuxe2ncia-de-mahalanobis}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{residuos }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(E\_resid)}
+\FunctionTok{colnames}\NormalTok{(residuos) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"res\_ped"}\NormalTok{, }\StringTok{"res\_cic"}\NormalTok{, }\StringTok{"res\_mot"}\NormalTok{)}
+
+\NormalTok{maha }\OtherTok{\textless{}{-}} \FunctionTok{mahalanobis}\NormalTok{(residuos,}
+                    \AttributeTok{center =} \FunctionTok{colMeans}\NormalTok{(residuos),}
+                    \AttributeTok{cov    =} \FunctionTok{cov}\NormalTok{(residuos))}
+
+\NormalTok{corte }\OtherTok{\textless{}{-}} \FunctionTok{qchisq}\NormalTok{(}\FloatTok{0.975}\NormalTok{, }\AttributeTok{df =} \FunctionTok{length}\NormalTok{(vars\_desfecho))}
+\NormalTok{outliers }\OtherTok{\textless{}{-}} \FunctionTok{which}\NormalTok{(maha }\SpecialCharTok{\textgreater{}}\NormalTok{ corte)}
+\FunctionTok{length}\NormalTok{(outliers)               }\CommentTok{\# quantidade}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 79
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{celulas\_f}\SpecialCharTok{$}\NormalTok{regiao\_administrativa[outliers][}\DecValTok{1}\SpecialCharTok{:}\DecValTok{10}\NormalTok{]   }\CommentTok{\# exemplos}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] "ARAÇATUBA"        "ARAÇATUBA"        "ARAÇATUBA"        "ARAÇATUBA"       
+##  [5] "ARAÇATUBA"        "ARAÇATUBA"        "BAIXADA SANTISTA" "BAIXADA SANTISTA"
+##  [9] "BAIXADA SANTISTA" "BAIXADA SANTISTA"
+\end{verbatim}
+
+São \textbf{79 células} (5,5\%) acima do corte qui-quadrado de 97,5\%
+--- proporção saudável, sem dominância de uma única região.
+
+\subsection{Visualização dos resíduos
+multivariados}\label{visualizauxe7uxe3o-dos-resuxedduos-multivariados}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_resid }\OtherTok{\textless{}{-}}\NormalTok{ residuos}
+\NormalTok{df\_resid}\SpecialCharTok{$}\NormalTok{maha    }\OtherTok{\textless{}{-}}\NormalTok{ maha}
+\NormalTok{df\_resid}\SpecialCharTok{$}\NormalTok{outlier }\OtherTok{\textless{}{-}}\NormalTok{ maha }\SpecialCharTok{\textgreater{}}\NormalTok{ corte}
+
+\FunctionTok{ggplot}\NormalTok{(df\_resid, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ res\_ped, }\AttributeTok{y =}\NormalTok{ res\_mot, }\AttributeTok{color =}\NormalTok{ outlier)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{size =} \DecValTok{2}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.7}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{stat\_ellipse}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{group =} \DecValTok{1}\NormalTok{), }\AttributeTok{color =}\NormalTok{ cor\_laranja,}
+               \AttributeTok{linetype =} \StringTok{"dashed"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.8}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_hline}\NormalTok{(}\AttributeTok{yintercept =} \DecValTok{0}\NormalTok{, }\AttributeTok{color =} \StringTok{"gray50"}\NormalTok{, }\AttributeTok{linetype =} \StringTok{"dotted"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_vline}\NormalTok{(}\AttributeTok{xintercept =} \DecValTok{0}\NormalTok{, }\AttributeTok{color =} \StringTok{"gray50"}\NormalTok{, }\AttributeTok{linetype =} \StringTok{"dotted"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_color\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"FALSE"} \OtherTok{=} \StringTok{"gray60"}\NormalTok{, }\StringTok{"TRUE"} \OtherTok{=}\NormalTok{ cor\_laranja),}
+                     \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Normal"}\NormalTok{, }\StringTok{"Outlier multivariado"}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Resíduos multivariados: pedestres × motociclistas"}\NormalTok{,}
+       \AttributeTok{subtitle =} \StringTok{"Elipse de 95\% baseada na distância de Mahalanobis"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"Resíduo (pedestres)"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Resíduo (motociclistas)"}\NormalTok{, }\AttributeTok{color =} \ConstantTok{NULL}\NormalTok{) }\SpecialCharTok{+}
+\NormalTok{  tema\_escuro}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{regressao_multivariada_sinistros_files/figure-latex/residuos-elipse-1} \end{center}
+
+\subsection{Coeficientes estimados por
+desfecho}\label{coeficientes-estimados-por-desfecho}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_coef }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{coef}\NormalTok{(fit))}
+\NormalTok{df\_coef}\SpecialCharTok{$}\NormalTok{preditor }\OtherTok{\textless{}{-}} \FunctionTok{rownames}\NormalTok{(df\_coef)}
+\CommentTok{\# Manter apenas os preditores principais (não as 15 dummies de região)}
+\NormalTok{df\_coef }\OtherTok{\textless{}{-}}\NormalTok{ df\_coef[df\_coef}\SpecialCharTok{$}\NormalTok{preditor }\SpecialCharTok{\%in\%}
+                     \FunctionTok{c}\NormalTok{(}\StringTok{"tipo\_viaVIAS URBANAS"}\NormalTok{, }\StringTok{"log\_n"}\NormalTok{, }\StringTok{"t"}\NormalTok{), ]}
+
+\NormalTok{df\_coef\_long }\OtherTok{\textless{}{-}} \FunctionTok{do.call}\NormalTok{(rbind, }\FunctionTok{lapply}\NormalTok{(vars\_desfecho, }\ControlFlowTok{function}\NormalTok{(v) \{}
+  \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{preditor =}\NormalTok{ df\_coef}\SpecialCharTok{$}\NormalTok{preditor, }\AttributeTok{desfecho =}\NormalTok{ rotulos[v],}
+             \AttributeTok{coeficiente =}\NormalTok{ df\_coef[[v]])}
+\NormalTok{\}))}
+
+\FunctionTok{ggplot}\NormalTok{(df\_coef\_long, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ preditor, }\AttributeTok{y =}\NormalTok{ coeficiente, }\AttributeTok{fill =}\NormalTok{ preditor)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_col}\NormalTok{(}\AttributeTok{width =} \FloatTok{0.6}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_hline}\NormalTok{(}\AttributeTok{yintercept =} \DecValTok{0}\NormalTok{, }\AttributeTok{color =} \StringTok{"gray50"}\NormalTok{, }\AttributeTok{linetype =} \StringTok{"dashed"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{desfecho, }\AttributeTok{scales =} \StringTok{"free\_y"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"tipo\_viaVIAS URBANAS"} \OtherTok{=}\NormalTok{ cor\_laranja,}
+                               \StringTok{"log\_n"} \OtherTok{=}\NormalTok{ cor\_clara, }\StringTok{"t"} \OtherTok{=}\NormalTok{ cor\_extra)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Coeficientes estimados por preditor e desfecho"}\NormalTok{,}
+       \AttributeTok{subtitle =} \StringTok{"Efeitos principais (regiões omitidas)"}\NormalTok{,}
+       \AttributeTok{x =} \ConstantTok{NULL}\NormalTok{, }\AttributeTok{y =} \StringTok{"Coeficiente estimado"}\NormalTok{, }\AttributeTok{fill =} \ConstantTok{NULL}\NormalTok{) }\SpecialCharTok{+}
+\NormalTok{  tema\_escuro }\SpecialCharTok{+} \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"none"}\NormalTok{,}
+                      \AttributeTok{axis.text.x =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{angle =} \DecValTok{20}\NormalTok{, }\AttributeTok{hjust =} \DecValTok{1}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{regressao_multivariada_sinistros_files/figure-latex/coef-plot-1} \end{center}
+
+O painel evidencia a \textbf{divergência de efeitos} entre desfechos:
+\texttt{tipo\_via} (urbana) eleva fortemente pedestres (+0,93), bem mais
+do que motociclistas (+0,50) ou ciclistas (+0,43). Vias urbanas
+concentram desproporcionalmente sinistros com pedestres --- o achado
+substantivo central.
+
+\newpage
+
+\section{Resultados substantivos}\label{resultados-substantivos}
+
+Sintetizando a leitura dos coeficientes (controlando por volume de
+sinistros):
+
+\begin{itemize}
+\item
+  \textbf{Tipo de via.} Vias urbanas aumentam o envolvimento de todas as
+  categorias, mas o efeito sobre \textbf{pedestres} é o mais intenso ---
+  coerente com a circulação de pedestres concentrar-se no ambiente
+  urbano.
+\item
+  \textbf{Região administrativa.} Após controlar pelo volume, a
+  Metropolitana de São Paulo concentra mais sinistros com
+  \textbf{pedestres} do que o interior, enquanto várias regiões do
+  interior apresentam mais sinistros com \textbf{ciclistas} do que o
+  esperado pelo seu tamanho. O perfil de vulnerabilidade é
+  geograficamente heterogêneo.
+\item
+  \textbf{Tempo.} A tendência temporal é pequena, com leve queda para
+  pedestres e ciclistas e leve alta para motociclistas ao longo do
+  período.
+\item
+  \textbf{Volume (\texttt{log\_n}).} Domina o modelo, sobretudo para
+  motociclistas --- o que configura uma relação quase contábil
+  (sinistros com moto ≈ fração fixa do total) e explica o \(R^2\) de
+  0,99 dessa resposta.
+\end{itemize}
+
+\newpage
+
+\section{Limitações e conclusão}\label{limitacoes}
+
+\subsection{Limitações}\label{limitauxe7uxf5es}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Envolvimento ≠ ferimento.} As respostas contam sinistros em
+  que a categoria esteve \emph{presente}, não em que ela foi a vítima
+  ferida. Um atropelamento moto-pedestre soma a \(Y_1\) e \(Y_3\)
+  simultaneamente. O refinamento natural é cruzar a tabela
+  \texttt{sinistros} com a tabela \texttt{pessoas} (que traz
+  \texttt{gravidade\_lesao} e posição da vítima) e recontar ferimentos
+  por categoria --- direção futura imediata.
+\item
+  \textbf{Normalidade multivariada rejeitada.} Originada nos zeros
+  estruturais. Mitigada pela escolha do traço de Pillai e pelo grande
+  \(n\).
+\item
+  \textbf{Colinearidade volume × região (VIF ≈ 11).} Mantida
+  deliberadamente; afeta coeficientes isolados, não as previsões nem os
+  testes conjuntos.
+\end{enumerate}
+
+\subsection{Conclusão}\label{conclusuxe3o}
+
+A regressão multivariada confirmou que tipo de via, região, volume e
+tempo afetam \textbf{conjuntamente} o perfil de usuários vulneráveis em
+sinistros não fatais de São Paulo (todos os preditores significativos a
+p \textless{} 0,001 nas quatro estatísticas). O achado metodológico mais
+relevante é que a forte correlação aparente entre pedestres, ciclistas e
+motociclistas é quase inteiramente um efeito de exposição: controlado o
+volume, os resíduos tornam-se praticamente ortogonais. Substantivamente,
+o ambiente urbano e a Metropolitana de São Paulo destacam-se no
+envolvimento de pedestres, enquanto o interior apresenta perfil
+relativamente mais ciclístico --- heterogeneidade geográfica que
+recomenda políticas de segurança viária diferenciadas por território.
+
+\end{document}

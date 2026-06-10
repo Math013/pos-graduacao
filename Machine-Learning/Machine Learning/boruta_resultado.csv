@@ -1,0 +1,61 @@
+feature,rank,confirmada,tentativa
+qtd_pedestre,1,True,False
+circunscricao_MUNICIPAL,1,True,False
+administracao_CONCESSIONÁRIA,1,True,False
+administracao_DER,1,True,False
+administracao_PREFEITURA,1,True,False
+tp_sinistro_primario_CHOQUE,1,True,False
+tp_sinistro_primario_COLISAO,1,True,False
+tp_sinistro_primario_OUTROS,1,True,False
+municipio,1,True,False
+madrugada,1,True,False
+multiplos_veiculos,1,True,False
+tipo_via_VIAS URBANAS,1,True,False
+envolve_pedestre,1,True,False
+envolve_moto,1,True,False
+coord_valida,1,True,False
+envolve_pesado,1,True,False
+latitude,1,True,False
+qtd_bicicleta,1,True,False
+qtd_motocicleta,1,True,False
+qtd_automovel,1,True,False
+qtd_caminhao,1,True,False
+qtd_veic_outros,1,True,False
+longitude,1,True,False
+total_veiculos,1,True,False
+usuarios_vulneraveis,1,True,False
+hora_num,1,True,False
+hora_cos,1,True,False
+tipo_local_PUBLICO,1,True,False
+hora_sin,2,False,False
+turno_MANHA,3,False,False
+tp_sinistro_primario_NAO DISPONIVEL,4,False,False
+turno_TARDE,5,False,False
+regiao_administrativa_METROPOLITANA DE SÃO PAULO,6,False,False
+mes_sin,7,False,False
+circunscricao_FEDERAL,8,False,False
+turno_NOITE,9,False,False
+mes_cos,10,False,False
+qtd_onibus,11,False,False
+dia_da_semana_Quarta-feira,12,False,False
+dia_da_semana_Sábado,13,False,False
+dia_da_semana_Terça-feira,14,False,False
+regiao_administrativa_BAIXADA SANTISTA,14,False,False
+regiao_administrativa_SÃO JOSÉ DOS CAMPOS,17,False,False
+regiao_administrativa_SÃO JOSÉ DO RIO PRETO,17,False,False
+regiao_administrativa_CAMPINAS,17,False,False
+regiao_administrativa_SOROCABA,19,False,False
+dia_da_semana_Quinta-feira,20,False,False
+dia_da_semana_Sexta-feira,21,False,False
+dia_da_semana_Segunda-feira,21,False,False
+regiao_administrativa_MARÍLIA,23,False,False
+tipo_local_PRIVADO,24,False,False
+regiao_administrativa_RIBEIRÃO PRETO,25,False,False
+regiao_administrativa_REGISTRO,26,False,False
+regiao_administrativa_CENTRAL,28,False,False
+regiao_administrativa_BAURU,28,False,False
+regiao_administrativa_PRESIDENTE PRUDENTE,28,False,False
+regiao_administrativa_FRANCA,31,False,False
+administracao_DNIT,31,False,False
+regiao_administrativa_ITAPEVA,31,False,False
+regiao_administrativa_BARRETOS,33,False,False

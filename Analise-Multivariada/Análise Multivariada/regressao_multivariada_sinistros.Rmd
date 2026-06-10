@@ -1,0 +1,557 @@
+---
+title: "Regressão Multivariada: Perfil de Usuários Vulneráveis em Sinistros de Trânsito"
+subtitle: "Infosiga.SP — Sistema de Informações Gerenciais de Sinistros de Trânsito (2022–2025)"
+author: "Matheus"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    fig_caption: true
+    latex_engine: xelatex
+geometry: margin=2.5cm
+fontsize: 11pt
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.width = 9,
+  fig.height = 5
+)
+
+# Tema visual escuro reutilizado em todos os gráficos
+library(ggplot2)
+tema_escuro <- theme_minimal(base_size = 12) +
+  theme(
+    plot.background  = element_rect(fill = "#1a1a1a", color = NA),
+    panel.background = element_rect(fill = "#1a1a1a", color = NA),
+    panel.grid       = element_line(color = "#2e2e2e"),
+    text             = element_text(color = "gray80"),
+    strip.text       = element_text(color = "gray90", face = "bold"),
+    axis.text        = element_text(color = "gray60"),
+    plot.title       = element_text(color = "gray95", face = "bold"),
+    plot.subtitle    = element_text(color = "gray60", size = 9),
+    legend.position  = "bottom"
+  )
+
+# Paleta
+cor_laranja <- "#E87722"
+cor_clara   <- "#f0a050"
+cor_extra   <- "#ffd080"
+```
+
+# Introdução
+
+## Tema
+
+Este trabalho aplica **regressão linear multivariada** a dados de
+sinistros de trânsito do estado de São Paulo. O objetivo é investigar se
+fatores estruturais — tipo de via, região administrativa, volume de
+sinistros e tempo — afetam de forma diferenciada três categorias de
+usuário vulnerável: **pedestres, ciclistas e motociclistas**.
+
+A escolha do tema decorre da disponibilidade pública de dados ricos do
+**Infosiga.SP**, mantido pela Coordenadoria Geral de Segurança Viária do
+Detran-SP, e da adequação natural do problema à regressão multivariada:
+três desfechos correlacionados, medidos sobre as mesmas unidades, com
+fatores estruturais comuns como preditores.
+
+## A estrutura do problema
+
+A pergunta poderia, em princípio, ser respondida por três regressões
+univariadas independentes — uma por resposta. Essa abordagem, contudo,
+ignora que os três desfechos são correlacionados (emergem do mesmo
+sistema viário) e que testar o efeito de um fator sobre o vetor de
+respostas **como um todo** exige estatísticas que considerem a
+covariância entre elas (Wilks, Pillai, Lawley-Hotelling, Roy). A
+regressão multivariada fornece esse arcabouço.
+
+## Variáveis-resposta
+
+As três respostas, todas em escala $\log(1+y)$ para estabilização de
+variância:
+
+-   $Y_1$: nº de sinistros não fatais com **pedestres** envolvidos
+-   $Y_2$: nº de sinistros não fatais com **ciclistas** envolvidos
+-   $Y_3$: nº de sinistros não fatais com **motociclistas** envolvidos
+
+> **Nota de interpretação.** $Y_k$ conta sinistros em que a categoria
+> $k$ esteve *presente*, não necessariamente em que ela foi a vítima
+> ferida. Esta limitação é retomada na Seção \ref{limitacoes}.
+
+\newpage
+
+# Preparação dos dados
+
+A base do Infosiga é distribuída em formato *parquet*, com uma linha por
+sinistro registrado. A unidade de análise do modelo será a **célula**,
+definida pelo cruzamento de região administrativa $\times$ ano-mês
+$\times$ tipo de via.
+
+```{r pacotes}
+library(arrow)     # leitura de parquet
+library(dplyr)     # manipulação
+library(car)       # vif()
+library(ggplot2)   # gráficos
+```
+
+## Leitura e diagnóstico inicial
+
+```{r leitura}
+sinistros <- read_parquet("C:/Users/Matheus/Desktop/Arquivos_PUC/sinistros_2022-2026.parquet")
+
+dim(sinistros)
+table(sinistros$tipo_registro)
+table(sinistros$tipo_via)
+```
+
+A base traz **841.984 sinistros** entre 2022 e 2025, em 48 variáveis.
+Convivem três tipos de registro: não fatais (com vítimas feridas, 61%),
+notificações (registros sem boletim formal, 36%) e fatais (3%). Quanto à
+via, predominam as urbanas (84%) sobre estradas e rodovias (16%).
+
+## Filtros
+
+Mantêm-se apenas sinistros **não fatais** com tipo de via conhecido.
+Fatais são categoria substantivamente distinta (óbitos, não ferimentos);
+notificações carregam viés de subnotificação.
+
+```{r filtros}
+base <- sinistros %>%
+  filter(
+    tipo_registro == "SINISTRO NAO FATAL",
+    tipo_via %in% c("VIAS URBANAS", "ESTRADAS E RODOVIAS")
+  )
+
+dim(base)
+```
+
+Restam **516.126 sinistros** (61% da base original).
+
+## Construção das respostas e agregação
+
+As colunas `qtd_pedestre`, `qtd_bicicleta` e `qtd_motocicleta` registram
+o número de envolvidos de cada categoria, mas usam `NA` (não zero)
+quando a categoria não aparece no sinistro. Ou seja, **`NA` significa
+"categoria ausente"**. Por isso, a operação correta para construir as
+respostas agregadas é contar *quantos sinistros tiveram cada categoria
+presente* (contar não-`NA`), não somar valores.
+
+```{r agregacao}
+celulas <- base %>%
+  mutate(
+    tem_pedestre    = as.integer(!is.na(qtd_pedestre)),
+    tem_bicicleta   = as.integer(!is.na(qtd_bicicleta)),
+    tem_motocicleta = as.integer(!is.na(qtd_motocicleta))
+  ) %>%
+  group_by(regiao_administrativa, ano_mes_sinistro, tipo_via) %>%
+  summarise(
+    n_sinistros = n(),
+    y1_ped = sum(tem_pedestre),
+    y2_cic = sum(tem_bicicleta),
+    y3_mot = sum(tem_motocicleta),
+    .groups = "drop"
+  )
+
+dim(celulas)
+head(celulas, 6)
+```
+
+A agregação produz **1.664 células**.
+
+## Filtro de robustez e variáveis derivadas
+
+Células com pouquíssimos sinistros tornam as contagens instáveis.
+Aplica-se um piso de **30 sinistros por célula**. Em seguida,
+constroem-se as respostas em escala log, o controle de exposição
+`log_n`, o índice de tempo `t` (meses desde jan/2022) e o fator de
+região com referência na Metropolitana de São Paulo.
+
+```{r preparacao}
+celulas_f <- celulas %>%
+  filter(n_sinistros >= 30) %>%
+  mutate(
+    log_y1 = log1p(y1_ped),
+    log_y2 = log1p(y2_cic),
+    log_y3 = log1p(y3_mot),
+    log_n  = log(n_sinistros),
+    ano    = as.integer(substr(ano_mes_sinistro, 1, 4)),
+    mes    = as.integer(substr(ano_mes_sinistro, 6, 7)),
+    t      = (ano - 2022) * 12 + mes,
+    regiao = relevel(factor(regiao_administrativa),
+                     ref = "METROPOLITANA DE SÃO PAULO"),
+    tipo_via = factor(tipo_via)
+  )
+
+dim(celulas_f)
+summary(celulas_f$n_sinistros)
+```
+
+Sobram **1.433 células** (86% da agregação), com mediana de 202
+sinistros por célula — tamanho confortável para inferência multivariada.
+
+\newpage
+
+# Análise descritiva
+
+## Desfechos e correlações
+
+A correlação entre os desfechos justifica o modelo conjunto; a
+correlação entre preditores antecipa a discussão de multicolinearidade.
+
+```{r correlacoes}
+# Correlação entre as respostas (escala log): justifica o modelo conjunto
+round(cor(celulas_f[, c("log_y1", "log_y2", "log_y3")]), 3)
+
+# Correlação dos desfechos com o controle de exposição
+round(cor(celulas_f[, c("log_y1", "log_y2", "log_y3", "log_n")]), 3)
+```
+
+As três respostas exibem correlações altas (0,79 a 0,93). Boa parte
+dessa associação, porém, vem de um **componente comum de exposição**: as
+correlações de cada resposta com `log_n` também são altíssimas (0,79 a
+0,98). Esse é o motivo central de incluir `log_n` como controle — sem
+ele, o modelo atribuiria efeitos parecidos às três respostas, refletindo
+apenas o tamanho da célula.
+
+## Boxplots dos desfechos
+
+```{r boxplot-desfechos, fig.height=4.5}
+vars_desfecho <- c("log_y1", "log_y2", "log_y3")
+rotulos <- c(log_y1 = "Pedestres", log_y2 = "Ciclistas", log_y3 = "Motociclistas")
+
+df_long <- do.call(rbind, lapply(vars_desfecho, function(v) {
+  data.frame(variavel = rotulos[v], valor = celulas_f[[v]])
+}))
+
+ggplot(df_long, aes(x = variavel, y = valor, fill = variavel)) +
+  geom_boxplot(alpha = 0.8, outlier.color = "white",
+               outlier.size = 1, linewidth = 0.4) +
+  scale_fill_manual(values = c("Pedestres" = cor_laranja,
+                               "Ciclistas" = "gray60",
+                               "Motociclistas" = cor_clara)) +
+  labs(title = "Distribuição dos desfechos (escala log)",
+       subtitle = "Infosiga.SP — 1.433 células (região × mês × tipo de via)",
+       x = NULL, y = "log(1 + nº de sinistros)", fill = NULL) +
+  tema_escuro + theme(legend.position = "none")
+```
+
+Motociclistas têm nível muito superior (mediana em torno de 4,8 na
+escala log, contra \~1,9 das demais), refletindo a presença massiva de
+motocicletas nos sinistros do estado.
+
+## Dispersão: preditor de exposição vs. desfechos
+
+```{r scatter-exposicao, fig.height=4}
+df_sc <- do.call(rbind, lapply(vars_desfecho, function(v) {
+  data.frame(desfecho = rotulos[v], x = celulas_f$log_n, y = celulas_f[[v]])
+}))
+
+ggplot(df_sc, aes(x = x, y = y)) +
+  geom_point(color = cor_laranja, alpha = 0.4, size = 1.2) +
+  geom_smooth(method = "lm", color = "white", linewidth = 0.7, se = FALSE) +
+  facet_wrap(~desfecho, scales = "free_y") +
+  labs(title = "Relação entre volume de sinistros (log_n) e desfechos",
+       subtitle = "Linha branca = tendência linear",
+       x = "log(nº de sinistros na célula)", y = NULL) +
+  tema_escuro
+```
+
+A relação quase perfeita entre `log_n` e motociclistas antecipa o $R^2$
+elevado dessa resposta — sinistros com moto são quase uma fração fixa do
+total.
+
+\newpage
+
+# Diagnósticos pré-regressão
+
+## Normalidade multivariada dos desfechos
+
+Avalia-se a normalidade multivariada via distância de Mahalanobis
+comparada à distribuição qui-quadrado de referência (teste de
+Kolmogorov-Smirnov).
+
+```{r normalidade-pre}
+Y_desc <- as.matrix(celulas_f[, vars_desfecho])
+xbar   <- colMeans(Y_desc)
+S_inv  <- solve(cov(Y_desc))
+d2     <- apply(Y_desc, 1, function(x) t(x - xbar) %*% S_inv %*% (x - xbar))
+
+ks.test(d2, "pchisq", df = length(vars_desfecho))
+```
+
+O teste rejeita a normalidade multivariada (p \< 0,001), o que é
+esperado dado o acúmulo de zeros em pedestres e ciclistas (células onde
+a categoria não apareceu). Como será discutido na Seção \ref{testes}, o
+traço de Pillai é robusto a esse tipo de desvio, e o tamanho amostral
+($n = 1433$) sustenta a inferência assintótica.
+
+\newpage
+
+# Ajuste da regressão multivariada
+
+O ajuste usa `lm()` com `cbind()` no lado esquerdo da fórmula — é o
+`cbind` que sinaliza ao R tratar-se de regressão multivariada (múltiplas
+respostas).
+
+```{r ajuste}
+fit <- lm(
+  cbind(log_y1, log_y2, log_y3) ~ tipo_via + log_n + t + regiao,
+  data = celulas_f
+)
+
+coef(fit)[1:4, ]   # coeficientes principais (uma coluna por desfecho)
+```
+
+```{r summary-fit}
+summary(fit)       # resumo por equação (nível univariado)
+```
+
+Os coeficientes de determinação são **0,92 (pedestres), 0,76 (ciclistas)
+e 0,99 (motociclistas)**. O valor quase perfeito de motociclistas
+reflete o papel dominante de `log_n`: como motocicletas estão na maioria
+dos sinistros, a contagem com moto é quase função determinística do
+total.
+
+Um ponto conceitual importante: cada coluna de $\hat{\mathbf{B}}$ é
+**idêntica** à que se obteria ajustando aquela resposta isoladamente por
+OLS. A informação genuinamente multivariada não está nos coeficientes, e
+sim na matriz de covariância dos resíduos $\hat{\boldsymbol{\Sigma}}$ —
+base dos testes conjuntos.
+
+\newpage
+
+# Testes de hipótese multivariados {#testes}
+
+Os testes a seguir avaliam a significância conjunta de cada preditor
+sobre o vetor $(Y_1, Y_2, Y_3)$. Todas as quatro estatísticas derivam
+dos autovalores da matriz $\mathbf{H}\mathbf{E}^{-1}$ (hipótese sobre
+erro), combinados de formas diferentes: Wilks via produto, Pillai via
+soma de proporções, Lawley-Hotelling via soma simples, Roy via maior
+autovalor.
+
+```{r manova}
+fit_manova <- manova(
+  cbind(log_y1, log_y2, log_y3) ~ tipo_via + log_n + t + regiao,
+  data = celulas_f
+)
+
+summary(fit_manova, test = "Wilks")             # Lambda de Wilks
+summary(fit_manova, test = "Pillai")            # Traço de Pillai
+summary(fit_manova, test = "Hotelling-Lawley")  # Traço de Lawley-Hotelling
+summary(fit_manova, test = "Roy")               # Maior raiz de Roy
+```
+
+**Todos os preditores são fortemente significativos (p \< 0,001) nas
+quatro estatísticas.** A concordância completa é esperada quando os
+efeitos são fortes e bem definidos; as quatro só divergem em situações
+limítrofes. O traço de Pillai é tomado como referência principal por sua
+robustez a desvios de normalidade (relevante dado o diagnóstico
+anterior).
+
+Atenção à `regiao`: por ser fator de 16 níveis, o teste avalia o **bloco
+inteiro** das 15 dummies de uma vez. A hipótese nula — "nenhuma região
+difere da Metropolitana de São Paulo em nenhuma das respostas" — é
+rejeitada com folga, indicando heterogeneidade geográfica significativa.
+
+> **Nota técnica.** O `summary.manova` usa soma de quadrados sequencial
+> (Tipo I), de modo que a estatística de cada termo depende da ordem de
+> entrada na fórmula. A conclusão (todos significativos) é robusta à
+> ordem.
+
+\newpage
+
+# Decomposição manual: matrizes B, $\Sigma$, H e E
+
+Para explicitar a mecânica do modelo, reconstroem-se os estimadores a
+partir das matrizes, sem usar `lm()`.
+
+```{r decomposicao}
+X <- model.matrix(fit)
+Y <- as.matrix(celulas_f[, vars_desfecho])
+n <- nrow(celulas_f)
+p <- ncol(X)
+
+# Estimador de mínimos quadrados: B = (X'X)^-1 X'Y
+B_hat <- solve(t(X) %*% X) %*% t(X) %*% Y
+round(B_hat[1:4, ], 3)   # confere com coef(fit)
+
+# Resíduos e matriz de covariância dos erros
+Y_hat   <- X %*% B_hat
+E_resid <- Y - Y_hat
+Sigma_hat <- (t(E_resid) %*% E_resid) / (n - p)
+round(Sigma_hat, 4)
+
+# Em escala de correlação
+round(cov2cor(Sigma_hat), 3)
+```
+
+A leitura de $\hat{\boldsymbol{\Sigma}}$ é o **achado metodológico
+central**. Enquanto as respostas brutas tinham correlações de 0,79 a
+0,93, a correlação entre os **resíduos** é praticamente nula (entre
+$-0,12$ e $0,08$). Ou seja: quase toda a associação observada entre
+pedestres, ciclistas e motociclistas era efeito de escala (volume de
+circulação). Removido esse componente comum via `log_n`, o que resta de
+cada resposta é praticamente ortogonal às demais — não há um "mecanismo
+de vulnerabilidade compartilhado" além da exposição.
+
+\newpage
+
+# Diagnóstico dos resíduos multivariados
+
+## Colinearidade (VIF)
+
+```{r vif}
+# A matriz X é a mesma para as três respostas; o VIF independe da resposta
+vif(lm(log_y1 ~ tipo_via + log_n + t + regiao, data = celulas_f))
+```
+
+O VIF de `log_n` é elevado (≈ 11), por colinearidade com as dummies de
+região (ambos capturam o "tamanho" da célula). **Optou-se por manter**
+`log_n`: a colinearidade afeta a precisão dos coeficientes individuais
+de volume/região — que não são o foco —, mas não as previsões nem os
+testes conjuntos de Pillai/Wilks. O controle de exposição é
+conceitualmente necessário para colocar as regiões em base comparável.
+
+## Outliers multivariados (distância de Mahalanobis)
+
+```{r outliers}
+residuos <- as.data.frame(E_resid)
+colnames(residuos) <- c("res_ped", "res_cic", "res_mot")
+
+maha <- mahalanobis(residuos,
+                    center = colMeans(residuos),
+                    cov    = cov(residuos))
+
+corte <- qchisq(0.975, df = length(vars_desfecho))
+outliers <- which(maha > corte)
+length(outliers)               # quantidade
+celulas_f$regiao_administrativa[outliers][1:10]   # exemplos
+```
+
+São **79 células** (5,5%) acima do corte qui-quadrado de 97,5% —
+proporção saudável, sem dominância de uma única região.
+
+## Visualização dos resíduos multivariados
+
+```{r residuos-elipse, fig.height=5}
+df_resid <- residuos
+df_resid$maha    <- maha
+df_resid$outlier <- maha > corte
+
+ggplot(df_resid, aes(x = res_ped, y = res_mot, color = outlier)) +
+  geom_point(size = 2, alpha = 0.7) +
+  stat_ellipse(aes(group = 1), color = cor_laranja,
+               linetype = "dashed", linewidth = 0.8) +
+  geom_hline(yintercept = 0, color = "gray50", linetype = "dotted") +
+  geom_vline(xintercept = 0, color = "gray50", linetype = "dotted") +
+  scale_color_manual(values = c("FALSE" = "gray60", "TRUE" = cor_laranja),
+                     labels = c("Normal", "Outlier multivariado")) +
+  labs(title = "Resíduos multivariados: pedestres × motociclistas",
+       subtitle = "Elipse de 95% baseada na distância de Mahalanobis",
+       x = "Resíduo (pedestres)", y = "Resíduo (motociclistas)", color = NULL) +
+  tema_escuro
+```
+
+## Coeficientes estimados por desfecho
+
+```{r coef-plot, fig.height=4.5}
+df_coef <- as.data.frame(coef(fit))
+df_coef$preditor <- rownames(df_coef)
+# Manter apenas os preditores principais (não as 15 dummies de região)
+df_coef <- df_coef[df_coef$preditor %in%
+                     c("tipo_viaVIAS URBANAS", "log_n", "t"), ]
+
+df_coef_long <- do.call(rbind, lapply(vars_desfecho, function(v) {
+  data.frame(preditor = df_coef$preditor, desfecho = rotulos[v],
+             coeficiente = df_coef[[v]])
+}))
+
+ggplot(df_coef_long, aes(x = preditor, y = coeficiente, fill = preditor)) +
+  geom_col(width = 0.6) +
+  geom_hline(yintercept = 0, color = "gray50", linetype = "dashed") +
+  facet_wrap(~desfecho, scales = "free_y") +
+  scale_fill_manual(values = c("tipo_viaVIAS URBANAS" = cor_laranja,
+                               "log_n" = cor_clara, "t" = cor_extra)) +
+  labs(title = "Coeficientes estimados por preditor e desfecho",
+       subtitle = "Efeitos principais (regiões omitidas)",
+       x = NULL, y = "Coeficiente estimado", fill = NULL) +
+  tema_escuro + theme(legend.position = "none",
+                      axis.text.x = element_text(angle = 20, hjust = 1))
+```
+
+O painel evidencia a **divergência de efeitos** entre desfechos:
+`tipo_via` (urbana) eleva fortemente pedestres (+0,93), bem mais do que
+motociclistas (+0,50) ou ciclistas (+0,43). Vias urbanas concentram
+desproporcionalmente sinistros com pedestres — o achado substantivo
+central.
+
+\newpage
+
+# Resultados substantivos
+
+Sintetizando a leitura dos coeficientes (controlando por volume de
+sinistros):
+
+-   **Tipo de via.** Vias urbanas aumentam o envolvimento de todas as
+    categorias, mas o efeito sobre **pedestres** é o mais intenso —
+    coerente com a circulação de pedestres concentrar-se no ambiente
+    urbano.
+
+-   **Região administrativa.** Após controlar pelo volume, a
+    Metropolitana de São Paulo concentra mais sinistros com
+    **pedestres** do que o interior, enquanto várias regiões do interior
+    apresentam mais sinistros com **ciclistas** do que o esperado pelo
+    seu tamanho. O perfil de vulnerabilidade é geograficamente
+    heterogêneo.
+
+-   **Tempo.** A tendência temporal é pequena, com leve queda para
+    pedestres e ciclistas e leve alta para motociclistas ao longo do
+    período.
+
+-   **Volume (`log_n`).** Domina o modelo, sobretudo para motociclistas
+    — o que configura uma relação quase contábil (sinistros com moto ≈
+    fração fixa do total) e explica o $R^2$ de 0,99 dessa resposta.
+
+\newpage
+
+# Limitações e conclusão {#limitacoes}
+
+## Limitações
+
+1.  **Envolvimento ≠ ferimento.** As respostas contam sinistros em que a
+    categoria esteve *presente*, não em que ela foi a vítima ferida. Um
+    atropelamento moto-pedestre soma a $Y_1$ e $Y_3$ simultaneamente. O
+    refinamento natural é cruzar a tabela `sinistros` com a tabela
+    `pessoas` (que traz `gravidade_lesao` e posição da vítima) e
+    recontar ferimentos por categoria — direção futura imediata.
+
+2.  **Normalidade multivariada rejeitada.** Originada nos zeros
+    estruturais. Mitigada pela escolha do traço de Pillai e pelo grande
+    $n$.
+
+3.  **Colinearidade volume × região (VIF ≈ 11).** Mantida
+    deliberadamente; afeta coeficientes isolados, não as previsões nem
+    os testes conjuntos.
+
+## Conclusão
+
+A regressão multivariada confirmou que tipo de via, região, volume e
+tempo afetam **conjuntamente** o perfil de usuários vulneráveis em
+sinistros não fatais de São Paulo (todos os preditores significativos a
+p \< 0,001 nas quatro estatísticas). O achado metodológico mais
+relevante é que a forte correlação aparente entre pedestres, ciclistas e
+motociclistas é quase inteiramente um efeito de exposição: controlado o
+volume, os resíduos tornam-se praticamente ortogonais. Substantivamente,
+o ambiente urbano e a Metropolitana de São Paulo destacam-se no
+envolvimento de pedestres, enquanto o interior apresenta perfil
+relativamente mais ciclístico — heterogeneidade geográfica que recomenda
+políticas de segurança viária diferenciadas por território.

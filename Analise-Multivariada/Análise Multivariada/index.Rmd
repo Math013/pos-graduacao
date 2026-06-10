@@ -1,0 +1,206 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# --- 1. Definindo a matriz de covariância dos slides ---
+S <- matrix(c(3, 1,
+              1, 3), nrow = 2, byrow = TRUE)
+# byrow = TRUE: preenche a matriz linha por linha
+# (como escrevemos no papel)
+```
+
+```{r}
+print(S)
+```
+```{r}
+resultado <- eigen(S)
+print(resultado)
+```
+```{r}
+help(eigen)
+```
+
+```{r}
+print(cbind( 1, 5:1, 1:5))
+```
+```{r}
+print(cbind(-1, c(1:2,0), 0:2))
+```
+
+```{r}
+cbind(1, c(1,-1))
+```
+```{r}
+help(cbind)
+```
+
+```{r}
+rbind(1, c(1,-1))
+```
+```{r}
+print(rbind(-1, c(1:2,0), 0:2))
+```
+```{r}
+print(cbind(-1, c(1:2,0), 0:2))
+```
+```{r}
+resultado
+```
+```{r}
+# --- 2. Calculando autovalores e autovetores ---
+autovalores  <- resultado$values   # λ1 = 4, λ2 = 2
+autovetores  <- resultado$vectors  # cada coluna é um autovetor
+
+cat("Autovalores:\n"); print(autovalores)
+cat("\nAutovetores (colunas):\n"); print(autovetores)
+```
+```{r}
+help(matrix)
+```
+
+```{r}
+# --- 3. Verificando a decomposição espectral PΛPᵀ = S ---
+P <- autovetores
+Lambda <- diag(autovalores)
+# diag() com um vetor cria uma matriz diagonal
+# com os elementos do vetor na diagonal principal
+```
+
+```{r}
+print(Lambda)
+```
+```{r}
+S_reconstruida <- P %*% Lambda %*% t(P)
+# %*% é o operador de multiplicação matricial em R
+# t()  é a transposta
+```
+
+```{r}
+cat("\nS reconstruída (deve ser igual a S original):\n")
+print(round(S_reconstruida, 10))  # arredonda erros numéricos ínfimos
+```
+```{r}
+variancia_total    <- sum(autovalores)
+variancia_explicada <- autovalores / variancia_total * 100
+
+cat("\nVariância explicada por cada componente (%):\n")
+print(round(variancia_explicada, 1))
+```
+
+```{r}
+variancia_explicada
+```
+```{r}
+# --- 5. Distâncias: Euclidiana, Manhattan e Mahalanobis ---
+x <- c(1, 2)
+y <- c(4, 6)
+```
+
+```{r}
+# Euclidiana
+d_euclidiana <- sqrt(sum((x - y)^2))
+cat("\nDistância Euclidiana:", d_euclidiana)  # 5
+```
+
+```{r}
+# Manhattan
+d_manhattan <- sum(abs(x - y))
+cat("\nDistância Manhattan:", d_manhattan)  # 7
+```
+
+```{r}
+# Mahalanobis — requer a matriz de covariância S
+S_cov <- matrix(c(2, 1, 1, 3), nrow = 2)
+S_inv <- solve(S_cov)
+# solve() com uma matriz calcula sua inversa
+```
+
+```{r}
+d_vec <- x - y
+d_mahal <- sqrt(t(d_vec) %*% S_inv %*% d_vec)
+cat("\nDistância Mahalanobis:", round(d_mahal, 3))  # 2.646
+```
+```{r}
+data(iris)
+```
+
+```{r}
+S_iris <- cov(iris[, 1:4])
+```
+
+```{r}
+cat("\nMatriz de Covariância (iris):\n")
+print(round(S_iris, 3))
+```
+```{r}
+eigen_iris <- eigen(S_iris)
+```
+
+```{r}
+cat("\nAutovalores (iris):\n")
+print(round(eigen_iris$values, 3))
+```
+```{r}
+# Scree plot — gráfico de cotovelo para ver quantos componentes importam
+var_exp <- eigen_iris$values / sum(eigen_iris$values) * 100
+plot(var_exp, type = "b",
+     xlab = "Componente", ylab = "Variância Explicada (%)",
+     main = "Scree Plot — Iris",
+     pch = 19, col = "steelblue")
+# type = "b": both (pontos + linhas)
+# pch = 19: círculo preenchido
+```
+
+```{r}
+# Matriz de dispersão (scatterplot matrix)
+pairs(iris[, 1:4],
+      col = as.integer(iris$Species),
+      pch = 19,
+      main = "Matriz de Dispersão — Iris")
+# col: colorir por espécie (3 cores para 3 grupos)
+# pch = 19: pontos sólidos
+```
+
+```{r}
+diag(c(8, 2, 8, 9))
+```
+```{r}
+diag(matrix(c(8, 2, 8, 9), nrow=2))
+```
+```{r}
+matrix(c(8, 2, 8, 9), nrow=1)
+```
+
+```{r}
+matrix(c(8, 2, 8, 9), nrow=2)
+```
+
+```{r}
+matrix(c(8, 2, 8, 9), nrow=4)
+```
+```{r}
+A <- matrix(c(1,2,3,4), nrow=2)
+A
+```
+
+```{r}
+B <- matrix(c(5,6,7,8), nrow=2)
+B
+```
+```{r}
+A * B # Multiplica elemento a elemento
+```
+```{r}
+A %*% B # Linha de A × coluna de B, multiplica par a par e soma. Multiplicação matricial real (produto interno linha × coluna)
+```
+
+```{r}
+# Matriz quadrada → funciona
+eigen(matrix(c(3,1,1,3), nrow=2))
+
+# Matriz não-quadrada → erro
+eigen(matrix(1:6, nrow=2))  # "non-square matrix in 'eigen'"
+```
+

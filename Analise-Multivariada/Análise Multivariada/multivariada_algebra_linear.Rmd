@@ -1,0 +1,728 @@
+---
+title: "Álgebra Linear para Estatística Multivariada"
+author: "Prof. Vinícius Osterne, PhD"
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.width = 7,
+  fig.height = 6
+)
+```
+
+```{r pacotes}
+# install.packages(c("ggplot2", "grid", "patchwork"))
+library(ggplot2)
+library(patchwork)
+```
+
+------------------------------------------------------------------------
+
+# Função Auxiliar: `plot_vetores()`
+
+Para visualizar os conceitos geométricos de álgebra linear, utilizamos uma função personalizada que plota vetores no plano 2D usando `ggplot2`. Pense nela como um **papel quadriculado com setas**: cada vetor é desenhado a partir da origem.
+
+```{r funcao-plot-vetores}
+plot_vetores <- function(vetores, cores = NULL, labels = NULL, titulo = "") {
+  # Cria um data.frame com as coordenadas de início (sempre a origem) e fim de cada vetor
+  df <- data.frame(
+    x    = rep(0, nrow(vetores)),   # todas as setas começam em x = 0
+    y    = rep(0, nrow(vetores)),   # todas as setas começam em y = 0
+    xend = vetores[, 1],            # coordenada x do ponto final
+    yend = vetores[, 2],            # coordenada y do ponto final
+    cor  = if (!is.null(cores))  cores  else paste0("v", 1:nrow(vetores)),
+    lab  = if (!is.null(labels)) labels else paste0("v", 1:nrow(vetores))
+  )
+
+  lim <- max(abs(vetores)) * 1.3  # define os limites dos eixos automaticamente
+
+  ggplot(df) +
+    geom_segment(aes(x = x, y = y, xend = xend, yend = yend, color = cor),
+                 arrow = arrow(length = unit(0.3, "cm")), linewidth = 1.2) +
+    geom_text(aes(x = xend * 1.1, y = yend * 1.1, label = lab, color = cor),
+              size = 5, fontface = "bold") +
+    geom_hline(yintercept = 0, color = "grey70") +
+    geom_vline(xintercept = 0, color = "grey70") +
+    scale_color_brewer(palette = "Set1", guide = "none") +
+    coord_fixed(xlim = c(-lim, lim), ylim = c(-lim, lim)) +
+    labs(title = titulo, x = "x", y = "y") +
+    theme_minimal(base_size = 13)
+}
+```
+
+**Exemplo:** soma de dois vetores `u` e `v`, ilustrando a Regra do Paralelogramo — imagine que cada vetor é um passo em uma direção; a soma é o atalho direto do início ao destino final.
+
+```{r soma-vetores-exemplo}
+u    <- c(2, 1)
+v    <- c(1, 3)
+soma <- u + v  # Regra do paralelogramo
+
+vets <- rbind(u, v, soma)
+
+plot_vetores(vets,
+             cores  = c("tomato", "steelblue", "darkgreen"),
+             labels = c("u = (2,1)", "v = (1,3)", "u+v"),
+             titulo = "Soma de Vetores — Regra do Paralelogramo")
+```
+
+------------------------------------------------------------------------
+
+# Escalar
+
+Um **escalar** é simplesmente um número real — um único valor sem direção. É o "volume do rádio": você pode aumentar ou diminuir, mas não aponta para lugar nenhum.
+
+```{r escalar}
+a <- 5
+b <- -3.14
+c <- sqrt(2)
+
+cat("a =", a, "\nb =", b, "\nc =", round(c, 5), "\n")
+```
+
+------------------------------------------------------------------------
+
+# Vetor
+
+Um **vetor** é uma sequência ordenada de escalares. Se um escalar é o volume do rádio, um vetor é o endereço completo: rua, número e bairro — cada componente carrega uma informação distinta.
+
+```{r vetor}
+x <- c(1, 2, 3)
+y <- c(4, 0, -1)
+
+# Comprimento (norma euclidiana) — "distância" do vetor até a origem
+norma_x  <- sqrt(sum(x^2))      # cálculo manual: raiz da soma dos quadrados
+norma_x2 <- norm(x, type = "2") # função nativa do R
+
+cat("||x|| calculado manualmente:", norma_x, "\n")
+cat("||x|| via norm():", norma_x2, "\n")
+```
+
+```{r soma-vetores}
+soma2 <- x + y
+
+vets2 <- rbind(x[1:2], y[1:2], soma2[1:2])  # exibindo apenas 2D para o gráfico
+
+plot_vetores(vets2,
+             cores  = c("tomato", "steelblue", "darkgreen"),
+             labels = c("x = (1,2)", "y = (4,0)", "x+y"),
+             titulo = "Soma de Vetores")
+```
+
+> **Nota:** o gráfico exibe apenas as duas primeiras componentes de `x` e `y`, pois estamos em 2D. O vetor completo tem 3 dimensões.
+
+------------------------------------------------------------------------
+
+# Produto Interno
+
+O **produto interno** (ou produto escalar) entre dois vetores mede o quanto eles "caminham juntos" na mesma direção. É como perguntar: *esses dois amigos têm gostos parecidos?*
+
+$$\langle x, y \rangle = \sum_{i=1}^{n} x_i \cdot y_i$$
+
+```{r produto-interno}
+x <- c(1, 2, 3)
+y <- c(4, 0, -1)
+
+prod_interno  <- sum(x * y)          # forma explícita: soma dos produtos elemento a elemento
+prod_interno2 <- as.numeric(x %*% y) # forma matricial: operador %*%
+
+cat("Produto interno (sum):", prod_interno, "\n")
+cat("Produto interno (%*%):", prod_interno2, "\n")
+```
+
+## Vetores Ortogonais
+
+Dois vetores são **ortogonais** (perpendiculares) quando seu produto interno é zero — como os eixos x e y de um mapa.
+
+```{r ortogonais}
+u <- c(1, 0)
+v <- c(0, 1)
+
+cat("<u, v> =", sum(u * v), "→ ortogonais!\n")
+```
+
+## Vetores Paralelos
+
+Dois vetores são **paralelos** quando um é múltiplo escalar do outro. Neste caso, o produto interno é igual ao produto das normas.
+
+```{r paralelos}
+u2 <- c(1, 2, 3)
+v2 <- c(2, 4, 6)  # v2 = 2 * u2
+
+cat("<u2, v2> =", sum(u2 * v2), "\n")
+cat("||u2|| × ||v2|| =", norm(u2, "2") * norm(v2, "2"), "\n")
+cat("(iguais → vetores paralelos)\n")
+```
+
+## Produto Interno e Covariância
+
+Uma conexão elegante: se $x$ e $y$ são vetores **centrados** (média zero), a covariância amostral nada mais é do que o produto interno dividido por $(n-1)$.
+
+$$\text{Cov}(x, y) = \frac{\langle x_c,\, y_c \rangle}{n - 1}$$
+
+```{r cov-produto-interno}
+n   <- 5
+x3  <- c(2, 4, 4, 4, 5) - mean(c(2, 4, 4, 4, 5))  # centralizado
+y3  <- c(1, 3, 4, 5, 7) - mean(c(1, 3, 4, 5, 7))  # centralizado
+
+cov_via_prod_interno <- sum(x3 * y3) / (n - 1)
+cov_via_funcao       <- cov(c(2, 4, 4, 4, 5), c(1, 3, 4, 5, 7))
+
+cat("Covariância via produto interno:", cov_via_prod_interno, "\n")
+cat("Covariância via cov():", cov_via_funcao, "\n")
+```
+
+------------------------------------------------------------------------
+
+# Ângulo Entre Vetores
+
+O ângulo entre dois vetores é dado pela fórmula do cosseno. Pense nisso como medir o quanto duas setas "concordam" em direção:
+
+$$\cos\theta = \frac{\langle x, y \rangle}{\|x\| \cdot \|y\|}$$
+
+```{r angulo}
+x <- c(1, 2, 3)
+y <- c(4, 0, -1)
+
+cos_theta   <- sum(x * y) / (norm(x, "2") * norm(y, "2"))
+theta_rad   <- acos(cos_theta)
+theta_graus <- theta_rad * 180 / pi
+
+cat("cos(θ) =", round(cos_theta, 4), "\n")
+cat("θ =", round(theta_graus, 2), "graus\n")
+```
+
+```{r angulo-2d}
+a2d    <- c(3, 1)
+b2d    <- c(1, 3)
+cos_ab <- sum(a2d * b2d) / (norm(a2d, "2") * norm(b2d, "2"))
+
+cat("Ângulo entre a e b:", round(acos(cos_ab) * 180/pi, 2), "graus\n")
+```
+
+------------------------------------------------------------------------
+
+# Vetor Ortogonal
+
+```{r projecao}
+x <- c(3, 4)
+y <- c(1, 0)  # eixo x
+
+proj    <- (sum(x * y) / sum(y * y)) * y
+residuo <- x - proj
+
+cat("Projeção de x sobre y:", proj, "\n")
+cat("Resíduo (x - proj):", residuo, "\n")
+cat("<resíduo, y> =", sum(residuo * y))
+```
+
+```{r projecao-plot}
+df <- data.frame(
+  x    = c(0, 0, 0, proj[1]),
+  y    = c(0, 0, 0, proj[2]),
+  xend = c(x[1], y[1]*4, proj[1], x[1]),
+  yend = c(x[2], y[2]*4, proj[2], x[2]),
+  nome = c("x = (3,4)", "y = (1,0)", "proj(x→y) = (3,0)", "resíduo = (0,4)"),
+  cor  = c("tomato", "steelblue", "darkgreen", "purple")
+)
+
+# Quadradinho de 90° indicando ortogonalidade
+quad_size <- 0.2
+quadrado <- data.frame(
+  x    = c(proj[1], proj[1] - quad_size, proj[1] - quad_size),
+  y    = c(proj[2], proj[2], proj[2] + quad_size),
+  xend = c(proj[1] - quad_size, proj[1] - quad_size, proj[1]),
+  yend = c(proj[2], proj[2] + quad_size, proj[2] + quad_size)
+)
+
+ggplot() +
+  geom_segment(data = df,
+               aes(x = x, y = y, xend = xend, yend = yend, color = cor),
+               arrow = arrow(length = unit(0.3, "cm"), type = "closed"),
+               linewidth = 1.3) +
+  geom_segment(data = quadrado,
+               aes(x = x, y = y, xend = xend, yend = yend),
+               color = "black", linewidth = 0.7) +
+  geom_label(data = df,
+             aes(x = (x + xend) / 2, y = (y + yend) / 2,
+                 label = nome, color = cor),
+             size = 4, fontface = "bold", fill = "white", label.size = 0) +
+  annotate("text", x = 1.5, y = -1,
+           label = "<resíduo, y> = 0  →  ortogonais!",
+           color = "black", size = 4.5, fontface = "italic") +
+  geom_hline(yintercept = 0, color = "grey70") +
+  geom_vline(xintercept = 0, color = "grey70") +
+  scale_color_identity() +
+  coord_fixed(xlim = c(-1, 5), ylim = c(-1.5, 5)) +
+  labs(title    = "Vetor Ortogonal de x sobre y",
+       subtitle = "O resíduo (x - proj) é perpendicular a y quando <resíduo, y> = 0",
+       x = "X", y = "Y") +
+  theme_minimal(base_size = 13)
+```
+
+# Vetor de Mesma direção
+
+```{r}
+x <- c(3, 2)
+y <- c(1, 4)
+
+produto_interno <- sum(x * y)
+
+proj <- (produto_interno / sum(y * y)) * y
+residuo <- x - proj
+
+cat("Projeção de x sobre y:", proj, "\n")
+cat("Resíduo (x - proj):", residuo, "\n")
+cat("<resíduo, y> =", round(sum(residuo * y)))
+```
+
+```{r projecao-plot}
+df <- data.frame(
+  x    = c(0,      0,       0,       proj[1]),
+  y    = c(0,      0,       0,       proj[2]),
+  xend = c(x[1],  y[1]*1,  proj[1], x[1]),
+  yend = c(x[2],  y[2]*1,  proj[2], x[2]),
+  nome = c("x = (3,2)", "y = (1,4)", 
+           "proj(x→y) = (0.65, 2.59)", 
+           "resíduo = (2.35, -0.59)"),
+  cor  = c("tomato", "steelblue", "darkgreen", "purple")
+)
+
+# Quadradinho perpendicular correto para y = (1,4)
+# Normaliza y e acha o vetor perpendicular
+yn   <- y / sqrt(sum(y^2))          # direção de y normalizada
+perp <- c(-yn[2], yn[1])            # perpendicular (rotação 90°)
+qs   <- 0.15                        # tamanho do quadrado
+
+p1 <- c(proj[1], proj[2])
+p2 <- p1 + perp * qs
+p3 <- p2 + yn  * qs
+p4 <- p1 + yn  * qs
+
+quadrado <- data.frame(
+  x    = c(p1[1], p2[1], p3[1]),
+  y    = c(p1[2], p2[2], p3[2]),
+  xend = c(p2[1], p3[1], p4[1]),
+  yend = c(p2[2], p3[2], p4[2])
+)
+
+ggplot() +
+  geom_segment(data = df,
+               aes(x = x, y = y, xend = xend, yend = yend, color = cor),
+               arrow = arrow(length = unit(0.3, "cm"), type = "closed"),
+               linewidth = 1.3) +
+  geom_segment(data = quadrado,
+               aes(x = x, y = y, xend = xend, yend = yend),
+               color = "black", linewidth = 0.7) +
+  geom_label(data = df,
+             aes(x = (x + xend) / 2, y = (y + yend) / 2,
+                 label = nome, color = cor),
+             size = 4, fontface = "bold", fill = "white", label.size = 0) +
+  annotate("text", x = 2.5, y = -0.4,
+           label = "<resíduo, y> ≈ 0  →  ortogonais!",
+           color = "black", size = 4, fontface = "italic") +
+  geom_hline(yintercept = 0, color = "grey70") +
+  geom_vline(xintercept = 0, color = "grey70") +
+  scale_color_identity() +
+  coord_fixed(xlim = c(-0.5, 4), ylim = c(-0.8, 5)) +
+  labs(title    = "Projeção de x sobre y",
+       subtitle = "O resíduo (x - proj) é perpendicular a y quando <resíduo, y> ≈ 0",
+       x = "X", y = "Y") +
+  theme_minimal(base_size = 13)
+```
+
+# Vetor com Direção Oposta
+
+```{r}
+x <- c(3, 2)
+y <- c(-1, -4)
+
+produto_interno <- sum(x * y)
+
+proj <- (produto_interno / sum(y * y)) * y
+residuo <- x - proj
+
+cat("Projeção de x sobre y:", proj, "\n")
+cat("Resíduo (x - proj):", residuo, "\n")
+cat("<resíduo, y> =", round(sum(residuo * y)))
+```
+
+```{r}
+df <- data.frame(
+  x    = c(0,      0,       0,       proj[1]),
+  y    = c(0,      0,       0,       proj[2]),
+  xend = c(x[1],  y[1]*1,  proj[1], x[1]),
+  yend = c(x[2],  y[2]*1,  proj[2], x[2]),
+  nome = c("x = (3,2)", "y = (-1,-4)", 
+           "proj(x→y) = (0.65, 2.59)", 
+           "resíduo = (2.35, -0.59)"),
+  cor  = c("tomato", "steelblue", "darkgreen", "purple")
+)
+
+# Quadradinho perpendicular correto para y = (1,4)
+# Normaliza y e acha o vetor perpendicular
+yn   <- y / sqrt(sum(y^2))          # direção de y normalizada
+perp <- c(-yn[2], yn[1])            # perpendicular (rotação 90°)
+qs   <- 0.15                        # tamanho do quadrado
+
+p1 <- c(proj[1], proj[2])
+p2 <- p1 + perp * qs
+p3 <- p2 + yn  * qs
+p4 <- p1 + yn  * qs
+
+quadrado <- data.frame(
+  x    = c(p1[1], p2[1], p3[1]),
+  y    = c(p1[2], p2[2], p3[2]),
+  xend = c(p2[1], p3[1], p4[1]),
+  yend = c(p2[2], p3[2], p4[2])
+)
+
+ggplot() +
+  geom_segment(data = df,
+               aes(x = x, y = y, xend = xend, yend = yend, color = cor),
+               arrow = arrow(length = unit(0.3, "cm"), type = "closed"),
+               linewidth = 1.3) +
+  geom_segment(data = quadrado,
+               aes(x = x, y = y, xend = xend, yend = yend),
+               color = "black", linewidth = 0.7) +
+  geom_label(data = df,
+             aes(x = (x + xend) / 2, y = (y + yend) / 2,
+                 label = nome, color = cor),
+             size = 4, fontface = "bold", fill = "white", label.size = 0) +
+  annotate("text", x = 2.5, y = -0.4,
+           label = "<resíduo, y> ≈ 0  →  ortogonais!",
+           color = "black", size = 4, fontface = "italic") +
+  geom_hline(yintercept = 0, color = "grey70") +
+  geom_vline(xintercept = 0, color = "grey70") +
+  scale_color_identity() +
+  coord_fixed(xlim = c(-0.5, 4), ylim = c(-0.8, 5)) +
+  labs(title    = "Projeção de x sobre y",
+       subtitle = "O resíduo (x - proj) é perpendicular a y quando <resíduo, y> ≈ 0",
+       x = "X", y = "Y") +
+  theme_minimal(base_size = 13)
+```
+
+------------------------------------------------------------------------
+
+# Matrizes
+
+Uma **matriz** é um arranjo bidimensional de escalares — pense em uma planilha com linhas e colunas. Em R, criamos matrizes com `matrix()`, especificando `nrow` (número de linhas) e `byrow = TRUE` para preencher linha a linha.
+
+```{r matrizes}
+A <- matrix(c(1, 2, 3,
+              4, 5, 6,
+              7, 8, 9), nrow = 3, byrow = TRUE)
+
+B <- matrix(c(9, 8, 7,
+              6, 5, 4,
+              3, 2, 1), nrow = 3, byrow = TRUE)
+
+cat("Matriz A:\n"); print(A)
+cat("\nMatriz B:\n"); print(B)
+```
+
+------------------------------------------------------------------------
+
+# Adição e Multiplicação de Matrizes
+
+## Adição
+
+A adição é feita **elemento a elemento** — as matrizes devem ter as mesmas dimensões.
+
+```{r adicao-matrizes}
+cat("A + B:\n"); print(A + B)
+```
+
+## Multiplicação por Escalar
+
+Multiplica **cada elemento** pelo escalar.
+
+```{r mult-escalar}
+cat("2 × A:\n"); print(2 * A)
+```
+
+## Multiplicação Matricial
+
+Usamos `%*%` (não `*`!). Para multiplicar $A \times B$, o número de **colunas de A** deve ser igual ao número de **linhas de B** — como encaixar peças de quebra-cabeça.
+
+```{r mult-matricial}
+cat("A %*% B:\n"); print(A %*% B)
+
+# Exemplo com dimensões compatíveis: C (3×2) × D (2×2) → resultado (3×2)
+C <- matrix(c(1, 2,
+              3, 4,
+              5, 6), nrow = 3, byrow = TRUE)
+
+D <- matrix(c(1, 0,
+              0, 1), nrow = 2, byrow = TRUE)  # Matriz identidade 2×2
+
+cat("\nC (3×2):\n"); print(C)
+cat("\nD (2×2 — identidade):\n"); print(D)
+cat("\nC %*% D:\n"); print(C %*% D)
+```
+
+------------------------------------------------------------------------
+
+# Transposta
+
+A **transposta** $A^T$ troca linhas por colunas — como virar uma planilha de lado.
+
+```{r transposta}
+cat("t(A):\n"); print(t(A))
+cat("\nt(C):\n"); print(t(C))
+
+# Propriedade: (A %*% B)^T = B^T %*% A^T  (a ordem inverte!)
+lhs <- t(A %*% B)
+rhs <- t(B) %*% t(A)
+
+cat("\n(A %*% B)^T == B^T %*% A^T ?", all.equal(lhs, rhs), "\n")
+```
+
+------------------------------------------------------------------------
+
+# Traço de uma Matriz
+
+O **traço** de uma matriz quadrada é a soma dos elementos da diagonal principal. Em estatística, aparece frequentemente em estimações e em critérios de otimização.
+
+```{r traco}
+traco_A <- sum(diag(A))
+cat("tr(A) =", traco_A, "\n")
+
+# Propriedade: tr(A) + tr(B) = tr(A + B)
+cat("tr(A) + tr(B):", sum(diag(A)) + sum(diag(B)), "\n")
+cat("tr(A + B):",     sum(diag(A + B)), "\n")
+
+# Propriedade: tr(A %*% B) = tr(B %*% A)  (comutatividade do traço!)
+cat("tr(A %*% B):", sum(diag(A %*% B)), "\n")
+cat("tr(B %*% A):", sum(diag(B %*% A)), "\n")
+```
+
+------------------------------------------------------------------------
+
+# Determinante
+
+O **determinante** mede o quanto uma transformação linear "estica ou encolhe" o espaço. Se det = 0, a matriz é **singular** (não invertível) — como uma planilha com linhas repetidas, que não traz informação nova.
+
+```{r determinante}
+M <- matrix(c(2, 1,
+              5, 3), nrow = 2, byrow = TRUE)
+
+cat("Matriz M:\n"); print(M)
+cat("det(M):", det(M), "→ M é invertível\n")
+# det = 2×3 - 1×5 = 1
+```
+
+```{r determinante-singular}
+M2 <- matrix(c(1, 2,
+               2, 4), nrow = 2, byrow = TRUE)
+
+cat("\nMatriz M2 (singular):\n"); print(M2)
+cat("det(M2):", det(M2), "→ matriz singular, não invertível\n")
+```
+
+```{r determinante-3x3}
+A3 <- matrix(c(1, 2, 3,
+               0, 4, 5,
+               1, 0, 6), nrow = 3, byrow = TRUE)
+
+cat("\ndet(A3):", det(A3), "\n")
+```
+
+------------------------------------------------------------------------
+
+# Matriz Inversa
+
+A **inversa** $A^{-1}$ desfaz a transformação de $A$: $A \cdot A^{-1} = I$. É como o "ctrl+z" de uma operação matricial.
+
+Em R, usamos `solve()`.
+
+```{r inversa}
+cat("Inversa de M:\n"); print(solve(M))
+
+# Verificação: M %*% solve(M) deve retornar a identidade
+cat("\nM %*% solve(M) (deve ser a identidade):\n")
+print(round(M %*% solve(M), 10))
+
+cat("\nInversa de A3:\n"); print(round(solve(A3), 4))
+```
+
+------------------------------------------------------------------------
+
+# Matriz Identidade
+
+A **matriz identidade** $I$ é o elemento neutro da multiplicação matricial — como o número 1 para a multiplicação de escalares.
+
+```{r identidade}
+I3 <- diag(3)  # cria uma identidade 3×3 automaticamente
+
+cat("Matriz Identidade 3×3:\n"); print(I3)
+cat("A3 %*% I3 == A3?", all.equal(A3 %*% I3, A3), "\n")
+```
+
+------------------------------------------------------------------------
+
+# Matriz Diagonal
+
+Uma **matriz diagonal** só tem valores fora de zero na diagonal principal — todos os outros elementos são zero. Sua inversa é trivial: basta inverter cada elemento da diagonal.
+
+```{r diagonal}
+D_diag <- diag(c(3, 7, 2))
+
+cat("Matriz Diagonal:\n"); print(D_diag)
+cat("\nInversa via solve():\n");          print(solve(D_diag))
+cat("Inversa via diag(1/c(3,7,2)):\n"); print(diag(1/c(3, 7, 2)))
+```
+
+------------------------------------------------------------------------
+
+# Matriz Simétrica
+
+Uma matriz é **simétrica** se $A = A^T$ — ou seja, é igual à sua transposta. A **matriz de covariância** é sempre simétrica, pois $\text{Cov}(X, Y) = \text{Cov}(Y, X)$.
+
+```{r simetrica}
+S_mat <- matrix(c(4, 2, 1,
+                  2, 5, 3,
+                  1, 3, 6), nrow = 3, byrow = TRUE)
+
+cat("Matriz Simétrica S:\n"); print(S_mat)
+cat("S == t(S)?", all.equal(S_mat, t(S_mat)), "\n")
+```
+
+```{r cov-simetrica}
+set.seed(42)
+dados   <- matrix(rnorm(50), nrow = 10)
+cov_mat <- cov(dados)
+
+cat("Matriz de covariância é simétrica?",
+    all.equal(cov_mat, t(cov_mat)), "\n")
+```
+
+------------------------------------------------------------------------
+
+# Autovalores e Autovetores
+
+Para uma matriz $A$, um **autovetor** $v$ é um vetor especial que, ao ser transformado por $A$, apenas escala de tamanho — não muda de direção. O fator de escala é o **autovalor** $\lambda$:
+
+$$A \cdot v = \lambda \cdot v$$
+
+Pense assim: se $A$ representa uma transformação no espaço (rotação, estirão), os autovetores são as direções que **resistem** à rotação — elas só ficam maiores ou menores.
+
+```{r autovalores}
+A_eig <- matrix(c(3, 1,
+                  1, 3), nrow = 2, byrow = TRUE)
+
+resultado <- eigen(A_eig)
+
+cat("Matriz A:\n"); print(A_eig)
+cat("\nAutovalores:\n");           print(resultado$values)
+cat("\nAutovetores (colunas):\n"); print(resultado$vectors)
+```
+
+```{r autovalores-verificacao}
+v1      <- resultado$vectors[, 1]   # primeiro autovetor
+lambda1 <- resultado$values[1]      # primeiro autovalor
+
+cat("A %*% v1:   ", A_eig %*% v1, "\n")
+cat("lambda1*v1: ", lambda1 * v1, "\n")
+cat("(devem ser iguais → verificação OK)\n")
+```
+
+```{r autovalores-cov}
+cat("\nAutovalores da matriz de covariância S_mat:\n")
+print(eigen(S_mat)$values)
+cat("(todos positivos → S é positiva definida)\n")
+```
+
+------------------------------------------------------------------------
+
+# Decomposição Espectral
+
+Toda matriz simétrica pode ser reescrita como:
+
+$$A = P \Lambda P^T$$
+
+onde $P$ é a matriz de autovetores (como colunas) e $\Lambda$ é a matriz diagonal de autovalores. Isso é como "desmontar" a transformação em seus ingredientes fundamentais — e remontar ela a partir deles.
+
+```{r decomp-espectral}
+P      <- resultado$vectors       # matriz de autovetores
+Lambda <- diag(resultado$values)  # diagonal de autovalores
+
+A_reconstruida <- P %*% Lambda %*% t(P)
+
+cat("A original:\n");              print(A_eig)
+cat("\nA reconstruída (P Λ P'):\n"); print(round(A_reconstruida, 10))
+cat("\nSão iguais?", all.equal(A_eig, round(A_reconstruida, 10)), "\n")
+```
+
+------------------------------------------------------------------------
+
+# Classificação de Matrizes por Autovalores
+
+A classificação de uma matriz quadrada simétrica depende do sinal dos seus autovalores — como checar se uma "bacia" de otimização tem um mínimo, um máximo ou um ponto de sela.
+
+| Classificação         | Condição dos autovalores           |
+|-----------------------|------------------------------------|
+| Positiva definida     | Todos $> 0$                        |
+| Positiva semidefinida | Todos $\geq 0$ (pelo menos um = 0) |
+| Indefinida            | Sinais mistos                      |
+
+```{r classificacao}
+# Positiva Definida: todos autovalores > 0
+PD <- matrix(c(4, 2,
+               2, 3), nrow = 2, byrow = TRUE)
+cat("PD — autovalores:", eigen(PD)$values, "→ positiva definida\n")
+
+# Positiva Semidefinida: um autovalor = 0
+PSD <- matrix(c(1, 1,
+                1, 1), nrow = 2, byrow = TRUE)
+cat("PSD — autovalores:", round(eigen(PSD)$values, 10), "→ positiva semidefinida\n")
+
+# Indefinida: sinais mistos
+INDEF <- matrix(c(1,  2,
+                  2, -3), nrow = 2, byrow = TRUE)
+cat("INDEF — autovalores:", round(eigen(INDEF)$values, 4), "→ indefinida\n")
+```
+
+## Verificação via Decomposição de Cholesky
+
+A decomposição de Cholesky só funciona para matrizes **positivas definidas** — é um teste prático e rápido.
+
+```{r cholesky}
+cat("Cholesky de PD (deve funcionar):\n")
+tryCatch(print(chol(PD)), error = function(e) cat("FALHOU\n"))
+
+cat("\nCholesky de PSD (não é PD — deve falhar):\n")
+tryCatch(print(chol(PSD)), error = function(e) cat("FALHOU — não é PD\n"))
+```
+
+------------------------------------------------------------------------
+
+# Regularização: Ridge (Tikhonov)
+
+Quando uma matriz $S$ é **singular** (det = 0, não invertível), podemos "regularizá-la" somando um pequeno múltiplo da identidade: $S + \lambda I$. Isso garante inversibilidade, ao custo de uma leve distorção — como adicionar um grão de areia para dar firmeza a algo frágil.
+
+Esta técnica está no coração da **Regressão Ridge**.
+
+```{r regularizacao}
+S <- matrix(c( 2,  4,  8,
+               4,  8, 16,
+              12, 24, 48), nrow = 3, byrow = TRUE)
+
+cat("Tentativa de inverter S singular:\n")
+tryCatch(print(solve(S)), error = function(e) cat("ERRO:", conditionMessage(e), "\n"))
+
+# Regularização: S + λI
+lambda_reg <- 0.05
+m_I <- diag(3)  # identidade 3×3
+
+cat("\nS + λI regularizada (λ = ", lambda_reg, "):\n", sep = "")
+print(solve(S + lambda_reg * m_I))
+```
+
+------------------------------------------------------------------------
+
+*Fim do documento. Material desenvolvido para a disciplina de Estatística Multivariada.*
