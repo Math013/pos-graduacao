@@ -1,6 +1,6 @@
 # 📊 Pós-Graduação em Ciência de Dados – PUC
 
-Este repositório concentra **aulas, exercícios e projetos finais** desenvolvidos ao longo da Pós-Graduação em **Ciência de Dados (PUC)**, com foco em **estatística aplicada, probabilidade, inferência estatística, programação em Python e modelos preditivos**.
+Este repositório concentra **aulas, exercícios e projetos finais** desenvolvidos ao longo da Pós-Graduação em **Ciência de Dados (PUC)**, com foco em **estatística aplicada, inferência, modelagem estatística, machine learning, deep learning, IA generativa e MLOps**.
 
 O objetivo é manter um **repositório organizado, versionado e reprodutível**, seguindo boas práticas de Git e servindo tanto para **uso acadêmico** quanto como **portfólio técnico**.
 
@@ -10,11 +10,20 @@ O objetivo é manter um **repositório organizado, versionado e reprodutível**,
 
 ```text
 ├── Analise-Descritiva-Probabilidade
+├── Analise-Multivariada
+├── Analise-Sobrevivencia
+├── Cultura-Praticas-Dataops-Mlops
 ├── Data-Discovery-Analytics
 ├── Estudos-Extras
+├── Framework-Deep-Learning
+├── Generative AI & Advanced Analytics
+├── Governanca-Dados
+├── Humanidades
 ├── Inferencia-Estatistica
+├── Machine-Learning
 ├── Modelos-Regressao
 ├── Python-Ciencia-de-Dados
+├── Redes-Neurais-Deep-Learning
 ├── Series-Temporais
 └── Tecnicas-Amostragem-Regressao-Linear
 ```
@@ -203,6 +212,8 @@ Series-Temporais/
 ### Conteúdos abordados
 - Análise exploratória de dados (EDA)
 - Modelos de churn e classificação
+- Análise descritiva, preditiva e prescritiva
+- Cultura data-driven e boas práticas de visualização
 - Análise de bases reais (vendas, dengue, fraude)
 
 ### Estrutura interna
@@ -215,6 +226,177 @@ Data-Discovery-Analytics/
 ### Tecnologias
 - Python (pandas, sklearn)
 - Jupyter Notebook
+
+---
+
+## 🔹 Análise Multivariada
+📂 `Analise-Multivariada`
+
+### Conteúdos abordados
+- Álgebra linear aplicada e distribuição normal multivariada
+- Testes T² de Hotelling (uma população, duas populações, pareado) e MANOVA
+- Análise de Componentes Principais (PCA)
+- Análise fatorial exploratória e confirmatória
+- Correlação canônica e regressão multivariada
+
+### Estrutura interna
+```text
+Analise-Multivariada/
+├── Markdown   # anotações das aulas
+├── Outros     # bases (ENANI, PNDS) e materiais auxiliares
+├── PDF        # slides
+└── R          # scripts e RMarkdown
+```
+
+### Tecnologias
+- R / RMarkdown
+
+---
+
+## 🔹 Análise de Sobrevivência
+📂 `Analise-Sobrevivencia`
+
+### Conteúdos abordados
+- Métodos não paramétricos (Kaplan-Meier, testes de log-rank)
+- Modelos paramétricos (Exponencial, Weibull, Log-normal)
+- Modelos de regressão (Cox e paramétricos)
+- Testes de vida acelerados
+
+### Conteúdo
+- Slides das Unidades I a IV
+- Notebooks de exemplo por unidade
+- Relatório final (PDF)
+
+### Tecnologias
+- Python / R
+- Jupyter Notebook
+
+---
+
+## 🔹 Machine Learning
+📂 `Machine-Learning`
+
+### Conteúdos abordados
+- Etapas de um projeto de ciência de dados
+- Pré-processamento de dados
+- Regressão e classificação supervisionadas
+- Ensemble learning
+- Tuning de hiperparâmetros
+- Projetos finais: Wine Quality (classificação) e California Housing (regressão)
+
+### Tecnologias
+- Python (pandas, scikit-learn)
+- Jupyter Notebook
+
+---
+
+## 🔹 Redes Neurais e Deep Learning
+📂 `Redes-Neurais-Deep-Learning`
+
+### Conteúdos abordados
+- Redes neurais artificiais, SGD e backpropagation
+- Funções de ativação e inicialização de pesos
+- Otimizadores e regras de atualização de pesos
+- Batch Normalization e Dropout
+- Redes convolucionais (CNN) e estudos de caso
+
+### Estrutura interna
+```text
+Redes Neurais e Deep Learning/
+├── Atividades-Praticas
+├── Material-Adicional
+├── Questionarios
+└── Slides
+```
+
+### Tecnologias
+- Python
+- Jupyter Notebook / Google Colab
+
+---
+
+## 🔹 Frameworks de Deep Learning
+📂 `Framework-Deep-Learning`
+
+### Conteúdos abordados
+- Fundamentos de POO para frameworks
+- PyTorch: tensores, datasets, treinamento e uso de GPU
+- Otimizações de GPU e quantização (torchao)
+- Keras
+- CNNs e prática de churn com PyTorch
+
+### Estrutura interna
+```text
+Framework-Deep-Learning/
+├── Atividades-Praticas   # listas de exercícios PyTorch (com resoluções)
+├── Jupyter               # notebooks das aulas
+├── Material-Adicional
+└── PDF                   # slides
+```
+
+### Tecnologias
+- Python (PyTorch, Keras/TensorFlow)
+- Jupyter Notebook
+
+---
+
+## 🔹 Generative AI & Advanced Analytics
+📂 `Generative AI & Advanced Analytics`
+
+### Conteúdos abordados
+- Fundamentos de IA generativa e modelos iniciais
+- Arquitetura Transformer
+- Introdução ao LangChain
+
+### Tecnologias
+- Python (LangChain)
+- Jupyter Notebook
+
+---
+
+## 🔹 Cultura e Práticas DataOps e MLOps
+📂 `Cultura-Praticas-Dataops-Mlops`
+
+### Conteúdos abordados
+- Cultura DevOps, DataOps e MLOps
+- Perfis de profissionais de dados e definição do problema
+- Integração contínua, ambientes Conda e pipelines
+- Docker
+- Rastreamento de experimentos e model registry com MLflow
+- Data drift e AutoML (AutoKeras)
+
+### Tecnologias
+- Python (MLflow, AutoKeras)
+- Docker, Conda (`environment.yml`)
+- Jupyter Notebook
+
+---
+
+## 🔹 Governança de Dados
+📂 `Governanca-Dados`
+
+### Conteúdos abordados
+- Fundamentos de governança de dados
+- Modelos de maturidade (DMM)
+- Arquitetura de governança
+- Catálogo e linhagem de dados (Apache Atlas)
+- Estudo de caso ANEEL
+
+### Conteúdo
+- Material da disciplina e trabalhos por unidade (PDF)
+
+---
+
+## 🔹 Humanidades
+📂 `Humanidades`
+
+### Conteúdos abordados
+- Ética, moral e alteridade (Levinas, Ricoeur, Dussel)
+- Ecologia, desigualdade global e Economia de Francisco e Clara
+- Democracia, ciência, tecnologia e negacionismo
+
+### Conteúdo
+- Textos de leitura, slides e tarefa da disciplina
 
 ---
 
