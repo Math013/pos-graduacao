@@ -1,0 +1,24 @@
+artifact_path: "file:c:/Users/Matheus/Desktop/Arquivos_PUC/Cultura e Pr\xE1ticas Dataops\
+  \ e Mlops/mlruns/0/models/m-588e72c74223496dbb50e78b8a5e310f/artifacts"
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.13.7
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.7.2
+    skops_trusted_types: null
+mlflow_version: 3.14.0
+model_id: m-588e72c74223496dbb50e78b8a5e310f
+model_size_bytes: 9580
+model_uuid: m-588e72c74223496dbb50e78b8a5e310f
+prompts: null
+run_id: ba43a943a4b54496a9d250b97e715aa4
+utc_time_created: '2026-07-29 23:30:52.681905'
