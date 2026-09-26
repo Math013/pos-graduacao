@@ -1,0 +1,12 @@
+{
+  "pares_brutos": 680,
+  "apos_limpeza_e_deduplicacao": 665,
+  "pares_com_numeros_fora_do_doc": 0,
+  "reprovados_pelo_juiz": 31,
+  "apos_juiz": 634,
+  "amostra_revisao_manual": 65,
+  "revisao_manual": {
+    "OK": 57
+  },
+  "dataset_final": 634
+}
