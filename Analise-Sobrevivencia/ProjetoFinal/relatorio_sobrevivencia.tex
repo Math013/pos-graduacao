@@ -1,0 +1,1596 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+  brazilian,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\ifLuaTeX
+\usepackage[bidi=basic,shorthands=off]{babel}
+\else
+\usepackage[bidi=default,shorthands=off]{babel}
+\fi
+\ifLuaTeX
+  \usepackage{selnolig} % disable illegal ligatures
+\fi
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{booktabs}
+\usepackage{float}
+\floatplacement{figure}{H}
+\usepackage{fvextra}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={Sobrevida de Pacientes com Câncer Colorretal no Estado de São Paulo},
+  pdfauthor={Matheus},
+  pdflang={pt-BR},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Sobrevida de Pacientes com Câncer Colorretal no Estado de São
+Paulo}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Análise de Sobrevivência com Modelagem Paramétrica e de
+Regressão --- RHC/SP (FOSP)}
+\author{Matheus}
+\date{03/10/2026}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\section{Apresentação dos Dados}\label{apresentauxe7uxe3o-dos-dados}
+
+\subsection{Fonte e população}\label{fonte-e-populauxe7uxe3o}
+
+Os dados vêm do Registro Hospitalar de Câncer do Estado de São Paulo
+(RHC/SP), mantido pela Fundação Oncocentro de São Paulo (FOSP). O
+registro reúne os casos de câncer atendidos nos hospitais habilitados em
+oncologia do estado. Foram usados os arquivos por ano de diagnóstico de
+\text{2020} a \text{2023}, restritos aos \textbf{casos analíticos} de
+câncer colorretal, isto é, topografias CID-O C18 (cólon), C19 (junção
+retossigmoide) e C20 (reto). Caso analítico é o paciente que chegou ao
+hospital sem diagnóstico e sem tratamento prévios
+(\texttt{DIAGPREV\ =\ 1}).
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Evento de interesse:} óbito por qualquer causa
+  (\texttt{ULTINFO} = 3, óbito por câncer, ou 4, óbito por outras
+  causas). A escolha pela sobrevida global evita depender da causa do
+  óbito registrada no prontuário hospitalar. Também evita tratar o óbito
+  por outras causas como censura não informativa, quando ele é, na
+  verdade, um risco competitivo.
+\item
+  \textbf{Tempo de sobrevida:} dias entre a data do diagnóstico
+  (\texttt{DTDIAG}) e a data da última informação (\texttt{DTULTINFO}),
+  expressos em anos.
+\item
+  \textbf{Censura:} à direita, para os pacientes vivos na última
+  informação (\texttt{ULTINFO} = 1 ou 2), incluindo os classificados
+  como perda de seguimento pelo registro.
+\end{itemize}
+
+\begin{longtable}[]{@{}lll@{}}
+\caption{Fluxograma de seleção dos casos.}\tabularnewline
+\toprule\noalign{}
+Critério & n restante & Excluídos \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Critério & n restante & Excluídos \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Tempo não negativo & 8.207 & \\
+Diagnóstico entre 2020 e 2023 & 6.013 & 2.194 \\
+\end{longtable}
+
+\subsection{Eventos e censuras}\label{eventos-e-censuras}
+
+A coorte final tem \textbf{6.013 pacientes}, com \textbf{2.803 óbitos
+(46,6\%)} e \textbf{3.210 censuras (53,4\%)}. O seguimento máximo foi de
+6,3 anos. O seguimento mediano, estimado pelo Kaplan-Meier reverso, foi
+de 3,18 anos. Entre os censurados, 0,1\% foram classificados pelo
+registro como perda de seguimento.
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Número de pacientes, óbitos e censuras por estádio
+clínico.}\tabularnewline
+\toprule\noalign{}
+Estádio & Pacientes & Óbitos & Censuras & \% óbitos \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Estádio & Pacientes & Óbitos & Censuras & \% óbitos \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+I & 842 & 182 & 660 & 21,6\% \\
+II & 1.551 & 454 & 1.097 & 29,3\% \\
+III & 1.739 & 701 & 1.038 & 40,3\% \\
+IV & 1.881 & 1.466 & 415 & 77,9\% \\
+Total & 6.013 & 2.803 & 3.210 & 46,6\% \\
+\end{longtable}
+
+\begin{longtable}[]{@{}llrr@{}}
+\caption{Características da coorte e proporção de óbitos por
+categoria.}\tabularnewline
+\toprule\noalign{}
+Variável & Nível & n (\%) & Óbitos no grupo \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Variável & Nível & n (\%) & Óbitos no grupo \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Sexo & Masculino & 3.071 (51,1\%) & 48,6\% \\
+& Feminino & 2.942 (48,9\%) & 44,5\% \\
+Faixa etária & 18-49 & 717 (11,9\%) & 39,1\% \\
+& 50-64 & 2.174 (36,2\%) & 40,5\% \\
+& 65-74 & 1.847 (30,7\%) & 49,2\% \\
+& 75+ & 1.275 (21,2\%) & 57,5\% \\
+Categoria de atendimento & SUS & 4.954 (82,4\%) & 47,1\% \\
+& Convênio & 1.015 (16,9\%) & 45,2\% \\
+& Particular & 44 (0,7\%) & 20,5\% \\
+Localização & Cólon & 3.998 (66,5\%) & 45,9\% \\
+& Reto/junção & 2.015 (33,5\%) & 48,0\% \\
+Estádio clínico & I & 842 (14,0\%) & 21,6\% \\
+& II & 1.551 (25,8\%) & 29,3\% \\
+& III & 1.739 (28,9\%) & 40,3\% \\
+& IV & 1.881 (31,3\%) & 77,9\% \\
+\end{longtable}
+
+A idade mediana ao diagnóstico foi de \text{65} anos (intervalo
+interquartil \text{56} a \text{73}).
+
+{[}A COMPLETAR: comente a proporção de censura, se ela é alta ou baixa e
+por quê, considerando o seguimento máximo. Comente também a distribuição
+dos estádios: há predomínio de doença avançada ao diagnóstico?{]}
+
+\section{Curva de Sobrevivência (Kaplan-Meier) e Teste de
+Log-Rank}\label{curva-de-sobrevivuxeancia-kaplan-meier-e-teste-de-log-rank}
+
+\subsection{Curva global}\label{curva-global}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/km-geral-1} 
+
+}
+
+\caption{Curva de Kaplan-Meier global com intervalo de confiança de 95\% e número em risco.}\label{fig:km-geral}
+\end{figure}
+
+\begin{longtable}[]{@{}rrrr@{}}
+\caption{Sobrevida estimada por Kaplan-Meier em tempos
+selecionados.}\tabularnewline
+\toprule\noalign{}
+Tempo (anos) & Em risco & S(t) & IC 95\% \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Tempo (anos) & Em risco & S(t) & IC 95\% \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1 & 4.017 & 0,719 & {[}0,708; 0,731{]} \\
+2 & 2.852 & 0,604 & {[}0,591; 0,617{]} \\
+3 & 1.739 & 0,524 & {[}0,511; 0,538{]} \\
+4 & 855 & 0,457 & {[}0,442; 0,472{]} \\
+5 & 230 & 0,412 & {[}0,394; 0,431{]} \\
+6 & 17 & 0,366 & {[}0,330; 0,406{]} \\
+\end{longtable}
+
+A sobrevida global estimada em 1 ano foi de 71,9\% e, em \text{6} anos,
+de 36,6\%. A mediana de sobrevida foi de 3,31 anos.
+
+{[}A COMPLETAR: descreva o formato da curva. A queda é mais acentuada no
+início? Ela se estabiliza depois? Relacione com a gravidade da doença ao
+diagnóstico.{]}
+
+\subsection{Comparação por estádio
+clínico}\label{comparauxe7uxe3o-por-estuxe1dio-cluxednico}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/km-estadio-1} 
+
+}
+
+\caption{Curvas de Kaplan-Meier por estádio clínico.}\label{fig:km-estadio}
+\end{figure}
+
+\begin{longtable}[]{@{}lrrrrr@{}}
+\caption{Teste de log-rank por estádio: óbitos observados (O) e
+esperados (E) sob a hipótese de igualdade das curvas.}\tabularnewline
+\toprule\noalign{}
+Estádio & N & Óbitos obs. & Óbitos esp. & O/E & Mediana (anos) \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Estádio & N & Óbitos obs. & Óbitos esp. & O/E & Mediana (anos) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+I & 842 & 182 & 451,2 & 0,40 & não atingida \\
+II & 1.551 & 454 & 842,8 & 0,54 & não atingida \\
+III & 1.739 & 701 & 868,8 & 0,81 & 4,28 \\
+IV & 1.881 & 1.466 & 640,2 & 2,29 & 1,00 \\
+\end{longtable}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2125}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2375}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2125}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2375}}@{}}
+\caption{Sobrevida em 1 e 3 anos por estádio.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Estádio
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+S(t) em 1 ano(s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+IC 95\% em 1 ano(s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+S(t) em 3 ano(s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+IC 95\% em 3 ano(s)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Estádio
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+S(t) em 1 ano(s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+IC 95\% em 1 ano(s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+S(t) em 3 ano(s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+IC 95\% em 3 ano(s)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+I & 0,878 & {[}0,855; 0,901{]} & 0,780 & {[}0,750; 0,812{]} \\
+II & 0,836 & {[}0,818; 0,855{]} & 0,713 & {[}0,689; 0,738{]} \\
+III & 0,781 & {[}0,762; 0,801{]} & 0,600 & {[}0,576; 0,626{]} \\
+IV & 0,499 & {[}0,476; 0,522{]} & 0,194 & {[}0,175; 0,215{]} \\
+\end{longtable}
+
+O teste de log-rank indica diferença estatisticamente significativa
+entre as curvas dos estádios (\(\chi^2\) = 1.474,2, gl = 3, p
+\textless{} 0,001). Como o teste global só informa que pelo menos uma
+curva difere, as comparações par a par abaixo usam a correção de Holm
+para comparações múltiplas.
+
+\begin{longtable}[]{@{}llll@{}}
+\caption{Valores-p do log-rank par a par entre estádios (ajuste de
+Holm).}\tabularnewline
+\toprule\noalign{}
+& Estádio I & Estádio II & Estádio III \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+& Estádio I & Estádio II & Estádio III \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Estádio II & 0,001 & & \\
+Estádio III & \textless{} 0,001 & \textless{} 0,001 & \\
+Estádio IV & \textless{} 0,001 & \textless{} 0,001 & \textless{}
+0,001 \\
+\end{longtable}
+
+{[}A COMPLETAR: interprete o gradiente entre os estádios. As curvas se
+separam desde o início? Algum par de estádios não difere? Reflita sobre
+o significado clínico, além do valor-p.{]}
+
+\subsection{Outros grupos}\label{outros-grupos}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/km-subgrupos-1} 
+
+}
+
+\caption{Curvas de Kaplan-Meier por sexo, categoria de atendimento, localização e faixa etária.}\label{fig:km-subgrupos}
+\end{figure}
+
+\begin{longtable}[]{@{}lrrr@{}}
+\caption{Testes de log-rank por grupo.}\tabularnewline
+\toprule\noalign{}
+Grupo & Qui-quadrado & gl & p \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Grupo & Qui-quadrado & gl & p \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Estádio clínico & 1.474,2 & 3 & \textless{} 0,001 \\
+Sexo & 5,2 & 1 & 0,022 \\
+Categoria & 14,8 & 2 & \textless{} 0,001 \\
+Localização & 0,3 & 1 & 0,601 \\
+Faixa etária & 151,7 & 3 & \textless{} 0,001 \\
+\end{longtable}
+
+{[}A COMPLETAR: quais grupos diferem? Atenção: o log-rank compara curvas
+brutas, sem ajuste. Uma diferença entre SUS e convênio, por exemplo,
+pode refletir diferenças de estádio entre os grupos. É por isso que a
+Seção 4 ajusta modelos de regressão.{]}
+
+\section{Curvas de Risco por Técnicas Não
+Paramétricas}\label{curvas-de-risco-por-tuxe9cnicas-nuxe3o-paramuxe9tricas}
+
+\subsection{Risco acumulado
+(Nelson-Aalen)}\label{risco-acumulado-nelson-aalen}
+
+O estimador de Nelson-Aalen é
+\(\hat H(t) = \sum_{t_j \le t} d_j / n_j\), em que \(d_j\) é o número de
+óbitos e \(n_j\) o número em risco no tempo \(t_j\). A inclinação de
+\(\hat H(t)\) é a taxa de risco: trechos mais íngremes indicam risco
+maior.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/na-geral-1} 
+
+}
+
+\caption{Risco acumulado de Nelson-Aalen: global (esquerda) e por estádio (direita).}\label{fig:na-geral}
+\end{figure}
+
+\begin{longtable}[]{@{}llllll@{}}
+\caption{Probabilidade condicional de óbito em cada intervalo anual,
+dado que o paciente estava vivo no início do intervalo:
+\(1 - \exp\{-[\hat H(b) - \hat H(a)]\}\).}\tabularnewline
+\toprule\noalign{}
+Intervalo & Global & Estádio I & Estádio II & Estádio III & Estádio
+IV \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Intervalo & Global & Estádio I & Estádio II & Estádio III & Estádio
+IV \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+{[}0; 1) anos & 28,0\% & 12,2\% & 16,4\% & 21,8\% & 50,1\% \\
+{[}1; 2) anos & 16,0\% & 6,5\% & 7,9\% & 12,8\% & 38,4\% \\
+{[}2; 3) anos & 13,2\% & 4,9\% & 7,4\% & 11,8\% & 36,6\% \\
+{[}3; 4) anos & 12,9\% & 6,9\% & 7,6\% & 13,7\% & 33,4\% \\
+\end{longtable}
+
+{[}A COMPLETAR: \(\hat H(t)\) é aproximadamente linear (risco
+constante), côncavo (risco decrescente) ou convexo (risco crescente)? Em
+qual intervalo a probabilidade condicional de óbito é maior? Ela cai nos
+anos seguintes?{]}
+
+\subsection{\texorpdfstring{Taxa de risco instantânea
+(\emph{hazard})}{Taxa de risco instantânea (hazard)}}\label{taxa-de-risco-instantuxe2nea-hazard}
+
+A função de risco foi estimada por suavização de kernel (estimador de
+Müller e Wang, pacote \texttt{muhaz}). A estimação foi limitada ao
+percentil 90 do tempo de seguimento, porque a estimativa fica instável
+na cauda, onde restam poucos pacientes em risco.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/hazard-1} 
+
+}
+
+\caption{Taxa de risco suavizada: global (esquerda) e por estádio (direita, escala logarítmica).}\label{fig:hazard}
+\end{figure}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1237}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2165}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1031}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2371}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1237}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1959}}@{}}
+\caption{Períodos de maior e menor risco estimados pela taxa de risco
+suavizada.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Grupo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Tempo do pico (anos)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+h no pico
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Tempo do mínimo (anos)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+h no mínimo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+h no fim da janela
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Grupo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Tempo do pico (anos)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+h no pico
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Tempo do mínimo (anos)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+h no mínimo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+h no fim da janela
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Global & 0,00 & 0,761 & 4,03 & 0,111 & 0,202 \\
+Estádio I & 4,46 & 1,606 & 4,15 & 0,054 & 1,606 \\
+Estádio II & 0,00 & 0,396 & 4,53 & 0,072 & 0,073 \\
+Estádio III & 0,00 & 0,582 & 4,49 & 0,101 & 0,101 \\
+Estádio IV & 0,00 & 1,340 & 3,18 & 0,269 & 0,269 \\
+\end{longtable}
+
+{[}A COMPLETAR: identifique o período de maior risco, por exemplo o
+primeiro ano após o diagnóstico, e o de menor risco. Discuta as
+implicações, como a concentração do acompanhamento intensivo no período
+de risco mais alto e o significado de o risco cair para quem sobrevive
+aos primeiros anos. Compare o formato entre os estádios. A forma de h(t)
+observada aqui vai orientar a escolha da distribuição na Seção 4.{]}
+
+\section{Ajuste de Modelos Paramétricos e de
+Regressão}\label{ajuste-de-modelos-paramuxe9tricos-e-de-regressuxe3o}
+
+\subsection{Modelos paramétricos sem
+covariáveis}\label{modelos-paramuxe9tricos-sem-covariuxe1veis}
+
+Cada distribuição impõe uma forma à função de risco. Por isso, o formato
+observado na Seção 3 já sugere quais modelos são plausíveis:
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\caption{Forma da função de risco implicada por cada
+distribuição.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Modelo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Forma de \(h(t)\)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Modelo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Forma de \(h(t)\)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Exponencial & Constante \\
+Weibull & Monótona: crescente (forma \textgreater{} 1) ou decrescente
+(forma \textless{} 1) \\
+Log-normal & Unimodal: cresce e depois decresce \\
+Log-logística & Decrescente (forma \(\leq\) 1) ou unimodal (forma
+\textgreater{} 1) \\
+\end{longtable}
+
+\begin{longtable}[]{@{}lrrrrr@{}}
+\caption{Critérios de ajuste dos modelos paramétricos sem covariáveis
+(BIC com penalização log(n)). A gama generalizada entra como referência,
+pois engloba Weibull, log-normal e exponencial como casos
+particulares.}\tabularnewline
+\toprule\noalign{}
+Modelo & k & logLik & AIC & BIC & Dif. AIC \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Modelo & k & logLik & AIC & BIC & Dif. AIC \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Gama generalizada & 3 & -6.497,3 & 13.000,7 & 13.020,8 & 0,0 \\
+Weibull & 2 & -6.504,5 & 13.013,1 & 13.026,5 & 12,4 \\
+Log-logística & 2 & -6.505,8 & 13.015,7 & 13.029,1 & 15,0 \\
+Log-normal & 2 & -6.533,1 & 13.070,2 & 13.083,6 & 69,5 \\
+Exponencial & 1 & -6.947,7 & 13.897,3 & 13.904,0 & 896,7 \\
+\end{longtable}
+
+\begin{longtable}[]{@{}llrr@{}}
+\caption{Estimativas dos parâmetros (parametrização do pacote
+flexsurv).}\tabularnewline
+\toprule\noalign{}
+Modelo & Parâmetro & Estimativa & IC 95\% \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Modelo & Parâmetro & Estimativa & IC 95\% \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Exponencial & rate & 0,228 & {[}0,220; 0,237{]} \\
+Weibull & shape & 0,632 & {[}0,611; 0,653{]} \\
+& scale & 5,910 & {[}5,533; 6,312{]} \\
+Log-normal & meanlog & 1,277 & {[}1,197; 1,358{]} \\
+& sdlog & 2,483 & {[}2,413; 2,556{]} \\
+Log-logística & shape & 0,736 & {[}0,712; 0,760{]} \\
+& scale & 3,387 & {[}3,158; 3,633{]} \\
+\end{longtable}
+
+\begin{longtable}[]{@{}lrrr@{}}
+\caption{Testes da razão de verossimilhanças entre modelos
+encaixados.}\tabularnewline
+\toprule\noalign{}
+Teste & TRV & gl & p \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Teste & TRV & gl & p \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Exponencial vs Weibull (H0: forma = 1) & 886,2 & 1 & \textless{}
+0,001 \\
+Weibull vs Gama generalizada (H0: Q = 1) & 14,4 & 1 & \textless{}
+0,001 \\
+Log-normal vs Gama generalizada (H0: Q = 0) & 71,5 & 1 & \textless{}
+0,001 \\
+\end{longtable}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/param-graf-1} 
+
+}
+
+\caption{Kaplan-Meier (degraus) e curvas de sobrevida ajustadas pelos modelos paramétricos.}\label{fig:param-graf}
+\end{figure}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/param-linear-1} 
+
+}
+
+\caption{Gráficos de linearização com base no Kaplan-Meier. Se a distribuição for adequada, os pontos ficam próximos de uma reta (tracejada: ajuste de mínimos quadrados).}\label{fig:param-linear}
+\end{figure}
+
+Entre as quatro distribuições pedidas, a de menor AIC sem covariáveis
+foi a \textbf{Weibull}. O parâmetro de forma estimado da Weibull foi
+0,632 (IC 95\%: {[}0,611; 0,653{]}), o que indica risco decrescente no
+tempo.
+
+{[}A COMPLETAR: os critérios (AIC, BIC, testes da razão de
+verossimilhanças) e os gráficos apontam para a mesma distribuição? Em
+qual gráfico de linearização os pontos ficam mais próximos da reta? Isso
+é coerente com a forma de h(t) da Seção 3?{]}
+
+\subsection{Modelos de regressão}\label{modelos-de-regressuxe3o}
+
+As covariáveis são estádio clínico, idade (centrada em 60 anos, por
+década), sexo, categoria de atendimento e localização do tumor. Os
+indicadores de tratamento \textbf{não} entram no modelo, por dois
+motivos. Primeiro, o tratamento é definido depois do diagnóstico, o que
+gera viés de tempo imortal: o paciente precisa sobreviver até a cirurgia
+para ser classificado como operado. Segundo, há confusão por indicação:
+a escolha do tratamento depende do estado clínico do paciente.
+
+Foram usados 6.013 pacientes com informação completa nas covariáveis (0
+excluídos por dados ausentes, 0,0\%).
+
+\subsubsection{Modelos de tempo de falha acelerado
+(AFT)}\label{modelos-de-tempo-de-falha-acelerado-aft}
+
+No modelo AFT,
+\(\log T = \mathbf{x}^\top\boldsymbol\beta + \sigma\varepsilon\), em que
+a distribuição de \(\varepsilon\) define o modelo. O termo
+\(e^{\beta_j}\) é a \textbf{razão de tempos} (\emph{time ratio}):
+valores menores que 1 indicam que a covariável \textbf{encurta} o tempo
+até o óbito.
+
+\begin{longtable}[]{@{}lrrrrrr@{}}
+\caption{Critérios de ajuste dos modelos AFT com covariáveis (C = índice
+de concordância de Harrell).}\tabularnewline
+\toprule\noalign{}
+Modelo & k & logLik & AIC & BIC & C & Dif. AIC \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Modelo & k & logLik & AIC & BIC & C & Dif. AIC \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Weibull & 10 & -5.736,8 & 11.493,6 & 11.560,6 & 0,705 & 0,0 \\
+Log-logística & 10 & -5.807,6 & 11.635,1 & 11.702,2 & 0,706 & 141,6 \\
+Log-normal & 10 & -5.917,7 & 11.855,4 & 11.922,4 & 0,706 & 361,8 \\
+Exponencial & 9 & -6.009,6 & 12.037,2 & 12.097,5 & 0,706 & 543,6 \\
+\end{longtable}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.4805}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2078}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2078}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1039}}@{}}
+\caption{Modelo AFT Weibull: razões de tempos estimadas (escala estimada
+= 1,428).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Termo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Razão de tempos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+IC 95\%
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Termo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Razão de tempos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+IC 95\%
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Estádio II (vs I) & 0,721 & {[}0,563; 0,922{]} & 0,009 \\
+Estádio III (vs I) & 0,386 & {[}0,305; 0,488{]} & \textless{} 0,001 \\
+Estádio IV (vs I) & 0,078 & {[}0,062; 0,098{]} & \textless{} 0,001 \\
+Idade (+10 anos) & 0,705 & {[}0,673; 0,738{]} & \textless{} 0,001 \\
+Sexo feminino (vs masculino) & 1,104 & {[}0,993; 1,228{]} & 0,068 \\
+Convênio (vs SUS) & 1,304 & {[}1,129; 1,506{]} & \textless{} 0,001 \\
+Particular (vs SUS) & 4,802 & {[}1,884; 12,242{]} & 0,001 \\
+Reto/junção retossigmoide (vs cólon) & 0,892 & {[}0,798; 0,998{]} &
+0,046 \\
+\end{longtable}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/aft-coxsnell-1} 
+
+}
+
+\caption{Resíduos de Cox-Snell dos modelos AFT. Se o modelo for adequado, o risco acumulado dos resíduos (estimado por Kaplan-Meier) acompanha a reta identidade.}\label{fig:aft-coxsnell}
+\end{figure}
+
+{[}A COMPLETAR: qual modelo AFT tem os resíduos de Cox-Snell mais
+próximos da reta? Isso confirma a ordem do AIC? Interprete as principais
+razões de tempos do modelo escolhido. Por exemplo, uma razão de 0,30
+para o estádio IV significa que o tempo até o óbito é cerca de 70\%
+menor que no estádio I, mantidas as demais covariáveis.{]}
+
+\subsubsection{Modelo de regressão de
+Cox}\label{modelo-de-regressuxe3o-de-cox}
+
+O modelo de Cox,
+\(h(t \mid \mathbf{x}) = h_0(t)\exp(\mathbf{x}^\top\boldsymbol\beta)\),
+não especifica o risco basal \(h_0(t)\). Em troca, ele supõe
+\textbf{riscos proporcionais}: a razão de riscos entre dois pacientes é
+constante no tempo. Os empates foram tratados pelo método de Efron.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.4868}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2105}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1974}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1053}}@{}}
+\caption{Modelo de Cox: razões de riscos (C de Harrell =
+0,705).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Termo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Razão de riscos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+IC 95\%
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Termo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Razão de riscos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+IC 95\%
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Estádio II (vs I) & 1,256 & {[}1,057; 1,492{]} & 0,010 \\
+Estádio III (vs I) & 1,947 & {[}1,653; 2,292{]} & \textless{} 0,001 \\
+Estádio IV (vs I) & 5,997 & {[}5,136; 7,003{]} & \textless{} 0,001 \\
+Idade (+10 anos) & 1,277 & {[}1,237; 1,319{]} & \textless{} 0,001 \\
+Sexo feminino (vs masculino) & 0,932 & {[}0,865; 1,004{]} & 0,062 \\
+Convênio (vs SUS) & 0,830 & {[}0,751; 0,918{]} & \textless{} 0,001 \\
+Particular (vs SUS) & 0,332 & {[}0,172; 0,638{]} & \textless{} 0,001 \\
+Reto/junção retossigmoide (vs cólon) & 1,086 & {[}1,004; 1,174{]} &
+0,039 \\
+\end{longtable}
+
+\subsubsection{Validação do modelo de
+Cox}\label{validauxe7uxe3o-do-modelo-de-cox}
+
+\begin{longtable}[]{@{}lrrr@{}}
+\caption{Teste de proporcionalidade dos riscos baseado nos resíduos de
+Schoenfeld (Grambsch \& Therneau, 1994).}\tabularnewline
+\toprule\noalign{}
+Termo & Qui-quadrado & gl & p \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Termo & Qui-quadrado & gl & p \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Estádio & 27,47 & 3 & \textless{} 0,001 \\
+Idade & 31,27 & 1 & \textless{} 0,001 \\
+Sexo & 8,60 & 1 & 0,003 \\
+Categoria & 6,34 & 2 & 0,042 \\
+Localização & 38,11 & 1 & \textless{} 0,001 \\
+Global & 109,49 & 8 & \textless{} 0,001 \\
+\end{longtable}
+
+Com 6.013 pacientes, o teste tem poder para detectar desvios de
+proporcionalidade pequenos e sem relevância prática. Por isso, a decisão
+deve combinar o valor-p com a \textbf{magnitude} do desvio, vista nas
+curvas \(\hat\beta(t)\) abaixo. Se a curva oscila pouco em torno de uma
+reta horizontal, a hipótese de riscos proporcionais é aceitável na
+prática, mesmo com p \textless{} 0,05.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/cox-schoenfeld-1} 
+
+}
+
+\caption{Coeficientes ao longo do tempo estimados pelos resíduos de Schoenfeld escalonados, com banda de 95\%. Uma linha horizontal indica riscos proporcionais. A linha tracejada vermelha marca a estimativa do modelo de Cox.}\label{fig:cox-schoenfeld}
+\end{figure}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/cox-cloglog-1} 
+
+}
+
+\caption{log(-log S(t)) por estádio versus log(t). Curvas aproximadamente paralelas são compatíveis com riscos proporcionais para o estádio.}\label{fig:cox-cloglog}
+\end{figure}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{relatorio_sobrevivencia_files/figure-latex/cox-residuos-1} 
+
+}
+
+\caption{Esquerda: resíduos martingale do modelo sem idade versus idade (forma funcional). Direita: resíduos de Cox-Snell do modelo de Cox.}\label{fig:cox-residuos}
+\end{figure}
+
+\subsubsection{Cox estratificado por estádio (análise de
+sensibilidade)}\label{cox-estratificado-por-estuxe1dio-anuxe1lise-de-sensibilidade}
+
+Quando a proporcionalidade falha para o estádio, uma alternativa é
+estratificar por ele. Cada estádio passa a ter o seu risco basal
+\(h_{0k}(t)\), livre de forma, e o efeito do estádio deixa de ser
+estimado. A comparação abaixo mostra se as razões de riscos das demais
+covariáveis mudam com isso.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.3627}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2059}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2059}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2255}}@{}}
+\caption{Razões de riscos {[}IC 95\%{]} no Cox, no Cox estratificado por
+estádio e implícitas no modelo Weibull.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Termo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Cox
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Cox estratificado
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Weibull (HR implícita)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Termo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Cox
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Cox estratificado
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Weibull (HR implícita)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Estádio II (vs I) & 1,256 {[}1,057; 1,492{]} & estrato & 1,258 \\
+Estádio III (vs I) & 1,947 {[}1,653; 2,292{]} & estrato & 1,947 \\
+Estádio IV (vs I) & 5,997 {[}5,136; 7,003{]} & estrato & 5,958 \\
+Idade (+10 anos) & 1,277 {[}1,237; 1,319{]} & 1,280 {[}1,239; 1,321{]} &
+1,278 \\
+Sexo feminino (vs masculino) & 0,932 {[}0,865; 1,004{]} & 0,934
+{[}0,867; 1,006{]} & 0,933 \\
+Convênio (vs SUS) & 0,830 {[}0,751; 0,918{]} & 0,830 {[}0,751; 0,918{]}
+& 0,830 \\
+Particular (vs SUS) & 0,332 {[}0,172; 0,638{]} & 0,329 {[}0,171;
+0,633{]} & 0,333 \\
+Reto/junção retossigmoide (vs cólon) & 1,086 {[}1,004; 1,174{]} & 1,090
+{[}1,008; 1,179{]} & 1,083 \\
+\end{longtable}
+
+No Cox estratificado, o teste global de proporcionalidade teve p
+\textless{} 0,001. O modelo Weibull é ao mesmo tempo AFT e de riscos
+proporcionais. Por isso, quando as razões de riscos implícitas nele
+ficam próximas das do Cox, há indicação de que uma forma paramétrica é
+compatível com os dados.
+
+{[}A COMPLETAR: a proporcionalidade se sustenta na prática? Quais curvas
+\(\hat\beta(t)\) se afastam da horizontal, e quanto? A idade tem efeito
+aproximadamente linear no gráfico dos resíduos martingale? Os resíduos
+de Cox-Snell seguem a reta?{]}
+
+\subsection{Comparação dos modelos}\label{comparauxe7uxe3o-dos-modelos}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1818}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2525}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2020}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1515}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1515}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0606}}@{}}
+\caption{Comparação dos modelos de regressão. AIC e BIC só são
+comparáveis entre os modelos AFT, pois o Cox maximiza uma
+verossimilhança parcial; o índice C é comparável entre
+todos.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Modelo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Suposição
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+logLik
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+AIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+BIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+C
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Modelo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Suposição
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+logLik
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+AIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+BIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+C
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+AFT Weibull & Tempo de falha acelerado & -5.736,8 & 11.493,6 & 11.560,6
+& 0,705 \\
+AFT Log-logística & Tempo de falha acelerado & -5.807,6 & 11.635,1 &
+11.702,2 & 0,706 \\
+AFT Log-normal & Tempo de falha acelerado & -5.917,7 & 11.855,4 &
+11.922,4 & 0,706 \\
+AFT Exponencial & Tempo de falha acelerado & -6.009,6 & 12.037,2 &
+12.097,5 & 0,706 \\
+Cox & Riscos proporcionais & -22.246,8 (parcial) & não comparável & não
+comparável & 0,705 \\
+\end{longtable}
+
+\section{Conclusão}\label{conclusuxe3o}
+
+Entre os modelos paramétricos de regressão, o \textbf{AFT Weibull} teve
+o menor AIC, 141,6 pontos abaixo do segundo colocado (Log-logística).
+Pelo BIC, o melhor foi o \textbf{Weibull}. No modelo de Cox, o teste
+global de proporcionalidade teve p \textless{} 0,001. O índice de
+concordância foi 0,705 no Cox e 0,705 no AFT Weibull.
+
+{[}A COMPLETAR: escolha o modelo final e justifique com os três
+critérios do enunciado.{]}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  {[}A COMPLETAR: \textbf{qualidade do ajuste.} Qual modelo tem melhor
+  AIC, BIC e log-verossimilhança entre os comparáveis? A diferença de
+  AIC é grande (acima de 10 já é evidência forte)?{]}
+\item
+  {[}A COMPLETAR: \textbf{validação dos resíduos.} Qual modelo tem
+  resíduos de Cox-Snell mais próximos da reta? A proporcionalidade do
+  Cox se sustenta na prática? Se não, o AFT ou o Cox estratificado são
+  mais adequados?{]}
+\item
+  {[}A COMPLETAR: \textbf{interpretação.} Razão de tempos (AFT) ou razão
+  de riscos (Cox): qual comunica melhor o resultado? Os efeitos fazem
+  sentido clínico, com mais risco para estádios avançados e idades
+  maiores?{]}
+\end{enumerate}
+
+\subsection{Limitações}\label{limitauxe7uxf5es}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Registro hospitalar.} A coorte representa pacientes atendidos
+  em hospitais habilitados em oncologia de São Paulo, não a população
+  geral.
+\item
+  \textbf{Censura possivelmente informativa.} Pacientes perdidos de
+  seguimento são censurados na última informação. Se a perda estiver
+  associada a pior prognóstico, a sobrevida é superestimada.
+\item
+  \textbf{Unidade de análise.} A base não tem identificador de paciente,
+  então quem teve mais de um tumor colorretal pode aparecer mais de uma
+  vez.
+\item
+  \textbf{Seguimento.} Os anos de diagnóstico mais recentes têm
+  seguimento curto e, segundo a FOSP, podem estar com o registro em
+  andamento.
+\item
+  \textbf{Covariáveis.} O tratamento foi excluído pelos motivos da Seção
+  4.2. As variáveis biológicas e de comorbidade não estão disponíveis.
+\end{itemize}
+
+\section{Referências}\label{referuxeancias}
+
+\begin{itemize}
+\tightlist
+\item
+  COLOSIMO, E. A.; GIOLO, S. R. \emph{Análise de Sobrevivência
+  Aplicada}. São Paulo: Blucher, 2006.
+\item
+  COX, D. R. Regression models and life-tables. \emph{Journal of the
+  Royal Statistical Society, Series B}, v. 34, n.~2, p.~187--220, 1972.
+\item
+  FUNDAÇÃO ONCOCENTRO DE SÃO PAULO. \emph{Dicionário de Dados ---
+  RHC/SP}. Revisão de 20/07/2026.
+\item
+  GRAMBSCH, P. M.; THERNEAU, T. M. Proportional hazards tests and
+  diagnostics based on weighted residuals. \emph{Biometrika}, v. 81,
+  n.~3, p.~515--526, 1994.
+\item
+  JACKSON, C. flexsurv: a platform for parametric survival modeling in
+  R. \emph{Journal of Statistical Software}, v. 70, n.~8, 2016.
+\item
+  KLEIN, J. P.; MOESCHBERGER, M. L. \emph{Survival Analysis: Techniques
+  for Censored and Truncated Data}. 2. ed.~New York: Springer, 2003.
+\item
+  SCHEMPER, M.; SMITH, T. L. A note on quantifying follow-up in studies
+  of failure time. \emph{Controlled Clinical Trials}, v. 17, n.~4,
+  p.~343--346, 1996.
+\item
+  THERNEAU, T. M.; GRAMBSCH, P. M. \emph{Modeling Survival Data:
+  Extending the Cox Model}. New York: Springer, 2000.
+\end{itemize}
+
+\newpage
+
+\section{Apêndice: código R}\label{apuxeandice-cuxf3digo-r}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{knitr}\SpecialCharTok{::}\NormalTok{opts\_chunk}\SpecialCharTok{$}\FunctionTok{set}\NormalTok{(}\AttributeTok{echo =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{message =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{warning =} \ConstantTok{FALSE}\NormalTok{,}
+                      \AttributeTok{fig.align =} \StringTok{"center"}\NormalTok{, }\AttributeTok{fig.width =} \DecValTok{7}\NormalTok{, }\AttributeTok{fig.height =} \FloatTok{4.2}\NormalTok{,}
+                      \AttributeTok{fig.pos =} \StringTok{"H"}\NormalTok{, }\AttributeTok{out.width =} \StringTok{"92\%"}\NormalTok{)}
+\FunctionTok{options}\NormalTok{(}\AttributeTok{OutDec =} \StringTok{","}\NormalTok{)}
+
+\FunctionTok{library}\NormalTok{(survival)   }\CommentTok{\# Surv, survfit, survdiff, coxph, cox.zph, survreg}
+\FunctionTok{library}\NormalTok{(flexsurv)   }\CommentTok{\# flexsurvreg: modelos paramétricos sem covariáveis}
+\FunctionTok{library}\NormalTok{(survminer)  }\CommentTok{\# ggsurvplot, pairwise\_survdiff}
+\FunctionTok{library}\NormalTok{(muhaz)      }\CommentTok{\# taxa de risco suavizada por kernel}
+\FunctionTok{library}\NormalTok{(dplyr)}
+\FunctionTok{library}\NormalTok{(tidyr)}
+\FunctionTok{library}\NormalTok{(purrr)}
+\FunctionTok{library}\NormalTok{(ggplot2)}
+\FunctionTok{library}\NormalTok{(knitr)}
+
+\FunctionTok{theme\_set}\NormalTok{(}\FunctionTok{theme\_minimal}\NormalTok{(}\AttributeTok{base\_size =} \DecValTok{11}\NormalTok{))}
+
+\CommentTok{\# Formatação pt{-}BR}
+\NormalTok{fmt   }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{d =} \DecValTok{2}\NormalTok{) }\FunctionTok{formatC}\NormalTok{(x, }\AttributeTok{format =} \StringTok{"f"}\NormalTok{, }\AttributeTok{digits =}\NormalTok{ d, }\AttributeTok{decimal.mark =} \StringTok{","}\NormalTok{, }\AttributeTok{big.mark =} \StringTok{"."}\NormalTok{)}
+\NormalTok{fmt\_n }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x) }\FunctionTok{formatC}\NormalTok{(}\FunctionTok{round}\NormalTok{(x), }\AttributeTok{format =} \StringTok{"d"}\NormalTok{, }\AttributeTok{big.mark =} \StringTok{"."}\NormalTok{)}
+\NormalTok{fmt\_p }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(p) }\FunctionTok{ifelse}\NormalTok{(p }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{, }\StringTok{"\textless{} 0,001"}\NormalTok{, }\FunctionTok{fmt}\NormalTok{(p, }\DecValTok{3}\NormalTok{))}
+\NormalTok{pct   }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{d =} \DecValTok{1}\NormalTok{) }\FunctionTok{paste0}\NormalTok{(}\FunctionTok{fmt}\NormalTok{(}\DecValTok{100} \SpecialCharTok{*}\NormalTok{ x, d), }\StringTok{"\%"}\NormalTok{)}
+\NormalTok{ic    }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(lo, hi, }\AttributeTok{d =} \DecValTok{3}\NormalTok{) }\FunctionTok{paste0}\NormalTok{(}\StringTok{"["}\NormalTok{, }\FunctionTok{fmt}\NormalTok{(lo, d), }\StringTok{"; "}\NormalTok{, }\FunctionTok{fmt}\NormalTok{(hi, d), }\StringTok{"]"}\NormalTok{)}
+\NormalTok{tabela }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(df, legenda, ...) }\FunctionTok{kable}\NormalTok{(df, }\AttributeTok{caption =}\NormalTok{ legenda, }\AttributeTok{booktabs =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{position =} \StringTok{"H"}\NormalTok{, ...)}
+
+\CommentTok{\# Teste de log{-}rank em texto: qui{-}quadrado, gl e p}
+\NormalTok{frase\_lr }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(t) \{}
+\NormalTok{  gl }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(t}\SpecialCharTok{$}\NormalTok{n) }\SpecialCharTok{{-}} \DecValTok{1}
+\NormalTok{  p  }\OtherTok{\textless{}{-}} \FunctionTok{pchisq}\NormalTok{(t}\SpecialCharTok{$}\NormalTok{chisq, gl, }\AttributeTok{lower.tail =} \ConstantTok{FALSE}\NormalTok{)}
+  \FunctionTok{sprintf}\NormalTok{(}\StringTok{"$}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{chi\^{}2$ = \%s, gl = \%d, p \%s"}\NormalTok{, }\FunctionTok{fmt}\NormalTok{(t}\SpecialCharTok{$}\NormalTok{chisq, }\DecValTok{1}\NormalTok{), gl,}
+          \ControlFlowTok{if}\NormalTok{ (p }\SpecialCharTok{\textless{}} \FloatTok{0.001}\NormalTok{) }\StringTok{"\textless{} 0,001"} \ControlFlowTok{else} \FunctionTok{paste}\NormalTok{(}\StringTok{"="}\NormalTok{, }\FunctionTok{fmt}\NormalTok{(p, }\DecValTok{3}\NormalTok{)))}
+\NormalTok{\}}
+
+\CommentTok{\# Rótulos legíveis dos coeficientes}
+\NormalTok{rotulos }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}
+  \StringTok{"estadioII"}            \OtherTok{=} \StringTok{"Estádio II (vs I)"}\NormalTok{,}
+  \StringTok{"estadioIII"}           \OtherTok{=} \StringTok{"Estádio III (vs I)"}\NormalTok{,}
+  \StringTok{"estadioIV"}            \OtherTok{=} \StringTok{"Estádio IV (vs I)"}\NormalTok{,}
+  \StringTok{"idade10"}              \OtherTok{=} \StringTok{"Idade (+10 anos)"}\NormalTok{,}
+  \StringTok{"sexoFeminino"}         \OtherTok{=} \StringTok{"Sexo feminino (vs masculino)"}\NormalTok{,}
+  \StringTok{"categoriaConvênio"}    \OtherTok{=} \StringTok{"Convênio (vs SUS)"}\NormalTok{,}
+  \StringTok{"categoriaParticular"}  \OtherTok{=} \StringTok{"Particular (vs SUS)"}\NormalTok{,}
+  \StringTok{"localizacaoReto/junção"} \OtherTok{=} \StringTok{"Reto/junção retossigmoide (vs cólon)"}
+\NormalTok{)}
+\NormalTok{rotular }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x) }\FunctionTok{unname}\NormalTok{(}\FunctionTok{ifelse}\NormalTok{(x }\SpecialCharTok{\%in\%} \FunctionTok{names}\NormalTok{(rotulos), rotulos[x], x))}
+\NormalTok{dados }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(params}\SpecialCharTok{$}\NormalTok{arquivo\_rds) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{filter}\NormalTok{(}\FunctionTok{between}\NormalTok{(ANODIAG, params}\SpecialCharTok{$}\NormalTok{ano\_min, params}\SpecialCharTok{$}\NormalTok{ano\_max)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{localizacao =} \FunctionTok{factor}\NormalTok{(}\FunctionTok{if\_else}\NormalTok{(TOPOGRUP }\SpecialCharTok{==} \StringTok{"C18"}\NormalTok{, }\StringTok{"Cólon"}\NormalTok{, }\StringTok{"Reto/junção"}\NormalTok{),}
+                         \AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Cólon"}\NormalTok{, }\StringTok{"Reto/junção"}\NormalTok{)),}
+    \AttributeTok{faixa\_idade =} \FunctionTok{cut}\NormalTok{(IDADE, }\AttributeTok{breaks =} \FunctionTok{c}\NormalTok{(}\DecValTok{18}\NormalTok{, }\DecValTok{50}\NormalTok{, }\DecValTok{65}\NormalTok{, }\DecValTok{75}\NormalTok{, }\ConstantTok{Inf}\NormalTok{), }\AttributeTok{right =} \ConstantTok{FALSE}\NormalTok{,}
+                      \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"18{-}49"}\NormalTok{, }\StringTok{"50{-}64"}\NormalTok{, }\StringTok{"65{-}74"}\NormalTok{, }\StringTok{"75+"}\NormalTok{)),}
+    \AttributeTok{idade10     =}\NormalTok{ (IDADE }\SpecialCharTok{{-}} \DecValTok{60}\NormalTok{) }\SpecialCharTok{/} \DecValTok{10}     \CommentTok{\# idade centrada em 60 anos, por década}
+\NormalTok{  )}
+
+\NormalTok{n\_total  }\OtherTok{\textless{}{-}} \FunctionTok{nrow}\NormalTok{(dados)}
+\NormalTok{n\_obitos }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{status)}
+\NormalTok{n\_cens   }\OtherTok{\textless{}{-}}\NormalTok{ n\_total }\SpecialCharTok{{-}}\NormalTok{ n\_obitos}
+\NormalTok{t\_max    }\OtherTok{\textless{}{-}} \FunctionTok{max}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{tempo\_anos)}
+
+\CommentTok{\# Seguimento mediano pelo KM reverso (Schemper \& Smith, 1996)}
+\NormalTok{km\_rev  }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, }\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ status) }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\AttributeTok{data =}\NormalTok{ dados)}
+\NormalTok{seg\_med }\OtherTok{\textless{}{-}} \FunctionTok{unname}\NormalTok{(}\FunctionTok{summary}\NormalTok{(km\_rev)}\SpecialCharTok{$}\NormalTok{table[}\StringTok{"median"}\NormalTok{])}
+
+\NormalTok{perda\_cens }\OtherTok{\textless{}{-}} \FunctionTok{mean}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{PERDASEG[dados}\SpecialCharTok{$}\NormalTok{status }\SpecialCharTok{==} \DecValTok{0}\NormalTok{] }\SpecialCharTok{==} \StringTok{"1"}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{funil }\OtherTok{\textless{}{-}} \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(params}\SpecialCharTok{$}\NormalTok{arquivo\_funil)) }\FunctionTok{readRDS}\NormalTok{(params}\SpecialCharTok{$}\NormalTok{arquivo\_funil) }\ControlFlowTok{else} \ConstantTok{NULL}
+
+\ControlFlowTok{if}\NormalTok{ (}\SpecialCharTok{!}\FunctionTok{is.null}\NormalTok{(funil)) \{}
+\NormalTok{  funil }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{bind\_rows}\NormalTok{(}\FunctionTok{tibble}\NormalTok{(}\AttributeTok{etapa =} \FunctionTok{sprintf}\NormalTok{(}\StringTok{"Diagnóstico entre \%d e \%d"}\NormalTok{, params}\SpecialCharTok{$}\NormalTok{ano\_min, params}\SpecialCharTok{$}\NormalTok{ano\_max),}
+                     \AttributeTok{n =}\NormalTok{ n\_total)) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Excluídos}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{c}\NormalTok{(}\ConstantTok{NA}\NormalTok{, }\SpecialCharTok{{-}}\FunctionTok{diff}\NormalTok{(n)),}
+           \AttributeTok{n =} \FunctionTok{fmt\_n}\NormalTok{(n),}
+           \StringTok{\textasciigrave{}}\AttributeTok{Excluídos}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Excluídos}\StringTok{\textasciigrave{}}\NormalTok{), }\StringTok{""}\NormalTok{, }\FunctionTok{fmt\_n}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Excluídos}\StringTok{\textasciigrave{}}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{rename}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Critério}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ etapa, }\StringTok{\textasciigrave{}}\AttributeTok{n restante}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ n) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{tabela}\NormalTok{(}\StringTok{"Fluxograma de seleção dos casos."}\NormalTok{)}
+\NormalTok{\}}
+\NormalTok{tab\_ev }\OtherTok{\textless{}{-}}\NormalTok{ dados }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{group\_by}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Estádio}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{as.character}\NormalTok{(estadio)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{Pacientes =} \FunctionTok{n}\NormalTok{(), }\StringTok{\textasciigrave{}}\AttributeTok{Óbitos}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{sum}\NormalTok{(status), }\AttributeTok{Censuras =} \FunctionTok{sum}\NormalTok{(}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ status), }\AttributeTok{.groups =} \StringTok{"drop"}\NormalTok{)}
+
+\FunctionTok{bind\_rows}\NormalTok{(tab\_ev, }\FunctionTok{summarise}\NormalTok{(tab\_ev, }\StringTok{\textasciigrave{}}\AttributeTok{Estádio}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{"Total"}\NormalTok{, }\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), sum))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{\% óbitos}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{pct}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Óbitos}\StringTok{\textasciigrave{}} \SpecialCharTok{/}\NormalTok{ Pacientes),}
+         \FunctionTok{across}\NormalTok{(}\FunctionTok{c}\NormalTok{(Pacientes, }\StringTok{\textasciigrave{}}\AttributeTok{Óbitos}\StringTok{\textasciigrave{}}\NormalTok{, Censuras), fmt\_n)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Número de pacientes, óbitos e censuras por estádio clínico."}\NormalTok{, }\AttributeTok{align =} \StringTok{"lrrrr"}\NormalTok{)}
+\NormalTok{desc\_var }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(v, rotulo) \{}
+\NormalTok{  dados }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{group\_by}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Nível}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ .data[[v]]) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{summarise}\NormalTok{(}\AttributeTok{n =} \FunctionTok{n}\NormalTok{(), }\AttributeTok{obitos =} \FunctionTok{sum}\NormalTok{(status), }\AttributeTok{.groups =} \StringTok{"drop"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Variável}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ rotulo,}
+           \StringTok{\textasciigrave{}}\AttributeTok{Nível}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Nível}\StringTok{\textasciigrave{}}\NormalTok{), }\StringTok{"Sem informação"}\NormalTok{, }\FunctionTok{as.character}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Nível}\StringTok{\textasciigrave{}}\NormalTok{)),}
+           \StringTok{\textasciigrave{}}\AttributeTok{n (\%)}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{paste0}\NormalTok{(}\FunctionTok{fmt\_n}\NormalTok{(n), }\StringTok{" ("}\NormalTok{, }\FunctionTok{pct}\NormalTok{(n }\SpecialCharTok{/} \FunctionTok{sum}\NormalTok{(n)), }\StringTok{")"}\NormalTok{),}
+           \StringTok{\textasciigrave{}}\AttributeTok{Óbitos no grupo}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{pct}\NormalTok{(obitos }\SpecialCharTok{/}\NormalTok{ n)) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{select}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Variável}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Nível}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{n (\%)}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Óbitos no grupo}\StringTok{\textasciigrave{}}\NormalTok{)}
+\NormalTok{\}}
+
+\FunctionTok{map2\_dfr}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"sexo"}\NormalTok{, }\StringTok{"faixa\_idade"}\NormalTok{, }\StringTok{"categoria"}\NormalTok{, }\StringTok{"localizacao"}\NormalTok{, }\StringTok{"estadio"}\NormalTok{),}
+         \FunctionTok{c}\NormalTok{(}\StringTok{"Sexo"}\NormalTok{, }\StringTok{"Faixa etária"}\NormalTok{, }\StringTok{"Categoria de atendimento"}\NormalTok{, }\StringTok{"Localização"}\NormalTok{, }\StringTok{"Estádio clínico"}\NormalTok{),}
+\NormalTok{         desc\_var) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Variável}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{duplicated}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Variável}\StringTok{\textasciigrave{}}\NormalTok{), }\StringTok{""}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Variável}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Características da coorte e proporção de óbitos por categoria."}\NormalTok{, }\AttributeTok{align =} \StringTok{"llrr"}\NormalTok{)}
+\NormalTok{km\_geral }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\AttributeTok{data =}\NormalTok{ dados)}
+
+\FunctionTok{ggsurvplot}\NormalTok{(km\_geral, }\AttributeTok{data =}\NormalTok{ dados, }\AttributeTok{conf.int =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{censor =} \ConstantTok{FALSE}\NormalTok{,}
+           \AttributeTok{risk.table =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{break.time.by =} \DecValTok{1}\NormalTok{, }\AttributeTok{surv.median.line =} \StringTok{"hv"}\NormalTok{,}
+           \AttributeTok{xlab =} \StringTok{"Anos desde o diagnóstico"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Probabilidade de sobrevida"}\NormalTok{,}
+           \AttributeTok{legend =} \StringTok{"none"}\NormalTok{, }\AttributeTok{ggtheme =} \FunctionTok{theme\_minimal}\NormalTok{(), }\AttributeTok{risk.table.height =} \FloatTok{0.22}\NormalTok{,}
+           \AttributeTok{risk.table.y.text =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{tables.theme =} \FunctionTok{theme\_cleantable}\NormalTok{())}
+\NormalTok{s\_geral }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(km\_geral, }\AttributeTok{times =} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{floor}\NormalTok{(t\_max))}
+\NormalTok{med\_geral }\OtherTok{\textless{}{-}} \FunctionTok{unname}\NormalTok{(}\FunctionTok{summary}\NormalTok{(km\_geral)}\SpecialCharTok{$}\NormalTok{table[}\StringTok{"median"}\NormalTok{])}
+
+\FunctionTok{tibble}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Tempo (anos)}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ s\_geral}\SpecialCharTok{$}\NormalTok{time,}
+       \StringTok{\textasciigrave{}}\AttributeTok{Em risco}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt\_n}\NormalTok{(s\_geral}\SpecialCharTok{$}\NormalTok{n.risk),}
+       \StringTok{\textasciigrave{}}\AttributeTok{S(t)}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(s\_geral}\SpecialCharTok{$}\NormalTok{surv, }\DecValTok{3}\NormalTok{),}
+       \StringTok{\textasciigrave{}}\AttributeTok{IC 95\%}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ic}\NormalTok{(s\_geral}\SpecialCharTok{$}\NormalTok{lower, s\_geral}\SpecialCharTok{$}\NormalTok{upper)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Sobrevida estimada por Kaplan{-}Meier em tempos selecionados."}\NormalTok{, }\AttributeTok{align =} \StringTok{"rrrr"}\NormalTok{)}
+\NormalTok{km\_est }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ estadio, }\AttributeTok{data =}\NormalTok{ dados)}
+
+\FunctionTok{ggsurvplot}\NormalTok{(km\_est, }\AttributeTok{data =}\NormalTok{ dados, }\AttributeTok{conf.int =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{censor =} \ConstantTok{FALSE}\NormalTok{,}
+           \AttributeTok{risk.table =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{break.time.by =} \DecValTok{1}\NormalTok{, }\AttributeTok{palette =} \StringTok{"Dark2"}\NormalTok{,}
+           \AttributeTok{legend.title =} \StringTok{"Estádio"}\NormalTok{, }\AttributeTok{legend.labs =} \FunctionTok{levels}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{estadio),}
+           \AttributeTok{xlab =} \StringTok{"Anos desde o diagnóstico"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Probabilidade de sobrevida"}\NormalTok{,}
+           \AttributeTok{ggtheme =} \FunctionTok{theme\_minimal}\NormalTok{(), }\AttributeTok{risk.table.height =} \FloatTok{0.28}\NormalTok{,}
+           \AttributeTok{tables.theme =} \FunctionTok{theme\_cleantable}\NormalTok{())}
+\NormalTok{lr\_est }\OtherTok{\textless{}{-}} \FunctionTok{survdiff}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ estadio, }\AttributeTok{data =}\NormalTok{ dados)}
+\NormalTok{s\_est  }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(km\_est, }\AttributeTok{times =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{3}\NormalTok{))}
+\NormalTok{med\_est }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(km\_est)}\SpecialCharTok{$}\NormalTok{table[, }\StringTok{"median"}\NormalTok{]}
+
+\FunctionTok{tibble}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Estádio}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{levels}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{estadio),}
+       \AttributeTok{N =} \FunctionTok{fmt\_n}\NormalTok{(lr\_est}\SpecialCharTok{$}\NormalTok{n),}
+       \StringTok{\textasciigrave{}}\AttributeTok{Óbitos obs.}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt\_n}\NormalTok{(lr\_est}\SpecialCharTok{$}\NormalTok{obs),}
+       \StringTok{\textasciigrave{}}\AttributeTok{Óbitos esp.}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(lr\_est}\SpecialCharTok{$}\NormalTok{exp, }\DecValTok{1}\NormalTok{),}
+       \StringTok{\textasciigrave{}}\AttributeTok{O/E}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(lr\_est}\SpecialCharTok{$}\NormalTok{obs }\SpecialCharTok{/}\NormalTok{ lr\_est}\SpecialCharTok{$}\NormalTok{exp, }\DecValTok{2}\NormalTok{),}
+       \StringTok{\textasciigrave{}}\AttributeTok{Mediana (anos)}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(med\_est), }\StringTok{"não atingida"}\NormalTok{, }\FunctionTok{fmt}\NormalTok{(med\_est, }\DecValTok{2}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Teste de log{-}rank por estádio: óbitos observados (O) e esperados (E) sob a hipótese de igualdade das curvas."}\NormalTok{,}
+         \AttributeTok{align =} \StringTok{"lrrrrr"}\NormalTok{)}
+
+\FunctionTok{tibble}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Estádio}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{sub}\NormalTok{(}\StringTok{"estadio="}\NormalTok{, }\StringTok{""}\NormalTok{, }\FunctionTok{as.character}\NormalTok{(s\_est}\SpecialCharTok{$}\NormalTok{strata)),}
+       \StringTok{\textasciigrave{}}\AttributeTok{Tempo (anos)}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ s\_est}\SpecialCharTok{$}\NormalTok{time,}
+       \StringTok{\textasciigrave{}}\AttributeTok{S(t)}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(s\_est}\SpecialCharTok{$}\NormalTok{surv, }\DecValTok{3}\NormalTok{),}
+       \StringTok{\textasciigrave{}}\AttributeTok{IC 95\%}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ic}\NormalTok{(s\_est}\SpecialCharTok{$}\NormalTok{lower, s\_est}\SpecialCharTok{$}\NormalTok{upper)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{names\_from =} \StringTok{\textasciigrave{}}\AttributeTok{Tempo (anos)}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{values\_from =} \FunctionTok{c}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{S(t)}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{IC 95\%}\StringTok{\textasciigrave{}}\NormalTok{),}
+              \AttributeTok{names\_glue =} \StringTok{"\{.value\} em \{\textasciigrave{}Tempo (anos)\textasciigrave{}\} ano(s)"}\NormalTok{, }\AttributeTok{names\_vary =} \StringTok{"slowest"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Sobrevida em 1 e 3 anos por estádio."}\NormalTok{)}
+\NormalTok{pares }\OtherTok{\textless{}{-}} \FunctionTok{pairwise\_survdiff}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ estadio, }\AttributeTok{data =}\NormalTok{ dados,}
+                           \AttributeTok{p.adjust.method =} \StringTok{"holm"}\NormalTok{)}
+\NormalTok{pmat }\OtherTok{\textless{}{-}}\NormalTok{ pares}\SpecialCharTok{$}\NormalTok{p.value}
+\NormalTok{pmat[] }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(pmat), }\StringTok{""}\NormalTok{, }\FunctionTok{fmt\_p}\NormalTok{(pmat))}
+\FunctionTok{rownames}\NormalTok{(pmat) }\OtherTok{\textless{}{-}} \FunctionTok{paste}\NormalTok{(}\StringTok{"Estádio"}\NormalTok{, }\FunctionTok{rownames}\NormalTok{(pmat))}
+\FunctionTok{colnames}\NormalTok{(pmat) }\OtherTok{\textless{}{-}} \FunctionTok{paste}\NormalTok{(}\StringTok{"Estádio"}\NormalTok{, }\FunctionTok{colnames}\NormalTok{(pmat))}
+\FunctionTok{tabela}\NormalTok{(pmat, }\StringTok{"Valores{-}p do log{-}rank par a par entre estádios (ajuste de Holm)."}\NormalTok{)}
+\NormalTok{vars\_grupo }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\AttributeTok{sexo =} \StringTok{"Sexo"}\NormalTok{, }\AttributeTok{categoria =} \StringTok{"Categoria"}\NormalTok{, }\AttributeTok{localizacao =} \StringTok{"Localização"}\NormalTok{,}
+                \AttributeTok{faixa\_idade =} \StringTok{"Faixa etária"}\NormalTok{)}
+
+\NormalTok{km\_sub }\OtherTok{\textless{}{-}} \FunctionTok{imap}\NormalTok{(vars\_grupo, \textbackslash{}(rot, v)}
+  \FunctionTok{surv\_fit}\NormalTok{(}\FunctionTok{as.formula}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"Surv(tempo\_anos, status) \textasciitilde{}"}\NormalTok{, v)), }\AttributeTok{data =}\NormalTok{ dados))}
+
+\NormalTok{graf\_sub }\OtherTok{\textless{}{-}} \FunctionTok{imap}\NormalTok{(km\_sub, \textbackslash{}(f, v)}
+  \FunctionTok{ggsurvplot}\NormalTok{(f, }\AttributeTok{data =}\NormalTok{ dados, }\AttributeTok{censor =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{conf.int =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{palette =} \StringTok{"Dark2"}\NormalTok{,}
+             \AttributeTok{legend.title =}\NormalTok{ vars\_grupo[[v]], }\AttributeTok{legend.labs =} \FunctionTok{sub}\NormalTok{(}\StringTok{".*="}\NormalTok{, }\StringTok{""}\NormalTok{, }\FunctionTok{names}\NormalTok{(f}\SpecialCharTok{$}\NormalTok{strata)),}
+             \AttributeTok{xlab =} \StringTok{"Anos"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"S(t)"}\NormalTok{, }\AttributeTok{ggtheme =} \FunctionTok{theme\_minimal}\NormalTok{(}\AttributeTok{base\_size =} \DecValTok{9}\NormalTok{)))}
+
+\FunctionTok{arrange\_ggsurvplots}\NormalTok{(}\FunctionTok{unname}\NormalTok{(graf\_sub), }\AttributeTok{ncol =} \DecValTok{2}\NormalTok{, }\AttributeTok{nrow =} \DecValTok{2}\NormalTok{, }\AttributeTok{print =} \ConstantTok{TRUE}\NormalTok{)}
+\FunctionTok{c}\NormalTok{(}\AttributeTok{estadio =} \StringTok{"Estádio clínico"}\NormalTok{, vars\_grupo) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{imap\_dfr}\NormalTok{(\textbackslash{}(rot, v) \{}
+\NormalTok{    t  }\OtherTok{\textless{}{-}} \FunctionTok{survdiff}\NormalTok{(}\FunctionTok{as.formula}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"Surv(tempo\_anos, status) \textasciitilde{}"}\NormalTok{, v)), }\AttributeTok{data =}\NormalTok{ dados)}
+\NormalTok{    gl }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(t}\SpecialCharTok{$}\NormalTok{n) }\SpecialCharTok{{-}} \DecValTok{1}
+    \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Grupo =}\NormalTok{ rot, }\StringTok{\textasciigrave{}}\AttributeTok{Qui{-}quadrado}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(t}\SpecialCharTok{$}\NormalTok{chisq, }\DecValTok{1}\NormalTok{), }\AttributeTok{gl =}\NormalTok{ gl,}
+           \AttributeTok{p =} \FunctionTok{fmt\_p}\NormalTok{(}\FunctionTok{pchisq}\NormalTok{(t}\SpecialCharTok{$}\NormalTok{chisq, gl, }\AttributeTok{lower.tail =} \ConstantTok{FALSE}\NormalTok{)))}
+\NormalTok{  \}) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Testes de log{-}rank por grupo."}\NormalTok{, }\AttributeTok{align =} \StringTok{"lrrr"}\NormalTok{)}
+\NormalTok{na\_geral }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\AttributeTok{data =}\NormalTok{ dados, }\AttributeTok{ctype =} \DecValTok{1}\NormalTok{)}
+\NormalTok{na\_est   }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ estadio, }\AttributeTok{data =}\NormalTok{ dados, }\AttributeTok{ctype =} \DecValTok{1}\NormalTok{)}
+
+\NormalTok{df\_na }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}\AttributeTok{tempo =}\NormalTok{ na\_geral}\SpecialCharTok{$}\NormalTok{time, }\AttributeTok{H =}\NormalTok{ na\_geral}\SpecialCharTok{$}\NormalTok{cumhaz, }\AttributeTok{se =}\NormalTok{ na\_geral}\SpecialCharTok{$}\NormalTok{std.chaz) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{lo =} \FunctionTok{pmax}\NormalTok{(H }\SpecialCharTok{{-}} \FloatTok{1.96} \SpecialCharTok{*}\NormalTok{ se, }\DecValTok{0}\NormalTok{), }\AttributeTok{hi =}\NormalTok{ H }\SpecialCharTok{+} \FloatTok{1.96} \SpecialCharTok{*}\NormalTok{ se)}
+
+\NormalTok{df\_na\_est }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}\AttributeTok{tempo =}\NormalTok{ na\_est}\SpecialCharTok{$}\NormalTok{time, }\AttributeTok{H =}\NormalTok{ na\_est}\SpecialCharTok{$}\NormalTok{cumhaz,}
+                    \AttributeTok{estadio =} \FunctionTok{sub}\NormalTok{(}\StringTok{"estadio="}\NormalTok{, }\StringTok{""}\NormalTok{, }\FunctionTok{rep}\NormalTok{(}\FunctionTok{names}\NormalTok{(na\_est}\SpecialCharTok{$}\NormalTok{strata), na\_est}\SpecialCharTok{$}\NormalTok{strata)))}
+
+\NormalTok{g1 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(df\_na, }\FunctionTok{aes}\NormalTok{(tempo, H)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ lo, }\AttributeTok{ymax =}\NormalTok{ hi), }\AttributeTok{fill =} \StringTok{"grey80"}\NormalTok{, }\AttributeTok{stat =} \StringTok{"identity"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_step}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Anos desde o diagnóstico"}\NormalTok{, }\AttributeTok{y =} \FunctionTok{expression}\NormalTok{(}\FunctionTok{hat}\NormalTok{(H)(t)), }\AttributeTok{title =} \StringTok{"Global"}\NormalTok{)}
+
+\NormalTok{g2 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(df\_na\_est, }\FunctionTok{aes}\NormalTok{(tempo, H, }\AttributeTok{colour =}\NormalTok{ estadio)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_step}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{scale\_colour\_brewer}\NormalTok{(}\AttributeTok{palette =} \StringTok{"Dark2"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Anos desde o diagnóstico"}\NormalTok{, }\AttributeTok{y =} \FunctionTok{expression}\NormalTok{(}\FunctionTok{hat}\NormalTok{(H)(t)), }\AttributeTok{colour =} \StringTok{"Estádio"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Por estádio"}\NormalTok{)}
+
+\NormalTok{gridExtra}\SpecialCharTok{::}\FunctionTok{grid.arrange}\NormalTok{(g1, g2, }\AttributeTok{ncol =} \DecValTok{2}\NormalTok{)}
+\NormalTok{corte\_max }\OtherTok{\textless{}{-}} \FunctionTok{floor}\NormalTok{(}\FunctionTok{quantile}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{tempo\_anos, }\FloatTok{0.95}\NormalTok{))}
+\NormalTok{cortes }\OtherTok{\textless{}{-}} \DecValTok{0}\SpecialCharTok{:}\NormalTok{corte\_max}
+
+\NormalTok{delta\_H }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(fit\_time, fit\_H) \{}
+\NormalTok{  H }\OtherTok{\textless{}{-}} \FunctionTok{stepfun}\NormalTok{(fit\_time, }\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, fit\_H))}
+\NormalTok{  dH }\OtherTok{\textless{}{-}} \FunctionTok{diff}\NormalTok{(}\FunctionTok{H}\NormalTok{(cortes))}
+  \DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{dH)     }\CommentTok{\# P(óbito no intervalo | vivo no início do intervalo)}
+\NormalTok{\}}
+
+\NormalTok{tab\_int }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Intervalo =} \FunctionTok{paste0}\NormalTok{(}\StringTok{"["}\NormalTok{, }\FunctionTok{head}\NormalTok{(cortes, }\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{), }\StringTok{"; "}\NormalTok{, cortes[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{], }\StringTok{") anos"}\NormalTok{),}
+                  \AttributeTok{Global =} \FunctionTok{delta\_H}\NormalTok{(na\_geral}\SpecialCharTok{$}\NormalTok{time, na\_geral}\SpecialCharTok{$}\NormalTok{cumhaz))}
+
+\ControlFlowTok{for}\NormalTok{ (e }\ControlFlowTok{in} \FunctionTok{levels}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{estadio)) \{}
+\NormalTok{  sel }\OtherTok{\textless{}{-}}\NormalTok{ df\_na\_est}\SpecialCharTok{$}\NormalTok{estadio }\SpecialCharTok{==}\NormalTok{ e}
+\NormalTok{  tab\_int[[}\FunctionTok{paste}\NormalTok{(}\StringTok{"Estádio"}\NormalTok{, e)]] }\OtherTok{\textless{}{-}} \FunctionTok{delta\_H}\NormalTok{(df\_na\_est}\SpecialCharTok{$}\NormalTok{tempo[sel], df\_na\_est}\SpecialCharTok{$}\NormalTok{H[sel])}
+\NormalTok{\}}
+
+\NormalTok{tab\_int }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{Intervalo, \textbackslash{}(x) }\FunctionTok{pct}\NormalTok{(x))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Probabilidade condicional de óbito em cada intervalo anual, dado que o paciente estava vivo no início do intervalo: $1 {-} }\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{exp}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{\{{-}[}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{hat H(b) {-} }\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{hat H(a)]}\SpecialCharTok{\textbackslash{}\textbackslash{}}\StringTok{\}$."}\NormalTok{,}
+         \AttributeTok{escape =} \ConstantTok{FALSE}\NormalTok{)}
+\NormalTok{estimar\_h }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(d) \{}
+\NormalTok{  m }\OtherTok{\textless{}{-}} \FunctionTok{muhaz}\NormalTok{(d}\SpecialCharTok{$}\NormalTok{tempo\_anos, d}\SpecialCharTok{$}\NormalTok{status, }\AttributeTok{max.time =} \FunctionTok{quantile}\NormalTok{(d}\SpecialCharTok{$}\NormalTok{tempo\_anos, }\FloatTok{0.90}\NormalTok{))}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{tempo =}\NormalTok{ m}\SpecialCharTok{$}\NormalTok{est.grid, }\AttributeTok{h =}\NormalTok{ m}\SpecialCharTok{$}\NormalTok{haz.est)}
+\NormalTok{\}}
+
+\NormalTok{h\_geral }\OtherTok{\textless{}{-}} \FunctionTok{estimar\_h}\NormalTok{(dados)}
+\NormalTok{h\_est }\OtherTok{\textless{}{-}} \FunctionTok{map\_dfr}\NormalTok{(}\FunctionTok{levels}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{estadio),}
+\NormalTok{                 \textbackslash{}(e) }\FunctionTok{estimar\_h}\NormalTok{(}\FunctionTok{filter}\NormalTok{(dados, estadio }\SpecialCharTok{==}\NormalTok{ e)) }\SpecialCharTok{|\textgreater{}} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{estadio =}\NormalTok{ e))}
+
+\NormalTok{g1 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(h\_geral, }\FunctionTok{aes}\NormalTok{(tempo, h)) }\SpecialCharTok{+} \FunctionTok{geom\_line}\NormalTok{(}\AttributeTok{linewidth =} \FloatTok{0.9}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Anos desde o diagnóstico"}\NormalTok{, }\AttributeTok{y =} \StringTok{"h(t) (óbitos por pessoa{-}ano)"}\NormalTok{, }\AttributeTok{title =} \StringTok{"Global"}\NormalTok{)}
+
+\NormalTok{g2 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(h\_est, }\FunctionTok{aes}\NormalTok{(tempo, h, }\AttributeTok{colour =}\NormalTok{ estadio)) }\SpecialCharTok{+} \FunctionTok{geom\_line}\NormalTok{(}\AttributeTok{linewidth =} \FloatTok{0.9}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_log10}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{scale\_colour\_brewer}\NormalTok{(}\AttributeTok{palette =} \StringTok{"Dark2"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Anos desde o diagnóstico"}\NormalTok{, }\AttributeTok{y =} \StringTok{"h(t) (escala log)"}\NormalTok{, }\AttributeTok{colour =} \StringTok{"Estádio"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Por estádio"}\NormalTok{)}
+
+\NormalTok{gridExtra}\SpecialCharTok{::}\FunctionTok{grid.arrange}\NormalTok{(g1, g2, }\AttributeTok{ncol =} \DecValTok{2}\NormalTok{)}
+\NormalTok{resumo\_h }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(df) \{}
+\NormalTok{  pico }\OtherTok{\textless{}{-}} \FunctionTok{slice\_max}\NormalTok{(df, h, }\AttributeTok{n =} \DecValTok{1}\NormalTok{, }\AttributeTok{with\_ties =} \ConstantTok{FALSE}\NormalTok{)}
+\NormalTok{  fim  }\OtherTok{\textless{}{-}} \FunctionTok{slice\_max}\NormalTok{(df, tempo, }\AttributeTok{n =} \DecValTok{1}\NormalTok{, }\AttributeTok{with\_ties =} \ConstantTok{FALSE}\NormalTok{)}
+\NormalTok{  minimo }\OtherTok{\textless{}{-}} \FunctionTok{slice\_min}\NormalTok{(df, h, }\AttributeTok{n =} \DecValTok{1}\NormalTok{, }\AttributeTok{with\_ties =} \ConstantTok{FALSE}\NormalTok{)}
+  \FunctionTok{tibble}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Tempo do pico (anos)}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(pico}\SpecialCharTok{$}\NormalTok{tempo, }\DecValTok{2}\NormalTok{),}
+         \StringTok{\textasciigrave{}}\AttributeTok{h no pico}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(pico}\SpecialCharTok{$}\NormalTok{h, }\DecValTok{3}\NormalTok{),}
+         \StringTok{\textasciigrave{}}\AttributeTok{Tempo do mínimo (anos)}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(minimo}\SpecialCharTok{$}\NormalTok{tempo, }\DecValTok{2}\NormalTok{),}
+         \StringTok{\textasciigrave{}}\AttributeTok{h no mínimo}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(minimo}\SpecialCharTok{$}\NormalTok{h, }\DecValTok{3}\NormalTok{),}
+         \StringTok{\textasciigrave{}}\AttributeTok{h no fim da janela}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(fim}\SpecialCharTok{$}\NormalTok{h, }\DecValTok{3}\NormalTok{))}
+\NormalTok{\}}
+
+\FunctionTok{bind\_rows}\NormalTok{(}
+  \FunctionTok{resumo\_h}\NormalTok{(h\_geral) }\SpecialCharTok{|\textgreater{}} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Grupo =} \StringTok{"Global"}\NormalTok{),}
+  \FunctionTok{map\_dfr}\NormalTok{(}\FunctionTok{levels}\NormalTok{(dados}\SpecialCharTok{$}\NormalTok{estadio), \textbackslash{}(e) }\FunctionTok{resumo\_h}\NormalTok{(}\FunctionTok{filter}\NormalTok{(h\_est, estadio }\SpecialCharTok{==}\NormalTok{ e)) }\SpecialCharTok{|\textgreater{}}
+            \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Grupo =} \FunctionTok{paste}\NormalTok{(}\StringTok{"Estádio"}\NormalTok{, e)))}
+\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{relocate}\NormalTok{(Grupo) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Períodos de maior e menor risco estimados pela taxa de risco suavizada."}\NormalTok{)}
+\NormalTok{dists0 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"Exponencial"} \OtherTok{=} \StringTok{"exp"}\NormalTok{, }\StringTok{"Weibull"} \OtherTok{=} \StringTok{"weibull"}\NormalTok{, }\StringTok{"Log{-}normal"} \OtherTok{=} \StringTok{"lnorm"}\NormalTok{,}
+            \StringTok{"Log{-}logística"} \OtherTok{=} \StringTok{"llogis"}\NormalTok{, }\StringTok{"Gama generalizada"} \OtherTok{=} \StringTok{"gengamma"}\NormalTok{)}
+
+\NormalTok{fits0 }\OtherTok{\textless{}{-}} \FunctionTok{map}\NormalTok{(dists0, \textbackslash{}(d) }\FunctionTok{tryCatch}\NormalTok{(}
+  \FunctionTok{flexsurvreg}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\AttributeTok{data =}\NormalTok{ dados, }\AttributeTok{dist =}\NormalTok{ d),}
+  \AttributeTok{error =}\NormalTok{ \textbackslash{}(e) }\ConstantTok{NULL}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{compact}\NormalTok{()}
+
+\NormalTok{crit0 }\OtherTok{\textless{}{-}} \FunctionTok{imap\_dfr}\NormalTok{(fits0, \textbackslash{}(f, nome) }\FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{Modelo =}\NormalTok{ nome, }\AttributeTok{k =}\NormalTok{ f}\SpecialCharTok{$}\NormalTok{npars, }\AttributeTok{logLik =}\NormalTok{ f}\SpecialCharTok{$}\NormalTok{loglik,}
+  \AttributeTok{AIC =} \SpecialCharTok{{-}}\DecValTok{2} \SpecialCharTok{*}\NormalTok{ f}\SpecialCharTok{$}\NormalTok{loglik }\SpecialCharTok{+} \DecValTok{2} \SpecialCharTok{*}\NormalTok{ f}\SpecialCharTok{$}\NormalTok{npars,}
+  \AttributeTok{BIC =} \SpecialCharTok{{-}}\DecValTok{2} \SpecialCharTok{*}\NormalTok{ f}\SpecialCharTok{$}\NormalTok{loglik }\SpecialCharTok{+} \FunctionTok{log}\NormalTok{(n\_total) }\SpecialCharTok{*}\NormalTok{ f}\SpecialCharTok{$}\NormalTok{npars)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{arrange}\NormalTok{(AIC) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Dif. AIC}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ AIC }\SpecialCharTok{{-}} \FunctionTok{min}\NormalTok{(AIC))}
+
+\NormalTok{crit0 }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{c}\NormalTok{(logLik, AIC, BIC, }\StringTok{\textasciigrave{}}\AttributeTok{Dif. AIC}\StringTok{\textasciigrave{}}\NormalTok{), \textbackslash{}(x) }\FunctionTok{fmt}\NormalTok{(x, }\DecValTok{1}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Critérios de ajuste dos modelos paramétricos sem covariáveis (BIC com penalização log(n)). A gama generalizada entra como referência, pois engloba Weibull, log{-}normal e exponencial como casos particulares."}\NormalTok{,}
+         \AttributeTok{align =} \StringTok{"lrrrrr"}\NormalTok{)}
+
+\NormalTok{melhor0 }\OtherTok{\textless{}{-}}\NormalTok{ crit0 }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(Modelo }\SpecialCharTok{!=} \StringTok{"Gama generalizada"}\NormalTok{) }\SpecialCharTok{|\textgreater{}} \FunctionTok{slice\_min}\NormalTok{(AIC, }\AttributeTok{n =} \DecValTok{1}\NormalTok{)}
+\FunctionTok{imap\_dfr}\NormalTok{(fits0[}\FunctionTok{names}\NormalTok{(fits0) }\SpecialCharTok{!=} \StringTok{"Gama generalizada"}\NormalTok{], \textbackslash{}(f, nome)}
+  \FunctionTok{as\_tibble}\NormalTok{(f}\SpecialCharTok{$}\NormalTok{res, }\AttributeTok{rownames =} \StringTok{"Parâmetro"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{transmute}\NormalTok{(}\AttributeTok{Modelo =}\NormalTok{ nome, }\StringTok{\textasciigrave{}}\AttributeTok{Parâmetro}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{Estimativa =} \FunctionTok{fmt}\NormalTok{(est, }\DecValTok{3}\NormalTok{), }\StringTok{\textasciigrave{}}\AttributeTok{IC 95\%}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ic}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{L95\%}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{U95\%}\StringTok{\textasciigrave{}}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Modelo =} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{duplicated}\NormalTok{(Modelo), }\StringTok{""}\NormalTok{, Modelo)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Estimativas dos parâmetros (parametrização do pacote flexsurv)."}\NormalTok{, }\AttributeTok{align =} \StringTok{"llrr"}\NormalTok{)}
+\NormalTok{trv }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(restrito, completo) \{}
+\NormalTok{  est }\OtherTok{\textless{}{-}} \DecValTok{2} \SpecialCharTok{*}\NormalTok{ (completo}\SpecialCharTok{$}\NormalTok{loglik }\SpecialCharTok{{-}}\NormalTok{ restrito}\SpecialCharTok{$}\NormalTok{loglik)}
+\NormalTok{  gl  }\OtherTok{\textless{}{-}}\NormalTok{ completo}\SpecialCharTok{$}\NormalTok{npars }\SpecialCharTok{{-}}\NormalTok{ restrito}\SpecialCharTok{$}\NormalTok{npars}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{TRV =} \FunctionTok{fmt}\NormalTok{(est, }\DecValTok{1}\NormalTok{), }\AttributeTok{gl =}\NormalTok{ gl, }\AttributeTok{p =} \FunctionTok{fmt\_p}\NormalTok{(}\FunctionTok{pchisq}\NormalTok{(est, gl, }\AttributeTok{lower.tail =} \ConstantTok{FALSE}\NormalTok{)))}
+\NormalTok{\}}
+
+\NormalTok{testes }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+  \StringTok{"Exponencial vs Weibull (H0: forma = 1)"} \OtherTok{=} \FunctionTok{c}\NormalTok{(}\StringTok{"Exponencial"}\NormalTok{, }\StringTok{"Weibull"}\NormalTok{),}
+  \StringTok{"Weibull vs Gama generalizada (H0: Q = 1)"} \OtherTok{=} \FunctionTok{c}\NormalTok{(}\StringTok{"Weibull"}\NormalTok{, }\StringTok{"Gama generalizada"}\NormalTok{),}
+  \StringTok{"Log{-}normal vs Gama generalizada (H0: Q = 0)"} \OtherTok{=} \FunctionTok{c}\NormalTok{(}\StringTok{"Log{-}normal"}\NormalTok{, }\StringTok{"Gama generalizada"}\NormalTok{)}
+\NormalTok{)}
+\NormalTok{testes }\OtherTok{\textless{}{-}} \FunctionTok{keep}\NormalTok{(testes, \textbackslash{}(par) }\FunctionTok{all}\NormalTok{(par }\SpecialCharTok{\%in\%} \FunctionTok{names}\NormalTok{(fits0)))}
+
+\FunctionTok{imap\_dfr}\NormalTok{(testes, \textbackslash{}(par, nome) }\FunctionTok{trv}\NormalTok{(fits0[[par[}\DecValTok{1}\NormalTok{]]], fits0[[par[}\DecValTok{2}\NormalTok{]]]) }\SpecialCharTok{|\textgreater{}} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Teste =}\NormalTok{ nome)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{relocate}\NormalTok{(Teste) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Testes da razão de verossimilhanças entre modelos encaixados."}\NormalTok{, }\AttributeTok{align =} \StringTok{"lrrr"}\NormalTok{)}
+\NormalTok{grade\_t }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(}\FloatTok{0.01}\NormalTok{, t\_max, }\AttributeTok{length.out =} \DecValTok{200}\NormalTok{)}
+
+\NormalTok{curvas }\OtherTok{\textless{}{-}} \FunctionTok{imap\_dfr}\NormalTok{(fits0[}\FunctionTok{c}\NormalTok{(}\StringTok{"Exponencial"}\NormalTok{, }\StringTok{"Weibull"}\NormalTok{, }\StringTok{"Log{-}normal"}\NormalTok{, }\StringTok{"Log{-}logística"}\NormalTok{)],}
+\NormalTok{                   \textbackslash{}(f, nome) }\FunctionTok{summary}\NormalTok{(f, }\AttributeTok{t =}\NormalTok{ grade\_t, }\AttributeTok{type =} \StringTok{"survival"}\NormalTok{, }\AttributeTok{ci =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{tidy =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+                     \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Modelo =}\NormalTok{ nome))}
+
+\FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_step}\NormalTok{(}\AttributeTok{data =} \FunctionTok{tibble}\NormalTok{(}\AttributeTok{time =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, km\_geral}\SpecialCharTok{$}\NormalTok{time), }\AttributeTok{surv =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, km\_geral}\SpecialCharTok{$}\NormalTok{surv)),}
+            \FunctionTok{aes}\NormalTok{(time, surv), }\AttributeTok{colour =} \StringTok{"black"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.7}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{(}\AttributeTok{data =}\NormalTok{ curvas, }\FunctionTok{aes}\NormalTok{(time, est, }\AttributeTok{colour =}\NormalTok{ Modelo), }\AttributeTok{linewidth =} \FloatTok{0.8}\NormalTok{, }\AttributeTok{linetype =} \StringTok{"dashed"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_colour\_brewer}\NormalTok{(}\AttributeTok{palette =} \StringTok{"Set1"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Anos desde o diagnóstico"}\NormalTok{, }\AttributeTok{y =} \StringTok{"S(t)"}\NormalTok{, }\AttributeTok{colour =} \ConstantTok{NULL}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"bottom"}\NormalTok{)}
+\NormalTok{km\_df }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}\AttributeTok{t =}\NormalTok{ km\_geral}\SpecialCharTok{$}\NormalTok{time, }\AttributeTok{S =}\NormalTok{ km\_geral}\SpecialCharTok{$}\NormalTok{surv) }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(S }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{, S }\SpecialCharTok{\textless{}} \DecValTok{1}\NormalTok{, t }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{)}
+
+\NormalTok{lin }\OtherTok{\textless{}{-}} \FunctionTok{with}\NormalTok{(km\_df, }\FunctionTok{bind\_rows}\NormalTok{(}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Modelo =} \StringTok{"Exponencial: {-}log S(t) vs t"}\NormalTok{,          }\AttributeTok{x =}\NormalTok{ t,      }\AttributeTok{y =} \SpecialCharTok{{-}}\FunctionTok{log}\NormalTok{(S)),}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Modelo =} \StringTok{"Weibull: log({-}log S(t)) vs log t"}\NormalTok{,     }\AttributeTok{x =} \FunctionTok{log}\NormalTok{(t), }\AttributeTok{y =} \FunctionTok{log}\NormalTok{(}\SpecialCharTok{{-}}\FunctionTok{log}\NormalTok{(S))),}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Modelo =} \StringTok{"Log{-}normal: qnorm(1 {-} S(t)) vs log t"}\NormalTok{, }\AttributeTok{x =} \FunctionTok{log}\NormalTok{(t), }\AttributeTok{y =} \FunctionTok{qnorm}\NormalTok{(}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ S)),}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Modelo =} \StringTok{"Log{-}logística: log[(1{-}S)/S] vs log t"}\NormalTok{, }\AttributeTok{x =} \FunctionTok{log}\NormalTok{(t), }\AttributeTok{y =} \FunctionTok{log}\NormalTok{((}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ S) }\SpecialCharTok{/}\NormalTok{ S))}
+\NormalTok{))}
+
+\FunctionTok{ggplot}\NormalTok{(lin, }\FunctionTok{aes}\NormalTok{(x, y)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_line}\NormalTok{(}\AttributeTok{colour =} \StringTok{"grey30"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method =} \StringTok{"lm"}\NormalTok{, }\AttributeTok{se =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{colour =} \StringTok{"firebrick"}\NormalTok{, }\AttributeTok{linetype =} \StringTok{"dashed"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.6}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ Modelo, }\AttributeTok{scales =} \StringTok{"free"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \ConstantTok{NULL}\NormalTok{, }\AttributeTok{y =} \ConstantTok{NULL}\NormalTok{)}
+\NormalTok{vars\_mod  }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"tempo\_anos"}\NormalTok{, }\StringTok{"status"}\NormalTok{, }\StringTok{"estadio"}\NormalTok{, }\StringTok{"idade10"}\NormalTok{, }\StringTok{"sexo"}\NormalTok{, }\StringTok{"categoria"}\NormalTok{, }\StringTok{"localizacao"}\NormalTok{)}
+\NormalTok{dados\_mod }\OtherTok{\textless{}{-}}\NormalTok{ dados }\SpecialCharTok{|\textgreater{}} \FunctionTok{select}\NormalTok{(}\FunctionTok{all\_of}\NormalTok{(vars\_mod)) }\SpecialCharTok{|\textgreater{}} \FunctionTok{drop\_na}\NormalTok{()}
+\NormalTok{n\_mod     }\OtherTok{\textless{}{-}} \FunctionTok{nrow}\NormalTok{(dados\_mod)}
+\NormalTok{form      }\OtherTok{\textless{}{-}} \FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ estadio }\SpecialCharTok{+}\NormalTok{ idade10 }\SpecialCharTok{+}\NormalTok{ sexo }\SpecialCharTok{+}\NormalTok{ categoria }\SpecialCharTok{+}\NormalTok{ localizacao}
+\NormalTok{dists\_aft }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"Exponencial"} \OtherTok{=} \StringTok{"exponential"}\NormalTok{, }\StringTok{"Weibull"} \OtherTok{=} \StringTok{"weibull"}\NormalTok{,}
+               \StringTok{"Log{-}normal"} \OtherTok{=} \StringTok{"lognormal"}\NormalTok{, }\StringTok{"Log{-}logística"} \OtherTok{=} \StringTok{"loglogistic"}\NormalTok{)}
+
+\NormalTok{fits\_aft }\OtherTok{\textless{}{-}} \FunctionTok{map}\NormalTok{(dists\_aft, \textbackslash{}(d) }\FunctionTok{survreg}\NormalTok{(form, }\AttributeTok{data =}\NormalTok{ dados\_mod, }\AttributeTok{dist =}\NormalTok{ d))}
+
+\NormalTok{crit\_aft }\OtherTok{\textless{}{-}} \FunctionTok{imap\_dfr}\NormalTok{(fits\_aft, \textbackslash{}(f, nome) }\FunctionTok{tibble}\NormalTok{(}
+  \AttributeTok{Modelo =}\NormalTok{ nome, }\AttributeTok{k =} \FunctionTok{attr}\NormalTok{(}\FunctionTok{logLik}\NormalTok{(f), }\StringTok{"df"}\NormalTok{), }\AttributeTok{logLik =} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{logLik}\NormalTok{(f)),}
+  \AttributeTok{AIC =} \FunctionTok{AIC}\NormalTok{(f), }\AttributeTok{BIC =} \FunctionTok{BIC}\NormalTok{(f), }\AttributeTok{C =} \FunctionTok{concordance}\NormalTok{(f)}\SpecialCharTok{$}\NormalTok{concordance)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{arrange}\NormalTok{(AIC) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Dif. AIC}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ AIC }\SpecialCharTok{{-}} \FunctionTok{min}\NormalTok{(AIC))}
+
+\NormalTok{crit\_aft }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{c}\NormalTok{(logLik, AIC, BIC, }\StringTok{\textasciigrave{}}\AttributeTok{Dif. AIC}\StringTok{\textasciigrave{}}\NormalTok{), \textbackslash{}(x) }\FunctionTok{fmt}\NormalTok{(x, }\DecValTok{1}\NormalTok{)), }\AttributeTok{C =} \FunctionTok{fmt}\NormalTok{(C, }\DecValTok{3}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Critérios de ajuste dos modelos AFT com covariáveis (C = índice de concordância de Harrell)."}\NormalTok{,}
+         \AttributeTok{align =} \StringTok{"lrrrrrr"}\NormalTok{)}
+
+\NormalTok{melhor\_aft\_nome }\OtherTok{\textless{}{-}}\NormalTok{ crit\_aft}\SpecialCharTok{$}\NormalTok{Modelo[}\DecValTok{1}\NormalTok{]}
+\NormalTok{melhor\_aft }\OtherTok{\textless{}{-}}\NormalTok{ fits\_aft[[melhor\_aft\_nome]]}
+\NormalTok{tab\_razao }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(f, rotulo\_efeito) \{}
+\NormalTok{  b  }\OtherTok{\textless{}{-}} \FunctionTok{coef}\NormalTok{(f)}
+\NormalTok{  ci }\OtherTok{\textless{}{-}} \FunctionTok{confint}\NormalTok{(f)}
+\NormalTok{  p  }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(f)}\SpecialCharTok{$}\NormalTok{table[}\FunctionTok{names}\NormalTok{(b), }\StringTok{"p"}\NormalTok{]}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Termo =} \FunctionTok{rotular}\NormalTok{(}\FunctionTok{names}\NormalTok{(b)), }\AttributeTok{Efeito =} \FunctionTok{fmt}\NormalTok{(}\FunctionTok{exp}\NormalTok{(b), }\DecValTok{3}\NormalTok{),}
+         \StringTok{\textasciigrave{}}\AttributeTok{IC 95\%}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ic}\NormalTok{(}\FunctionTok{exp}\NormalTok{(ci[}\FunctionTok{names}\NormalTok{(b), }\DecValTok{1}\NormalTok{]), }\FunctionTok{exp}\NormalTok{(ci[}\FunctionTok{names}\NormalTok{(b), }\DecValTok{2}\NormalTok{])), }\AttributeTok{p =} \FunctionTok{fmt\_p}\NormalTok{(p)) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{filter}\NormalTok{(Termo }\SpecialCharTok{!=} \StringTok{"(Intercept)"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+    \FunctionTok{rename}\NormalTok{(}\SpecialCharTok{!!}\AttributeTok{rotulo\_efeito :=}\NormalTok{ Efeito)}
+\NormalTok{\}}
+
+\FunctionTok{tab\_razao}\NormalTok{(melhor\_aft, }\StringTok{"Razão de tempos"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\FunctionTok{sprintf}\NormalTok{(}\StringTok{"Modelo AFT \%s: razões de tempos estimadas (escala estimada = \%s)."}\NormalTok{,}
+\NormalTok{                 melhor\_aft\_nome, }\FunctionTok{fmt}\NormalTok{(melhor\_aft}\SpecialCharTok{$}\NormalTok{scale, }\DecValTok{3}\NormalTok{)), }\AttributeTok{align =} \StringTok{"lrrr"}\NormalTok{)}
+\NormalTok{cox\_snell\_df }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(r, status) \{}
+\NormalTok{  km\_r }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(r, status) }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{)}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{r =}\NormalTok{ km\_r}\SpecialCharTok{$}\NormalTok{time, }\AttributeTok{H =} \SpecialCharTok{{-}}\FunctionTok{log}\NormalTok{(km\_r}\SpecialCharTok{$}\NormalTok{surv)) }\SpecialCharTok{|\textgreater{}} \FunctionTok{filter}\NormalTok{(}\FunctionTok{is.finite}\NormalTok{(H))}
+\NormalTok{\}}
+
+\NormalTok{cs\_aft }\OtherTok{\textless{}{-}} \FunctionTok{imap\_dfr}\NormalTok{(fits\_aft, \textbackslash{}(f, nome) \{}
+\NormalTok{  lp }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(f, }\AttributeTok{type =} \StringTok{"lp"}\NormalTok{)}
+\NormalTok{  S  }\OtherTok{\textless{}{-}} \DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{psurvreg}\NormalTok{(dados\_mod}\SpecialCharTok{$}\NormalTok{tempo\_anos, }\AttributeTok{mean =}\NormalTok{ lp, }\AttributeTok{scale =}\NormalTok{ f}\SpecialCharTok{$}\NormalTok{scale, }\AttributeTok{distribution =}\NormalTok{ f}\SpecialCharTok{$}\NormalTok{dist)}
+  \FunctionTok{cox\_snell\_df}\NormalTok{(}\SpecialCharTok{{-}}\FunctionTok{log}\NormalTok{(S), dados\_mod}\SpecialCharTok{$}\NormalTok{status) }\SpecialCharTok{|\textgreater{}} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Modelo =}\NormalTok{ nome)}
+\NormalTok{\})}
+
+\FunctionTok{ggplot}\NormalTok{(cs\_aft, }\FunctionTok{aes}\NormalTok{(r, H)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_step}\NormalTok{(}\AttributeTok{colour =} \StringTok{"steelblue"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_abline}\NormalTok{(}\AttributeTok{slope =} \DecValTok{1}\NormalTok{, }\AttributeTok{intercept =} \DecValTok{0}\NormalTok{, }\AttributeTok{linetype =} \StringTok{"dashed"}\NormalTok{, }\AttributeTok{colour =} \StringTok{"firebrick"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}} \FunctionTok{factor}\NormalTok{(Modelo, }\AttributeTok{levels =} \FunctionTok{names}\NormalTok{(dists\_aft)), }\AttributeTok{scales =} \StringTok{"free"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Resíduo de Cox{-}Snell"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Risco acumulado estimado dos resíduos"}\NormalTok{)}
+\NormalTok{fit\_cox }\OtherTok{\textless{}{-}} \FunctionTok{coxph}\NormalTok{(form, }\AttributeTok{data =}\NormalTok{ dados\_mod, }\AttributeTok{ties =} \StringTok{"efron"}\NormalTok{)}
+\NormalTok{s\_cox   }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(fit\_cox)}
+
+\FunctionTok{tibble}\NormalTok{(}\AttributeTok{Termo =} \FunctionTok{rotular}\NormalTok{(}\FunctionTok{rownames}\NormalTok{(s\_cox}\SpecialCharTok{$}\NormalTok{conf.int)),}
+       \StringTok{\textasciigrave{}}\AttributeTok{Razão de riscos}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{fmt}\NormalTok{(s\_cox}\SpecialCharTok{$}\NormalTok{conf.int[, }\StringTok{"exp(coef)"}\NormalTok{], }\DecValTok{3}\NormalTok{),}
+       \StringTok{\textasciigrave{}}\AttributeTok{IC 95\%}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ic}\NormalTok{(s\_cox}\SpecialCharTok{$}\NormalTok{conf.int[, }\StringTok{"lower .95"}\NormalTok{], s\_cox}\SpecialCharTok{$}\NormalTok{conf.int[, }\StringTok{"upper .95"}\NormalTok{]),}
+       \AttributeTok{p =} \FunctionTok{fmt\_p}\NormalTok{(s\_cox}\SpecialCharTok{$}\NormalTok{coefficients[, }\StringTok{"Pr(\textgreater{}|z|)"}\NormalTok{])) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\FunctionTok{sprintf}\NormalTok{(}\StringTok{"Modelo de Cox: razões de riscos (C de Harrell = \%s)."}\NormalTok{,}
+                 \FunctionTok{fmt}\NormalTok{(s\_cox}\SpecialCharTok{$}\NormalTok{concordance[}\DecValTok{1}\NormalTok{], }\DecValTok{3}\NormalTok{)), }\AttributeTok{align =} \StringTok{"lrrr"}\NormalTok{)}
+\NormalTok{zph }\OtherTok{\textless{}{-}} \FunctionTok{cox.zph}\NormalTok{(fit\_cox)}
+
+\FunctionTok{as\_tibble}\NormalTok{(zph}\SpecialCharTok{$}\NormalTok{table, }\AttributeTok{rownames =} \StringTok{"Termo"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Termo =} \FunctionTok{recode}\NormalTok{(Termo, }\AttributeTok{estadio =} \StringTok{"Estádio"}\NormalTok{, }\AttributeTok{idade10 =} \StringTok{"Idade"}\NormalTok{, }\AttributeTok{sexo =} \StringTok{"Sexo"}\NormalTok{,}
+                        \AttributeTok{categoria =} \StringTok{"Categoria"}\NormalTok{, }\AttributeTok{localizacao =} \StringTok{"Localização"}\NormalTok{, }\AttributeTok{GLOBAL =} \StringTok{"Global"}\NormalTok{),}
+         \AttributeTok{chisq =} \FunctionTok{fmt}\NormalTok{(chisq, }\DecValTok{2}\NormalTok{), }\AttributeTok{p =} \FunctionTok{fmt\_p}\NormalTok{(p)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{rename}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Qui{-}quadrado}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ chisq, }\AttributeTok{gl =}\NormalTok{ df) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Teste de proporcionalidade dos riscos baseado nos resíduos de Schoenfeld (Grambsch \& Therneau, 1994)."}\NormalTok{,}
+         \AttributeTok{align =} \StringTok{"lrrr"}\NormalTok{)}
+
+\NormalTok{p\_global }\OtherTok{\textless{}{-}}\NormalTok{ zph}\SpecialCharTok{$}\NormalTok{table[}\StringTok{"GLOBAL"}\NormalTok{, }\StringTok{"p"}\NormalTok{]}
+\NormalTok{zph\_coef }\OtherTok{\textless{}{-}} \FunctionTok{cox.zph}\NormalTok{(fit\_cox, }\AttributeTok{terms =} \ConstantTok{FALSE}\NormalTok{)   }\CommentTok{\# uma curva por coeficiente (fatores desdobrados)}
+\NormalTok{n\_coef }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(}\FunctionTok{coef}\NormalTok{(fit\_cox))}
+\FunctionTok{par}\NormalTok{(}\AttributeTok{mfrow =} \FunctionTok{c}\NormalTok{(}\FunctionTok{ceiling}\NormalTok{(n\_coef }\SpecialCharTok{/} \DecValTok{3}\NormalTok{), }\DecValTok{3}\NormalTok{), }\AttributeTok{mar =} \FunctionTok{c}\NormalTok{(}\DecValTok{4}\NormalTok{, }\DecValTok{4}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{1}\NormalTok{))}
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \FunctionTok{seq\_len}\NormalTok{(n\_coef)) \{}
+  \FunctionTok{plot}\NormalTok{(zph\_coef[j], }\AttributeTok{resid =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{se =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{xlab =} \StringTok{"Anos"}\NormalTok{, }\AttributeTok{main =} \FunctionTok{rotular}\NormalTok{(}\FunctionTok{names}\NormalTok{(}\FunctionTok{coef}\NormalTok{(fit\_cox))[j]),}
+       \AttributeTok{ylab =} \FunctionTok{expression}\NormalTok{(}\FunctionTok{hat}\NormalTok{(beta)(t)))}
+  \FunctionTok{abline}\NormalTok{(}\AttributeTok{h =} \FunctionTok{coef}\NormalTok{(fit\_cox)[j], }\AttributeTok{col =} \StringTok{"firebrick"}\NormalTok{, }\AttributeTok{lty =} \DecValTok{2}\NormalTok{)}
+\NormalTok{\}}
+\FunctionTok{tibble}\NormalTok{(}\AttributeTok{t =}\NormalTok{ km\_est}\SpecialCharTok{$}\NormalTok{time, }\AttributeTok{S =}\NormalTok{ km\_est}\SpecialCharTok{$}\NormalTok{surv,}
+       \AttributeTok{estadio =} \FunctionTok{sub}\NormalTok{(}\StringTok{"estadio="}\NormalTok{, }\StringTok{""}\NormalTok{, }\FunctionTok{rep}\NormalTok{(}\FunctionTok{names}\NormalTok{(km\_est}\SpecialCharTok{$}\NormalTok{strata), km\_est}\SpecialCharTok{$}\NormalTok{strata))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{filter}\NormalTok{(S }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{, S }\SpecialCharTok{\textless{}} \DecValTok{1}\NormalTok{, t }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\FunctionTok{log}\NormalTok{(t), }\FunctionTok{log}\NormalTok{(}\SpecialCharTok{{-}}\FunctionTok{log}\NormalTok{(S)), }\AttributeTok{colour =}\NormalTok{ estadio)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_step}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{scale\_colour\_brewer}\NormalTok{(}\AttributeTok{palette =} \StringTok{"Dark2"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"log(tempo em anos)"}\NormalTok{, }\AttributeTok{y =} \StringTok{"log({-}log S(t))"}\NormalTok{, }\AttributeTok{colour =} \StringTok{"Estádio"}\NormalTok{)}
+\NormalTok{fit\_sem\_idade }\OtherTok{\textless{}{-}} \FunctionTok{update}\NormalTok{(fit\_cox, . }\SpecialCharTok{\textasciitilde{}}\NormalTok{ . }\SpecialCharTok{{-}}\NormalTok{ idade10)}
+\NormalTok{df\_mart }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}\AttributeTok{idade =}\NormalTok{ dados\_mod}\SpecialCharTok{$}\NormalTok{idade10 }\SpecialCharTok{*} \DecValTok{10} \SpecialCharTok{+} \DecValTok{60}\NormalTok{,}
+                  \AttributeTok{r =} \FunctionTok{residuals}\NormalTok{(fit\_sem\_idade, }\AttributeTok{type =} \StringTok{"martingale"}\NormalTok{))}
+
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{42}\NormalTok{)}
+\NormalTok{g1 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(df\_mart, }\FunctionTok{aes}\NormalTok{(idade, r)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{data =} \FunctionTok{slice\_sample}\NormalTok{(df\_mart, }\AttributeTok{n =} \FunctionTok{min}\NormalTok{(}\DecValTok{4000}\NormalTok{, }\FunctionTok{nrow}\NormalTok{(df\_mart))), }\AttributeTok{alpha =} \FloatTok{0.08}\NormalTok{, }\AttributeTok{size =} \FloatTok{0.6}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{colour =} \StringTok{"firebrick"}\NormalTok{, }\AttributeTok{se =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Idade (anos)"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Resíduo martingale"}\NormalTok{, }\AttributeTok{title =} \StringTok{"Forma funcional da idade"}\NormalTok{)}
+
+\NormalTok{r\_cs\_cox }\OtherTok{\textless{}{-}}\NormalTok{ dados\_mod}\SpecialCharTok{$}\NormalTok{status }\SpecialCharTok{{-}} \FunctionTok{residuals}\NormalTok{(fit\_cox, }\AttributeTok{type =} \StringTok{"martingale"}\NormalTok{)}
+\NormalTok{g2 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{cox\_snell\_df}\NormalTok{(r\_cs\_cox, dados\_mod}\SpecialCharTok{$}\NormalTok{status), }\FunctionTok{aes}\NormalTok{(r, H)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_step}\NormalTok{(}\AttributeTok{colour =} \StringTok{"steelblue"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_abline}\NormalTok{(}\AttributeTok{slope =} \DecValTok{1}\NormalTok{, }\AttributeTok{intercept =} \DecValTok{0}\NormalTok{, }\AttributeTok{linetype =} \StringTok{"dashed"}\NormalTok{, }\AttributeTok{colour =} \StringTok{"firebrick"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Resíduo de Cox{-}Snell"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Risco acumulado"}\NormalTok{, }\AttributeTok{title =} \StringTok{"Ajuste global (Cox)"}\NormalTok{)}
+
+\NormalTok{gridExtra}\SpecialCharTok{::}\FunctionTok{grid.arrange}\NormalTok{(g1, g2, }\AttributeTok{ncol =} \DecValTok{2}\NormalTok{)}
+\NormalTok{fit\_cox\_estr }\OtherTok{\textless{}{-}} \FunctionTok{coxph}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(tempo\_anos, status) }\SpecialCharTok{\textasciitilde{}} \FunctionTok{strata}\NormalTok{(estadio) }\SpecialCharTok{+}\NormalTok{ idade10 }\SpecialCharTok{+}\NormalTok{ sexo }\SpecialCharTok{+}\NormalTok{ categoria }\SpecialCharTok{+}\NormalTok{ localizacao,}
+                      \AttributeTok{data =}\NormalTok{ dados\_mod, }\AttributeTok{ties =} \StringTok{"efron"}\NormalTok{)}
+
+\NormalTok{hr }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(f) \{ s }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(f)}\SpecialCharTok{$}\NormalTok{conf.int}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Termo =} \FunctionTok{rownames}\NormalTok{(s), }\AttributeTok{hr =} \FunctionTok{paste0}\NormalTok{(}\FunctionTok{fmt}\NormalTok{(s[, }\DecValTok{1}\NormalTok{], }\DecValTok{3}\NormalTok{), }\StringTok{" "}\NormalTok{, }\FunctionTok{ic}\NormalTok{(s[, }\DecValTok{3}\NormalTok{], s[, }\DecValTok{4}\NormalTok{]))) \}}
+
+\CommentTok{\# HR implícita pela Weibull AFT: HR = exp({-}beta / escala)}
+\NormalTok{fw }\OtherTok{\textless{}{-}}\NormalTok{ fits\_aft[[}\StringTok{"Weibull"}\NormalTok{]]}
+\NormalTok{hr\_weib }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Termo =} \FunctionTok{names}\NormalTok{(}\FunctionTok{coef}\NormalTok{(fw))[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{], }\AttributeTok{hr\_w =} \FunctionTok{fmt}\NormalTok{(}\FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\FunctionTok{coef}\NormalTok{(fw)[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{] }\SpecialCharTok{/}\NormalTok{ fw}\SpecialCharTok{$}\NormalTok{scale), }\DecValTok{3}\NormalTok{))}
+
+\FunctionTok{hr}\NormalTok{(fit\_cox) }\SpecialCharTok{|\textgreater{}} \FunctionTok{rename}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Cox}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ hr) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{left\_join}\NormalTok{(}\FunctionTok{hr}\NormalTok{(fit\_cox\_estr) }\SpecialCharTok{|\textgreater{}} \FunctionTok{rename}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Cox estratificado}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ hr), }\AttributeTok{by =} \StringTok{"Termo"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{left\_join}\NormalTok{(hr\_weib }\SpecialCharTok{|\textgreater{}} \FunctionTok{rename}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Weibull (HR implícita)}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ hr\_w), }\AttributeTok{by =} \StringTok{"Termo"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Termo =} \FunctionTok{rotular}\NormalTok{(Termo),}
+         \FunctionTok{across}\NormalTok{(}\FunctionTok{everything}\NormalTok{(), \textbackslash{}(x) }\FunctionTok{replace\_na}\NormalTok{(x, }\StringTok{"estrato"}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Razões de riscos [IC 95\%] no Cox, no Cox estratificado por estádio e implícitas no modelo Weibull."}\NormalTok{,}
+         \AttributeTok{align =} \StringTok{"lrrr"}\NormalTok{)}
+
+\NormalTok{zph\_estr }\OtherTok{\textless{}{-}} \FunctionTok{cox.zph}\NormalTok{(fit\_cox\_estr)}
+\NormalTok{c\_cox }\OtherTok{\textless{}{-}}\NormalTok{ s\_cox}\SpecialCharTok{$}\NormalTok{concordance[}\DecValTok{1}\NormalTok{]}
+
+\FunctionTok{bind\_rows}\NormalTok{(}
+\NormalTok{  crit\_aft }\SpecialCharTok{|\textgreater{}} \FunctionTok{transmute}\NormalTok{(}\AttributeTok{Modelo =} \FunctionTok{paste}\NormalTok{(}\StringTok{"AFT"}\NormalTok{, Modelo), }\StringTok{\textasciigrave{}}\AttributeTok{Suposição}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{"Tempo de falha acelerado"}\NormalTok{,}
+                        \AttributeTok{logLik =} \FunctionTok{fmt}\NormalTok{(logLik, }\DecValTok{1}\NormalTok{), }\AttributeTok{AIC =} \FunctionTok{fmt}\NormalTok{(AIC, }\DecValTok{1}\NormalTok{), }\AttributeTok{BIC =} \FunctionTok{fmt}\NormalTok{(BIC, }\DecValTok{1}\NormalTok{), }\AttributeTok{C =} \FunctionTok{fmt}\NormalTok{(C, }\DecValTok{3}\NormalTok{)),}
+  \FunctionTok{tibble}\NormalTok{(}\AttributeTok{Modelo =} \StringTok{"Cox"}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Suposição}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{"Riscos proporcionais"}\NormalTok{,}
+         \AttributeTok{logLik =} \FunctionTok{paste}\NormalTok{(}\FunctionTok{fmt}\NormalTok{(fit\_cox}\SpecialCharTok{$}\NormalTok{loglik[}\DecValTok{2}\NormalTok{], }\DecValTok{1}\NormalTok{), }\StringTok{"(parcial)"}\NormalTok{),}
+         \AttributeTok{AIC =} \StringTok{"não comparável"}\NormalTok{, }\AttributeTok{BIC =} \StringTok{"não comparável"}\NormalTok{, }\AttributeTok{C =} \FunctionTok{fmt}\NormalTok{(c\_cox, }\DecValTok{3}\NormalTok{))}
+\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tabela}\NormalTok{(}\StringTok{"Comparação dos modelos de regressão. AIC e BIC só são comparáveis entre os modelos AFT, pois o Cox maximiza uma verossimilhança parcial; o índice C é comparável entre todos."}\NormalTok{,}
+         \AttributeTok{align =} \StringTok{"llrrrr"}\NormalTok{)}
+\NormalTok{segundo\_aft }\OtherTok{\textless{}{-}}\NormalTok{ crit\_aft}\SpecialCharTok{$}\NormalTok{Modelo[}\DecValTok{2}\NormalTok{]}
+\NormalTok{dif\_aic     }\OtherTok{\textless{}{-}}\NormalTok{ crit\_aft}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Dif. AIC}\StringTok{\textasciigrave{}}\NormalTok{[}\DecValTok{2}\NormalTok{]}
+\NormalTok{melhor\_bic  }\OtherTok{\textless{}{-}}\NormalTok{ crit\_aft}\SpecialCharTok{$}\NormalTok{Modelo[}\FunctionTok{which.min}\NormalTok{(crit\_aft}\SpecialCharTok{$}\NormalTok{BIC)]}
+\end{Highlighting}
+\end{Shaded}
+
+
+\end{document}

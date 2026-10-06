@@ -1,0 +1,898 @@
+---
+title: "Sobrevida de Pacientes com Câncer Colorretal no Estado de São Paulo"
+subtitle: "Análise de Sobrevivência com Modelagem Paramétrica e de Regressão — RHC/SP (FOSP)"
+author: "Matheus"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+lang: pt-BR
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: true
+    toc: true
+    fig_caption: true
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+params:
+  arquivo_rds: "rhc_analitica.rds"
+  arquivo_funil: "funil_selecao.rds"
+  ano_min: 2020
+  ano_max: 2023
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      fig.align = "center", fig.width = 7, fig.height = 4.2,
+                      fig.pos = "H", out.width = "92%")
+options(OutDec = ",")
+
+library(survival)   # Surv, survfit, survdiff, coxph, cox.zph, survreg
+library(flexsurv)   # flexsurvreg: modelos paramétricos sem covariáveis
+library(survminer)  # ggsurvplot, pairwise_survdiff
+library(muhaz)      # taxa de risco suavizada por kernel
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(knitr)
+
+theme_set(theme_minimal(base_size = 11))
+
+# Formatação pt-BR
+fmt   <- function(x, d = 2) formatC(x, format = "f", digits = d, decimal.mark = ",", big.mark = ".")
+fmt_n <- function(x) formatC(round(x), format = "d", big.mark = ".")
+fmt_p <- function(p) ifelse(p < 0.001, "< 0,001", fmt(p, 3))
+pct   <- function(x, d = 1) paste0(fmt(100 * x, d), "%")
+ic    <- function(lo, hi, d = 3) paste0("[", fmt(lo, d), "; ", fmt(hi, d), "]")
+tabela <- function(df, legenda, ...) kable(df, caption = legenda, booktabs = TRUE, position = "H", ...)
+
+# Teste de log-rank em texto: qui-quadrado, gl e p
+frase_lr <- function(t) {
+  gl <- length(t$n) - 1
+  p  <- pchisq(t$chisq, gl, lower.tail = FALSE)
+  sprintf("$\\chi^2$ = %s, gl = %d, p %s", fmt(t$chisq, 1), gl,
+          if (p < 0.001) "< 0,001" else paste("=", fmt(p, 3)))
+}
+
+# Rótulos legíveis dos coeficientes
+rotulos <- c(
+  "estadioII"            = "Estádio II (vs I)",
+  "estadioIII"           = "Estádio III (vs I)",
+  "estadioIV"            = "Estádio IV (vs I)",
+  "idade10"              = "Idade (+10 anos)",
+  "sexoFeminino"         = "Sexo feminino (vs masculino)",
+  "categoriaConvênio"    = "Convênio (vs SUS)",
+  "categoriaParticular"  = "Particular (vs SUS)",
+  "localizacaoReto/junção" = "Reto/junção retossigmoide (vs cólon)"
+)
+rotular <- function(x) unname(ifelse(x %in% names(rotulos), rotulos[x], x))
+```
+
+```{r dados}
+dados <- readRDS(params$arquivo_rds) |>
+  filter(between(ANODIAG, params$ano_min, params$ano_max)) |>
+  mutate(
+    localizacao = factor(if_else(TOPOGRUP == "C18", "Cólon", "Reto/junção"),
+                         levels = c("Cólon", "Reto/junção")),
+    faixa_idade = cut(IDADE, breaks = c(18, 50, 65, 75, Inf), right = FALSE,
+                      labels = c("18-49", "50-64", "65-74", "75+")),
+    idade10     = (IDADE - 60) / 10     # idade centrada em 60 anos, por década
+  )
+
+n_total  <- nrow(dados)
+n_obitos <- sum(dados$status)
+n_cens   <- n_total - n_obitos
+t_max    <- max(dados$tempo_anos)
+
+# Seguimento mediano pelo KM reverso (Schemper & Smith, 1996)
+km_rev  <- survfit(Surv(tempo_anos, 1 - status) ~ 1, data = dados)
+seg_med <- unname(summary(km_rev)$table["median"])
+
+perda_cens <- mean(dados$PERDASEG[dados$status == 0] == "1", na.rm = TRUE)
+```
+
+# Apresentação dos Dados
+
+## Fonte e população
+
+Os dados vêm do Registro Hospitalar de Câncer do Estado de São Paulo (RHC/SP), mantido pela Fundação Oncocentro de São Paulo (FOSP). O registro reúne os casos de câncer atendidos nos hospitais habilitados em oncologia do estado. Foram usados os arquivos por ano de diagnóstico de `r params$ano_min` a `r params$ano_max`, restritos aos **casos analíticos** de câncer colorretal, isto é, topografias CID-O C18 (cólon), C19 (junção retossigmoide) e C20 (reto). Caso analítico é o paciente que chegou ao hospital sem diagnóstico e sem tratamento prévios (`DIAGPREV = 1`).
+
+- **Evento de interesse:** óbito por qualquer causa (`ULTINFO` = 3, óbito por câncer, ou 4, óbito por outras causas). A escolha pela sobrevida global evita depender da causa do óbito registrada no prontuário hospitalar. Também evita tratar o óbito por outras causas como censura não informativa, quando ele é, na verdade, um risco competitivo.
+- **Tempo de sobrevida:** dias entre a data do diagnóstico (`DTDIAG`) e a data da última informação (`DTULTINFO`), expressos em anos.
+- **Censura:** à direita, para os pacientes vivos na última informação (`ULTINFO` = 1 ou 2), incluindo os classificados como perda de seguimento pelo registro.
+
+```{r funil}
+funil <- if (file.exists(params$arquivo_funil)) readRDS(params$arquivo_funil) else NULL
+
+if (!is.null(funil)) {
+  funil |>
+    bind_rows(tibble(etapa = sprintf("Diagnóstico entre %d e %d", params$ano_min, params$ano_max),
+                     n = n_total)) |>
+    mutate(`Excluídos` = c(NA, -diff(n)),
+           n = fmt_n(n),
+           `Excluídos` = ifelse(is.na(`Excluídos`), "", fmt_n(`Excluídos`))) |>
+    rename(`Critério` = etapa, `n restante` = n) |>
+    tabela("Fluxograma de seleção dos casos.")
+}
+```
+
+## Eventos e censuras
+
+A coorte final tem **`r fmt_n(n_total)` pacientes**, com **`r fmt_n(n_obitos)` óbitos (`r pct(n_obitos / n_total)`)** e **`r fmt_n(n_cens)` censuras (`r pct(n_cens / n_total)`)**. O seguimento máximo foi de `r fmt(t_max, 1)` anos. O seguimento mediano, estimado pelo Kaplan-Meier reverso, foi de `r if (is.na(seg_med)) "valor não atingido" else paste(fmt(seg_med, 2), "anos")`. Entre os censurados, `r if (is.nan(perda_cens)) "não há informação de" else pct(perda_cens)` `r if (is.nan(perda_cens)) "perda de seguimento." else "foram classificados pelo registro como perda de seguimento."`
+
+```{r tab-eventos}
+tab_ev <- dados |>
+  group_by(`Estádio` = as.character(estadio)) |>
+  summarise(Pacientes = n(), `Óbitos` = sum(status), Censuras = sum(1 - status), .groups = "drop")
+
+bind_rows(tab_ev, summarise(tab_ev, `Estádio` = "Total", across(where(is.numeric), sum))) |>
+  mutate(`% óbitos` = pct(`Óbitos` / Pacientes),
+         across(c(Pacientes, `Óbitos`, Censuras), fmt_n)) |>
+  tabela("Número de pacientes, óbitos e censuras por estádio clínico.", align = "lrrrr")
+```
+
+```{r tab-descritiva}
+desc_var <- function(v, rotulo) {
+  dados |>
+    group_by(`Nível` = .data[[v]]) |>
+    summarise(n = n(), obitos = sum(status), .groups = "drop") |>
+    mutate(`Variável` = rotulo,
+           `Nível` = ifelse(is.na(`Nível`), "Sem informação", as.character(`Nível`)),
+           `n (%)` = paste0(fmt_n(n), " (", pct(n / sum(n)), ")"),
+           `Óbitos no grupo` = pct(obitos / n)) |>
+    select(`Variável`, `Nível`, `n (%)`, `Óbitos no grupo`)
+}
+
+map2_dfr(c("sexo", "faixa_idade", "categoria", "localizacao", "estadio"),
+         c("Sexo", "Faixa etária", "Categoria de atendimento", "Localização", "Estádio clínico"),
+         desc_var) |>
+  mutate(`Variável` = ifelse(duplicated(`Variável`), "", `Variável`)) |>
+  tabela("Características da coorte e proporção de óbitos por categoria.", align = "llrr")
+```
+
+A idade mediana ao diagnóstico foi de `r median(dados$IDADE)` anos (intervalo interquartil `r quantile(dados$IDADE, 0.25)` a `r quantile(dados$IDADE, 0.75)`).
+
+A coorte tem 6.013 pacientes, com 2.803 óbitos (46,6%) e 3.210 censuras (53,4%), uma proporção de censura moderada a alta. Parte importante dela decorre do tempo curto de acompanhamento: com diagnósticos entre `r params$ano_min` e `r params$ano_max`, o seguimento máximo é de `r fmt(t_max, 1)` anos e o mediano, de `r fmt(seg_med, 1)` anos, de modo que muitos pacientes ainda estavam vivos na data da última informação. `r if (perda_cens >= 0.5) paste0("A maior parte dos censurados (", pct(perda_cens), "), porém, foi classificada pelo registro como perda de seguimento, e não como censura administrativa, ponto retomado na discussão sobre censura informativa (Seção 5.1).") else paste0("Entre os censurados, ", pct(perda_cens), " foram classificados pelo registro como perda de seguimento", if (perda_cens > 0.3) ", fração relevante que é retomada na discussão sobre censura informativa (Seção 5.1)." else ".")` A censura também varia muito por estádio, de 78,4% no estádio I a 22,1% no IV. Isso é esperado, porque pacientes em estádios iniciais vivem mais e chegam com mais frequência ao fim do acompanhamento, mas significa que as estimativas do estádio I se apoiam em menos eventos (182 óbitos).
+
+Há predomínio de doença avançada ao diagnóstico: os estádios III e IV somam 60,2% dos casos, e o estádio IV sozinho, 31,3%. Esse perfil pesa na sobrevida global da coorte, já que o estádio IV concentra 52,3% de todos os óbitos (1.466 de 2.803).
+
+Nas demais variáveis, a proporção bruta de óbitos cresce com a idade, de 39,1% entre 18 e 49 anos para 57,5% a partir dos 75, e é um pouco maior nos homens (48,6%) que nas mulheres (44,5%). Essas proporções não consideram o tempo de seguimento de cada grupo, por isso as comparações formais ficam para as Seções 2 e 4. Por fim, o atendimento particular reúne apenas 44 pacientes (0,7%), o que torna as estimativas desse grupo imprecisas nos modelos.
+
+# Curva de Sobrevivência (Kaplan-Meier) e Teste de Log-Rank
+
+## Curva global
+
+```{r km-geral, fig.height=5, fig.cap="Curva de Kaplan-Meier global com intervalo de confiança de 95% e número em risco."}
+km_geral <- survfit(Surv(tempo_anos, status) ~ 1, data = dados)
+
+ggsurvplot(km_geral, data = dados, conf.int = TRUE, censor = FALSE,
+           risk.table = TRUE, break.time.by = 1, surv.median.line = "hv",
+           xlab = "Anos desde o diagnóstico", ylab = "Probabilidade de sobrevida",
+           legend = "none", ggtheme = theme_minimal(), risk.table.height = 0.22,
+           risk.table.y.text = FALSE, tables.theme = theme_cleantable())
+```
+
+```{r tab-km-geral}
+s_geral <- summary(km_geral, times = 1:floor(t_max))
+med_geral <- unname(summary(km_geral)$table["median"])
+
+tibble(`Tempo (anos)` = s_geral$time,
+       `Em risco` = fmt_n(s_geral$n.risk),
+       `S(t)` = fmt(s_geral$surv, 3),
+       `IC 95%` = ic(s_geral$lower, s_geral$upper)) |>
+  tabela("Sobrevida estimada por Kaplan-Meier em tempos selecionados.", align = "rrrr")
+```
+
+A sobrevida global estimada em 1 ano foi de `r pct(s_geral$surv[1])` e, em `r max(s_geral$time)` anos, de `r pct(tail(s_geral$surv, 1))`. A mediana de sobrevida `r if (is.na(med_geral)) "não foi atingida no período de seguimento, pois a curva não cruzou 50%" else paste("foi de", fmt(med_geral, 2), "anos")`.
+
+A queda é mais acentuada no primeiro ano: 28,1% dos pacientes morreram nos primeiros 12 meses após o diagnóstico. Depois disso, a perda desacelera. Entre os pacientes vivos no início de cada ano, a proporção de óbitos foi de 16,0% no segundo ano, 13,2% no terceiro, 12,8% no quarto e 9,8% no quinto. A curva não chega a se estabilizar num platô, mas o ritmo de queda no segundo ano já é pouco mais da metade do observado no primeiro e continua diminuindo depois.
+
+Esse formato é compatível com uma coorte em que parte relevante dos pacientes chega ao diagnóstico com doença avançada: esses casos concentram os óbitos precoces, enquanto os diagnosticados em estádios iniciais sustentam a parte mais lenta da curva. Dos óbitos ocorridos no primeiro ano, `r pct(mean(dados$estadio[dados$status == 1 & dados$tempo_anos < 1] == "IV"))` foram de pacientes no estádio IV. A estimativa em 6 anos deve ser lida com cautela, porque se apoia em apenas 17 pacientes em risco, o que explica o intervalo de confiança mais largo.
+
+## Comparação por estádio clínico
+
+```{r km-estadio, fig.height=5.2, fig.cap="Curvas de Kaplan-Meier por estádio clínico."}
+km_est <- survfit(Surv(tempo_anos, status) ~ estadio, data = dados)
+
+ggsurvplot(km_est, data = dados, conf.int = TRUE, censor = FALSE,
+           risk.table = TRUE, break.time.by = 1, palette = "Dark2",
+           legend.title = "Estádio", legend.labs = levels(dados$estadio),
+           xlab = "Anos desde o diagnóstico", ylab = "Probabilidade de sobrevida",
+           ggtheme = theme_minimal(), risk.table.height = 0.28,
+           tables.theme = theme_cleantable())
+```
+
+```{r logrank-estadio}
+lr_est <- survdiff(Surv(tempo_anos, status) ~ estadio, data = dados)
+s_est  <- summary(km_est, times = c(1, 3))
+med_est <- summary(km_est)$table[, "median"]
+
+tibble(`Estádio` = levels(dados$estadio),
+       N = fmt_n(lr_est$n),
+       `Óbitos obs.` = fmt_n(lr_est$obs),
+       `Óbitos esp.` = fmt(lr_est$exp, 1),
+       `O/E` = fmt(lr_est$obs / lr_est$exp, 2),
+       `Mediana (anos)` = ifelse(is.na(med_est), "não atingida", fmt(med_est, 2))) |>
+  tabela("Teste de log-rank por estádio: óbitos observados (O) e esperados (E) sob a hipótese de igualdade das curvas.",
+         align = "lrrrrr")
+
+tibble(`Estádio` = sub("estadio=", "", as.character(s_est$strata)),
+       `Tempo (anos)` = s_est$time,
+       `S(t)` = fmt(s_est$surv, 3),
+       `IC 95%` = ic(s_est$lower, s_est$upper)) |>
+  pivot_wider(names_from = `Tempo (anos)`, values_from = c(`S(t)`, `IC 95%`),
+              names_glue = "{.value} em {`Tempo (anos)`} ano(s)", names_vary = "slowest") |>
+  tabela("Sobrevida em 1 e 3 anos por estádio.")
+```
+
+O teste de log-rank indica `r ifelse(pchisq(lr_est$chisq, length(lr_est$n) - 1, lower.tail = FALSE) < 0.05, "diferença estatisticamente significativa", "ausência de diferença estatisticamente significativa")` entre as curvas dos estádios (`r frase_lr(lr_est)`). Como o teste global só informa que pelo menos uma curva difere, as comparações par a par abaixo usam a correção de Holm para comparações múltiplas.
+
+```{r logrank-pares}
+pares <- pairwise_survdiff(Surv(tempo_anos, status) ~ estadio, data = dados,
+                           p.adjust.method = "holm")
+pmat <- pares$p.value
+pmat[] <- ifelse(is.na(pmat), "", fmt_p(pmat))
+rownames(pmat) <- paste("Estádio", rownames(pmat))
+colnames(pmat) <- paste("Estádio", colnames(pmat))
+tabela(pmat, "Valores-p do log-rank par a par entre estádios (ajuste de Holm).")
+```
+
+O gradiente é monótono e clinicamente expressivo. A sobrevida em 3 anos cai de 78,0% no estádio I para 71,3% no II, 60,0% no III e 19,4% no IV. As curvas já estão separadas no primeiro ano, e a distância entre elas aumenta com o tempo: a diferença entre os estádios I e IV passa de 37,9 pontos percentuais em 1 ano para 58,6 pontos em 3 anos.
+
+Todos os pares de estádios diferem após o ajuste de Holm. A diferença entre I e II é a menos marcada (p = 0,001), e é nela que o valor-p precisa ser lido junto com a magnitude: com quase 2.400 pacientes nesses dois grupos, o teste detecta uma diferença de 4,2 pontos percentuais em 1 ano e de 6,7 em 3 anos, que é real, mas modesta. O salto clinicamente decisivo está entre os estádios III e IV, com 28,2 pontos percentuais de diferença já no primeiro ano. Metade dos pacientes no estádio IV morre no primeiro ano (mediana de 1,00 ano), e, entre os que sobrevivem a ele, 61,1% morrem até o terceiro. No estádio III, a mediana é de 4,28 anos; nos estádios I e II, ela não foi atingida no período de seguimento.
+
+A razão entre óbitos observados e esperados resume o gradiente: no estádio IV ocorreram 2,29 vezes os óbitos esperados sob igualdade das curvas, contra 0,40 no estádio I. O estádio IV reúne 31,3% dos pacientes, mas 52,3% dos óbitos, e é o principal determinante da sobrevida global da coorte. Mesmo no estádio I, porém, 12,2% dos pacientes morreram no primeiro ano. Como o desfecho é óbito por qualquer causa, parte dessas mortes pode não estar ligada ao câncer, e sim à idade e a comorbidades.
+
+## Outros grupos
+
+```{r km-subgrupos, fig.height=6.5, fig.width=8, fig.cap="Curvas de Kaplan-Meier por sexo, categoria de atendimento, localização e faixa etária."}
+vars_grupo <- c(sexo = "Sexo", categoria = "Categoria", localizacao = "Localização",
+                faixa_idade = "Faixa etária")
+
+km_sub <- imap(vars_grupo, \(rot, v)
+  surv_fit(as.formula(paste("Surv(tempo_anos, status) ~", v)), data = dados))
+
+graf_sub <- imap(km_sub, \(f, v)
+  ggsurvplot(f, data = dados, censor = FALSE, conf.int = FALSE, palette = "Dark2",
+             legend.title = vars_grupo[[v]], legend.labs = sub(".*=", "", names(f$strata)),
+             xlab = "Anos", ylab = "S(t)", ggtheme = theme_minimal(base_size = 9)))
+
+arrange_ggsurvplots(unname(graf_sub), ncol = 2, nrow = 2, print = TRUE)
+```
+
+```{r logrank-tabela}
+c(estadio = "Estádio clínico", vars_grupo) |>
+  imap_dfr(\(rot, v) {
+    t  <- survdiff(as.formula(paste("Surv(tempo_anos, status) ~", v)), data = dados)
+    gl <- length(t$n) - 1
+    tibble(Grupo = rot, `Qui-quadrado` = fmt(t$chisq, 1), gl = gl,
+           p = fmt_p(pchisq(t$chisq, gl, lower.tail = FALSE)))
+  }) |>
+  tabela("Testes de log-rank por grupo.", align = "lrrr")
+```
+
+```{r interp-grupos}
+s3_grupo <- function(v) {
+  s <- summary(km_sub[[v]], times = 3)
+  setNames(s$surv, sub(".*=", "", as.character(s$strata)))
+}
+s3_sexo  <- s3_grupo("sexo")
+s3_cat   <- s3_grupo("categoria")
+s3_idade <- s3_grupo("faixa_idade")
+
+iv_cat <- dados |>
+  filter(!is.na(categoria)) |>
+  group_by(categoria) |>
+  summarise(p_iv = mean(estadio == "IV"), .groups = "drop")
+iv_cat <- setNames(iv_cat$p_iv, as.character(iv_cat$categoria))
+```
+
+Além do estádio, as curvas diferem por faixa etária ($\chi^2$ = 151,7; p \< 0,001), categoria de atendimento ($\chi^2$ = 14,8; p \< 0,001) e sexo ($\chi^2$ = 5,2; p = 0,022). Não há evidência de diferença entre tumores de cólon e de reto/junção retossigmoide (p = 0,601). A magnitude das estatísticas mostra a hierarquia entre os fatores: o estádio ($\chi^2$ = 1.474,2) separa as curvas com força cerca de dez vezes maior que a idade e muito maior que sexo e categoria.
+
+Em 3 anos, a sobrevida é de `r pct(s3_idade[["18-49"]])` entre 18 e 49 anos e de `r pct(s3_idade[["75+"]])` a partir dos 75 anos. Por categoria, é de `r pct(s3_cat[["SUS"]])` no SUS, `r pct(s3_cat[["Convênio"]])` em convênio e `r pct(s3_cat[["Particular"]])` em particular. Por sexo, é de `r pct(s3_sexo[["Masculino"]])` nos homens e `r pct(s3_sexo[["Feminino"]])` nas mulheres.
+
+Essas comparações são brutas e não separam o efeito de cada fator do efeito da composição dos grupos. No caso da categoria de atendimento, a distribuição de estádios é parte da explicação a ser verificada: a proporção de pacientes no estádio IV é de `r pct(iv_cat[["SUS"]])` no SUS, `r pct(iv_cat[["Convênio"]])` em convênio e `r pct(iv_cat[["Particular"]])` em particular. A diferença por sexo, embora significativa, tem a menor estatística entre os fatores significativos. Com mais de 6 mil pacientes, uma diferença pequena já atinge p \< 0,05, e ela pode não se manter após o ajuste. A faixa etária, por sua vez, também carrega a mortalidade por outras causas, já que o desfecho é óbito por qualquer causa. A Seção 4 reavalia esses fatores com ajuste simultâneo.
+
+# Curvas de Risco por Técnicas Não Paramétricas
+
+## Risco acumulado (Nelson-Aalen)
+
+O estimador de Nelson-Aalen é $\hat H(t) = \sum_{t_j \le t} d_j / n_j$, em que $d_j$ é o número de óbitos e $n_j$ o número em risco no tempo $t_j$. A inclinação de $\hat H(t)$ é a taxa de risco: trechos mais íngremes indicam risco maior.
+
+```{r na-geral, fig.height=3.8, fig.cap="Risco acumulado de Nelson-Aalen: global (esquerda) e por estádio (direita)."}
+na_geral <- survfit(Surv(tempo_anos, status) ~ 1, data = dados, ctype = 1)
+na_est   <- survfit(Surv(tempo_anos, status) ~ estadio, data = dados, ctype = 1)
+
+df_na <- tibble(tempo = na_geral$time, H = na_geral$cumhaz, se = na_geral$std.chaz) |>
+  mutate(lo = pmax(H - 1.96 * se, 0), hi = H + 1.96 * se)
+
+df_na_est <- tibble(tempo = na_est$time, H = na_est$cumhaz,
+                    estadio = sub("estadio=", "", rep(names(na_est$strata), na_est$strata)))
+
+g1 <- ggplot(df_na, aes(tempo, H)) +
+  geom_ribbon(aes(ymin = lo, ymax = hi), fill = "grey80", stat = "identity") +
+  geom_step() +
+  labs(x = "Anos desde o diagnóstico", y = expression(hat(H)(t)), title = "Global")
+
+g2 <- ggplot(df_na_est, aes(tempo, H, colour = estadio)) +
+  geom_step() +
+  scale_colour_brewer(palette = "Dark2") +
+  labs(x = "Anos desde o diagnóstico", y = expression(hat(H)(t)), colour = "Estádio",
+       title = "Por estádio")
+
+gridExtra::grid.arrange(g1, g2, ncol = 2)
+```
+
+```{r na-intervalos}
+corte_max <- floor(quantile(dados$tempo_anos, 0.95))
+cortes <- 0:corte_max
+
+delta_H <- function(fit_time, fit_H) {
+  H <- stepfun(fit_time, c(0, fit_H))
+  dH <- diff(H(cortes))
+  1 - exp(-dH)     # P(óbito no intervalo | vivo no início do intervalo)
+}
+
+tab_int <- tibble(Intervalo = paste0("[", head(cortes, -1), "; ", cortes[-1], ") anos"),
+                  Global = delta_H(na_geral$time, na_geral$cumhaz))
+
+for (e in levels(dados$estadio)) {
+  sel <- df_na_est$estadio == e
+  tab_int[[paste("Estádio", e)]] <- delta_H(df_na_est$tempo[sel], df_na_est$H[sel])
+}
+
+tab_int |>
+  mutate(across(-Intervalo, \(x) pct(x))) |>
+  tabela("Probabilidade condicional de óbito em cada intervalo anual, dado que o paciente estava vivo no início do intervalo: $1 - \\exp\\{-[\\hat H(b) - \\hat H(a)]\\}$.",
+         escape = FALSE)
+```
+
+A curva global de $\hat H(t)$ é côncava no início e aproximadamente linear a partir do segundo ano. A probabilidade condicional de óbito é máxima no primeiro ano (28,0%), cai para 16,0% no segundo e se estabiliza em torno de 13% no terceiro e no quarto (13,2% e 12,9%). Ou seja, o risco é decrescente no início e aproximadamente constante depois: quem sobrevive ao primeiro ano passa a enfrentar um risco anual de óbito bem menor, mas que deixa de cair a partir do segundo ano. Esse formato já indica que um modelo de risco constante, como o exponencial, não descreve bem o início do seguimento.O mesmo desenho aparece em todos os estádios, com o maior risco sempre no primeiro ano, mas em níveis muito diferentes. Nos estádios I a III, a probabilidade cai entre 41% e 52% do primeiro para o segundo ano (de 12,2% para 6,5% no I, de 16,4% para 7,9% no II e de 21,8% para 12,8% no III) e fica relativamente estável depois. No estádio IV, a queda é menor e mais lenta: de 50,1% no primeiro ano para 38,4% no segundo e 33,4% no quarto. Mesmo depois de sobreviver ao primeiro ano, um paciente no estádio IV tem cerca de um terço de chance de morrer a cada ano, risco maior que o do primeiro ano em qualquer outro estádio.As pequenas altas no último intervalo dos estádios I e III (de 4,9% para 6,9% e de 11,8% para 13,7%) devem ser lidas com cautela, porque o número de pacientes em risco nesse intervalo é bem menor. Também chama atenção que a razão entre as probabilidades dos estádios IV e I muda de um intervalo para outro (de cerca de 4 vezes no primeiro ano para mais de 7 no terceiro), o que antecipa a avaliação de riscos proporcionais da Seção 4.
+
+## Taxa de risco instantânea (*hazard*)
+
+A função de risco foi estimada por suavização de kernel (estimador de Müller e Wang, pacote `muhaz`). A estimação foi limitada ao percentil 90 do tempo de seguimento, porque a estimativa fica instável na cauda, onde restam poucos pacientes em risco.
+
+```{r hazard, fig.height=3.8, fig.cap="Taxa de risco suavizada: global (esquerda) e por estádio (direita, escala logarítmica)."}
+janela <- function(d) {
+  n_min <- max(200, 0.10 * nrow(d))
+  km <- survfit(Surv(tempo_anos, status) ~ 1, data = d)
+  max(km$time[km$n.risk >= n_min])
+}
+
+estimar_h <- function(d) {
+  m <- muhaz(d$tempo_anos, d$status, max.time = janela(d))
+  tibble(tempo = m$est.grid, h = m$haz.est)
+}
+
+h_geral <- estimar_h(dados)
+h_est <- map_dfr(levels(dados$estadio),
+                 \(e) estimar_h(filter(dados, estadio == e)) |> mutate(estadio = e))
+
+g1 <- ggplot(h_geral, aes(tempo, h)) + geom_line(linewidth = 0.9) +
+  labs(x = "Anos desde o diagnóstico", y = "h(t) (óbitos por pessoa-ano)", title = "Global")
+
+g2 <- ggplot(h_est, aes(tempo, h, colour = estadio)) + geom_line(linewidth = 0.9) +
+  scale_y_log10() + scale_colour_brewer(palette = "Dark2") +
+  labs(x = "Anos desde o diagnóstico", y = "h(t) (escala log)", colour = "Estádio",
+       title = "Por estádio")
+
+gridExtra::grid.arrange(g1, g2, ncol = 2)
+```
+
+```{r hazard-picos}
+tempos_h <- c(0.25, 0.5, 1, 2, 3)
+grupos_h <- c(list(Global = h_geral),
+              setNames(map(levels(dados$estadio), \(e) filter(h_est, estadio == e)),
+                       paste("Estádio", levels(dados$estadio))))
+
+hz <- t(sapply(grupos_h, \(df) approx(df$tempo, df$h, xout = tempos_h)$y))   # NA fora da janela
+colnames(hz) <- tempos_h
+fim_janela <- sapply(grupos_h, \(df) max(df$tempo))
+
+tibble(Grupo = rownames(hz)) |>
+  bind_cols(as_tibble(ifelse(is.na(hz), "-", fmt(hz, 3)), .name_repair = "minimal") |>
+              setNames(paste0("h(", fmt(tempos_h, 2), ")"))) |>
+  mutate(`Fim da janela (anos)` = fmt(fim_janela, 1)) |>
+  tabela("Taxa de risco suavizada (óbitos por pessoa-ano) em tempos selecionados.")
+```
+
+```{r interp-hazard}
+obitos_30d <- sum(dados$status == 1 & dados$tempo_dias <= 30)
+sobe_fim   <- tail(h_geral$h, 1) > 1.25 * min(h_geral$h)
+razao_1ano <- hz["Estádio IV", "1"] / hz["Estádio I", "1"]
+```
+
+O período de maior risco é o início do seguimento. A taxa de risco global é de `r fmt(hz["Global", "0.25"], 3)` óbitos por pessoa-ano aos 3 meses do diagnóstico e cai para `r fmt(hz["Global", "1"], 3)` em 1 ano, `r fmt(hz["Global", "2"], 3)` em 2 anos e `r fmt(hz["Global", "3"], 3)` em 3 anos. Só nos primeiros 30 dias ocorreram `r fmt_n(obitos_30d)` óbitos, `r pct(obitos_30d / n_obitos)` de todos os óbitos da coorte. O formato confirma a tabela de Nelson-Aalen: risco decrescente no início e aproximadamente estável a partir do segundo ano. O período de menor risco é o final do seguimento observado`r if (sobe_fim) "; a leve alta no fim da janela está na região de borda da estimativa, onde há menos pacientes em risco, e não deve ser interpretada como aumento real" else ", sem sinal de que o risco volte a subir"`.
+
+Na prática, isso concentra a necessidade de acompanhamento intensivo nos primeiros meses após o diagnóstico, quando a taxa de risco é várias vezes maior que a dos anos seguintes. Para quem sobrevive a esse período, o risco cai, ou seja, a sobrevida condicional melhora com o tempo. É uma informação útil no aconselhamento: a chance de sobreviver aos anos seguintes é maior para quem já passou do primeiro ano do que a estimada no momento do diagnóstico.
+
+Todos os estádios seguem o mesmo desenho, com risco máximo no início, mas em níveis muito diferentes. Em 1 ano, a taxa de risco no estádio IV (`r fmt(hz["Estádio IV", "1"], 3)`) é cerca de `r fmt(razao_1ano, 0)` vezes a do estádio I (`r fmt(hz["Estádio I", "1"], 3)`). Em 2 anos, o estádio IV ainda tem `r fmt(hz["Estádio IV", "2"], 3)` óbitos por pessoa-ano, contra `r fmt(hz["Estádio III", "2"], 3)` no estádio III.
+
+Esse formato orienta a escolha da distribuição na Seção 4. A exponencial, de risco constante, é incompatível com ele. A Weibull com forma menor que 1 e a log-logística com forma até 1 produzem risco decrescente. A log-normal produz um risco que sobe muito rápido logo após o início e depois decresce, o que, com pico tão precoce, também se aproxima do observado. Os critérios de ajuste decidem entre elas.
+
+# Ajuste de Modelos Paramétricos e de Regressão
+
+## Modelos paramétricos sem covariáveis
+
+Cada distribuição impõe uma forma à função de risco. Por isso, o formato observado na Seção 3 já sugere quais modelos são plausíveis:
+
+| Modelo | Forma de $h(t)$ |
+|----|----|
+| Exponencial | Constante |
+| Weibull | Monótona: crescente (forma \> 1) ou decrescente (forma \< 1) |
+| Log-normal | Unimodal: cresce e depois decresce |
+| Log-logística | Decrescente (forma $\leq$ 1) ou unimodal (forma \> 1) |
+
+: Forma da função de risco implicada por cada distribuição.
+
+```{r param-ajuste, message=TRUE, warning=TRUE, paged.print=FALSE}
+dists0 <- c("Exponencial" = "exp", "Weibull" = "weibull", "Log-normal" = "lnorm",
+            "Log-logística" = "llogis", "Gama generalizada" = "gengamma")
+
+fits0 <- map(dists0, \(d) tryCatch(
+  flexsurvreg(Surv(tempo_anos, status) ~ 1, data = dados, dist = d),
+  error = \(e) NULL)) |>
+  compact()
+
+crit0 <- imap_dfr(fits0, \(f, nome) tibble(
+  Modelo = nome, k = f$npars, logLik = f$loglik,
+  AIC = -2 * f$loglik + 2 * f$npars,
+  BIC = -2 * f$loglik + log(n_total) * f$npars)) |>
+  arrange(AIC) |>
+  mutate(`Dif. AIC` = AIC - min(AIC))
+
+crit0 |>
+  mutate(across(c(logLik, AIC, BIC, `Dif. AIC`), \(x) fmt(x, 1))) |>
+  tabela("Critérios de ajuste dos modelos paramétricos sem covariáveis (BIC com penalização log(n)). A gama generalizada entra como referência, pois engloba Weibull, log-normal e exponencial como casos particulares.",
+         align = "lrrrrr")
+
+melhor0 <- crit0 |> filter(Modelo != "Gama generalizada") |> slice_min(AIC, n = 1)
+```
+
+```{r param-coef}
+imap_dfr(fits0[names(fits0) != "Gama generalizada"], \(f, nome)
+  as_tibble(f$res, rownames = "Parâmetro") |>
+    transmute(Modelo = nome, `Parâmetro`, Estimativa = fmt(est, 3), `IC 95%` = ic(`L95%`, `U95%`))) |>
+  mutate(Modelo = ifelse(duplicated(Modelo), "", Modelo)) |>
+  tabela("Estimativas dos parâmetros (parametrização do pacote flexsurv).", align = "llrr")
+```
+
+```{r param-trv}
+trv <- function(restrito, completo) {
+  est <- 2 * (completo$loglik - restrito$loglik)
+  gl  <- completo$npars - restrito$npars
+  tibble(TRV = fmt(est, 1), gl = gl, p = fmt_p(pchisq(est, gl, lower.tail = FALSE)))
+}
+
+testes <- list(
+  "Exponencial vs Weibull (H0: forma = 1)" = c("Exponencial", "Weibull"),
+  "Weibull vs Gama generalizada (H0: Q = 1)" = c("Weibull", "Gama generalizada"),
+  "Log-normal vs Gama generalizada (H0: Q = 0)" = c("Log-normal", "Gama generalizada")
+)
+testes <- keep(testes, \(par) all(par %in% names(fits0)))
+
+imap_dfr(testes, \(par, nome) trv(fits0[[par[1]]], fits0[[par[2]]]) |> mutate(Teste = nome)) |>
+  relocate(Teste) |>
+  tabela("Testes da razão de verossimilhanças entre modelos encaixados.", align = "lrrr")
+```
+
+```{r param-graf, fig.height=4, fig.cap="Kaplan-Meier (degraus) e curvas de sobrevida ajustadas pelos modelos paramétricos."}
+grade_t <- seq(0.01, t_max, length.out = 200)
+
+curvas <- imap_dfr(fits0[c("Exponencial", "Weibull", "Log-normal", "Log-logística")],
+                   \(f, nome) summary(f, t = grade_t, type = "survival", ci = FALSE, tidy = TRUE) |>
+                     mutate(Modelo = nome))
+
+ggplot() +
+  geom_step(data = tibble(time = c(0, km_geral$time), surv = c(1, km_geral$surv)),
+            aes(time, surv), colour = "black", linewidth = 0.7) +
+  geom_line(data = curvas, aes(time, est, colour = Modelo), linewidth = 0.8, linetype = "dashed") +
+  scale_colour_brewer(palette = "Set1") +
+  labs(x = "Anos desde o diagnóstico", y = "S(t)", colour = NULL) +
+  theme(legend.position = "bottom")
+```
+
+```{r param-linear, fig.height=5.5, fig.cap="Gráficos de linearização com base no Kaplan-Meier. Se a distribuição for adequada, os pontos ficam próximos de uma reta (tracejada: ajuste de mínimos quadrados)."}
+km_df <- tibble(t = km_geral$time, S = km_geral$surv) |> filter(S > 0, S < 1, t > 0)
+
+lin <- with(km_df, bind_rows(
+  tibble(Modelo = "Exponencial: -log S(t) vs t",          x = t,      y = -log(S)),
+  tibble(Modelo = "Weibull: log(-log S(t)) vs log t",     x = log(t), y = log(-log(S))),
+  tibble(Modelo = "Log-normal: qnorm(1 - S(t)) vs log t", x = log(t), y = qnorm(1 - S)),
+  tibble(Modelo = "Log-logística: log[(1-S)/S] vs log t", x = log(t), y = log((1 - S) / S))
+))
+
+ggplot(lin, aes(x, y)) +
+  geom_line(colour = "grey30") +
+  geom_smooth(method = "lm", se = FALSE, colour = "firebrick", linetype = "dashed", linewidth = 0.6) +
+  facet_wrap(~ Modelo, scales = "free") +
+  labs(x = NULL, y = NULL)
+```
+
+Entre as quatro distribuições pedidas, a de menor AIC sem covariáveis foi a **`r melhor0$Modelo`**. `r if ("Weibull" %in% names(fits0)) { fw <- fits0[["Weibull"]]$res["shape", ]; paste0("O parâmetro de forma estimado da Weibull foi ", fmt(fw["est"], 3), " (IC 95%: ", ic(fw["L95%"], fw["U95%"]), "), o que indica risco ", ifelse(fw["U95%"] < 1, "decrescente", ifelse(fw["L95%"] > 1, "crescente", "compatível com constante")), " no tempo.") }`
+
+```{r interp-param}
+nome_d <- function(x) ifelse(x == "Weibull", x, tolower(x))   # nome em texto corrido
+quatro      <- filter(crit0, Modelo != "Gama generalizada")
+ordem_aic   <- quatro$Modelo[order(quatro$AIC)]
+melhor_aic0 <- ordem_aic[1]
+melhor_bic0 <- quatro$Modelo[which.min(quatro$BIC)]
+dif2_0      <- sort(quatro$AIC)[2] - min(quatro$AIC)
+p_exp_weib  <- pchisq(2 * (fits0[["Weibull"]]$loglik - fits0[["Exponencial"]]$loglik), 1,
+                      lower.tail = FALSE)
+obitos_3d   <- sum(dados$status == 1 & dados$tempo_dias <= 3)
+graf_ok     <- melhor_aic0 %in% c("Weibull", "Log-logística")
+```
+
+```{r}
+if (melhor_aic0 == melhor_bic0) {
+  paste0("AIC e BIC concordam e apontam a ", nome_d(melhor_aic0), ", com ", fmt(dif2_0, 1), " pontos de AIC a menos que a segunda colocada (", nome_d(ordem_aic[2]), ").")
+} else {
+  paste0("O AIC aponta a ", nome_d(melhor_aic0), " e o BIC aponta a ", nome_d(melhor_bic0), ".")
+}
+```
+
+O teste da razão de verossimilhanças entre exponencial e Weibull `r if (p_exp_weib < 0.05) "rejeita" else "não rejeita"` a forma igual a 1 (p `r ifelse(p_exp_weib < 0.001, "< 0,001", paste("=", fmt(p_exp_weib, 3)))`), ou seja, o risco `r if (p_exp_weib < 0.05) "não é constante no tempo" else "é compatível com constante"`. Os testes contra a gama generalizada, com uma amostra deste tamanho, tendem a rejeitar os casos particulares mesmo quando a diferença é pequena; por isso a diferença de AIC e os gráficos são mais informativos que eles.
+
+Nos gráficos de linearização, a exponencial é a única claramente inadequada: a curva de $-\log S(t)$ é côncava, cresce rápido no início e desacelera, o que indica risco decrescente, e não constante. A Weibull e a log-logística são as mais próximas da reta em praticamente toda a faixa de tempo. No gráfico da Weibull, a inclinação da reta corresponde ao parâmetro de forma e é visivelmente menor que 1, coerente com a estimativa acima. A log-normal acompanha bem a reta a partir de $\log t \approx -2{,}5$ (cerca de um mês), mas se afasta dela nos tempos mais curtos. Os desvios das três no extremo esquerdo ($\log t < -5$, os primeiros dois a três dias) correspondem aos `r fmt_n(obitos_3d)` óbitos ocorridos até o terceiro dia, incluindo os registrados no próprio dia do diagnóstico, cujo tempo foi fixado em meio dia.
+
+Essa leitura é coerente com a forma do risco vista na Seção 3. O risco é máximo logo após o diagnóstico e decresce, formato que a Weibull e a log-logística com forma menor que 1 reproduzem. A log-normal, ao contrário, impõe um risco que parte de zero e sobe antes de cair, e é exatamente nos primeiros dias que ela se afasta da reta.
+
+```{r}
+if (graf_ok) {
+  paste0("A escolha da ", nome_d(melhor_aic0), " pelo AIC é, portanto, coerente com os gráficos e com a forma do risco.")
+} else {
+  paste0("Há, portanto, uma divergência: o AIC aponta a ", nome_d(melhor_aic0), ", mas os gráficos sugerem o contrário.")
+}
+```
+
+`r if (graf_ok) paste0("A escolha da ", nome_d(melhor_aic0), " pelo AIC é, portanto, coerente com os gráficos e com a forma do risco.") else paste0("Há, portanto, uma divergência: o AIC aponta a ", nome_d(melhor_aic0), ", enquanto os gráficos e a forma do risco favorecem a Weibull e a log-logística. Como o AIC pondera o ajuste em toda a distribuição e os gráficos destacam desvios nos extremos, a decisão considera também os resíduos dos modelos com covariáveis (Seção 4.2).")`
+
+## Modelos de regressão
+
+As covariáveis são estádio clínico, idade (centrada em 60 anos, por década), sexo, categoria de atendimento e localização do tumor. Os indicadores de tratamento **não** entram no modelo, por dois motivos. Primeiro, o tratamento é definido depois do diagnóstico, o que gera viés de tempo imortal: o paciente precisa sobreviver até a cirurgia para ser classificado como operado. Segundo, há confusão por indicação: a escolha do tratamento depende do estado clínico do paciente.
+
+```{r dados-modelo}
+vars_mod  <- c("tempo_anos", "status", "estadio", "idade10", "sexo", "categoria", "localizacao")
+dados_mod <- dados |> select(all_of(vars_mod)) |> drop_na()
+n_mod     <- nrow(dados_mod)
+form      <- Surv(tempo_anos, status) ~ estadio + idade10 + sexo + categoria + localizacao
+```
+
+Foram usados `r fmt_n(n_mod)` pacientes com informação completa nas covariáveis (`r fmt_n(n_total - n_mod)` excluídos por dados ausentes, `r pct((n_total - n_mod) / n_total)`).
+
+### Modelos de tempo de falha acelerado (AFT)
+
+No modelo AFT, $\log T = \mathbf{x}^\top\boldsymbol\beta + \sigma\varepsilon$, em que a distribuição de $\varepsilon$ define o modelo. O termo $e^{\beta_j}$ é a **razão de tempos** (*time ratio*): valores menores que 1 indicam que a covariável **encurta** o tempo até o óbito.
+
+```{r aft-ajuste}
+dists_aft <- c("Exponencial" = "exponential", "Weibull" = "weibull",
+               "Log-normal" = "lognormal", "Log-logística" = "loglogistic")
+
+fits_aft <- map(dists_aft, \(d) survreg(form, data = dados_mod, dist = d))
+
+crit_aft <- imap_dfr(fits_aft, \(f, nome) tibble(
+  Modelo = nome, k = attr(logLik(f), "df"), logLik = as.numeric(logLik(f)),
+  AIC = AIC(f), BIC = BIC(f), C = concordance(f)$concordance)) |>
+  arrange(AIC) |>
+  mutate(`Dif. AIC` = AIC - min(AIC))
+
+crit_aft |>
+  mutate(across(c(logLik, AIC, BIC, `Dif. AIC`), \(x) fmt(x, 1)), C = fmt(C, 3)) |>
+  tabela("Critérios de ajuste dos modelos AFT com covariáveis (C = índice de concordância de Harrell).",
+         align = "lrrrrrr")
+
+melhor_aft_nome <- crit_aft$Modelo[1]
+melhor_aft <- fits_aft[[melhor_aft_nome]]
+```
+
+```{r aft-coef}
+tab_razao <- function(f, rotulo_efeito) {
+  b  <- coef(f)
+  ci <- confint(f)
+  p  <- summary(f)$table[names(b), "p"]
+  tibble(Termo = rotular(names(b)), Efeito = fmt(exp(b), 3),
+         `IC 95%` = ic(exp(ci[names(b), 1]), exp(ci[names(b), 2])), p = fmt_p(p)) |>
+    filter(Termo != "(Intercept)") |>
+    rename(!!rotulo_efeito := Efeito)
+}
+
+tab_razao(melhor_aft, "Razão de tempos") |>
+  tabela(sprintf("Modelo AFT %s: razões de tempos estimadas (escala estimada = %s).",
+                 melhor_aft_nome, fmt(melhor_aft$scale, 3)), align = "lrrr")
+```
+
+```{r aft-coxsnell, fig.height=5.5, fig.cap="Resíduos de Cox-Snell dos modelos AFT. Se o modelo for adequado, o risco acumulado dos resíduos (estimado por Kaplan-Meier) acompanha a reta identidade."}
+cox_snell_df <- function(r, status) {
+  km_r <- survfit(Surv(r, status) ~ 1)
+  tibble(r = km_r$time, H = -log(km_r$surv)) |> filter(is.finite(H))
+}
+
+cs_aft <- imap_dfr(fits_aft, \(f, nome) {
+  lp <- predict(f, type = "lp")
+  S  <- 1 - psurvreg(dados_mod$tempo_anos, mean = lp, scale = f$scale, distribution = f$dist)
+  cox_snell_df(-log(S), dados_mod$status) |> mutate(Modelo = nome)
+})
+
+ggplot(cs_aft, aes(r, H)) +
+  geom_step(colour = "steelblue") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "firebrick") +
+  facet_wrap(~ factor(Modelo, levels = names(dists_aft)), scales = "free") +
+  labs(x = "Resíduo de Cox-Snell", y = "Risco acumulado estimado dos resíduos")
+```
+
+```{r interp-aft}
+b_w    <- coef(melhor_aft)
+p_w    <- summary(melhor_aft)$table[names(b_w), "p"]
+tr_reto <- exp(b_w[["localizacaoReto/junção"]])
+p_reto  <- p_w[["localizacaoReto/junção"]]
+n_part  <- sum(dados_mod$categoria == "Particular")
+
+perda_grupo <- function(g) mean(dados$PERDASEG[dados$categoria %in% g & dados$status == 0] == "1", na.rm = TRUE)
+perda_part  <- perda_grupo("Particular")
+perda_sus   <- perda_grupo("SUS")
+```
+
+Nos resíduos de Cox-Snell, a Weibull é o único modelo cujo risco acumulado acompanha a reta identidade em praticamente toda a faixa dos resíduos, com afastamentos apenas na cauda, onde restam poucas observações. A exponencial fica abaixo da reta a partir de resíduos em torno de 1, e a log-normal e a log-logística se afastam para cima a partir de 0,8 a 1,0. O gráfico confirma, portanto, a ordem do AIC, que também aponta a Weibull como o melhor modelo AFT. O resultado é coerente com as seções anteriores: a escala estimada de 1,428 corresponde a um parâmetro de forma de 1/1,428 ≈ 0,70, menor que 1, ou seja, risco decrescente no tempo, como indicaram a taxa de risco suavizada e os gráficos de linearização.
+
+No modelo AFT Weibull, mantidas as demais covariáveis, o tempo até o óbito é 27,9% menor no estádio II, 61,4% menor no estádio III e 92,2% menor no estádio IV, em relação ao estádio I. No estádio IV, ele equivale a cerca de 1/13 do observado no estádio I. Cada década a mais de idade reduz o tempo até o óbito em 29,5%. Pacientes atendidos por convênio têm tempo 30,4% maior que os do SUS, mesmo após o ajuste por estádio e idade. A diferença vista no log-rank, portanto, não se explica só pela composição de estádios, embora ainda possa refletir fatores não medidos, como condição socioeconômica e acesso ao tratamento. Como a Weibull também é um modelo de riscos proporcionais, cada razão de tempos (RT) corresponde a uma razão de riscos $HR = RT^{-1/\sigma}$: para o estádio IV, cerca de 6,0; para cada década de idade, cerca de 1,28.
+
+A razão de tempos de 4,80 para o atendimento particular deve ser lida com cautela. O intervalo de confiança é muito largo (1,88 a 12,24), porque o grupo é pequeno (`r fmt_n(n_part)` pacientes), e o efeito é grande demais para ser atribuído só ao tipo de atendimento. Uma hipótese é a qualidade do seguimento: se o óbito desses pacientes é registrado com menos frequência pelo hospital, eles parecem viver mais. Entre os censurados, a proporção classificada como perda de seguimento é de `r pct(perda_part)` no atendimento particular e de `r pct(perda_sus)` no SUS, `r if (perda_part > 1.2 * perda_sus) "o que é compatível com essa hipótese" else "o que não sustenta essa hipótese; o efeito pode refletir características não medidas do grupo, como condição socioeconômica e comorbidades"`. O efeito do sexo não é significativo ao nível de 5% (razão de tempos de 1,10; p = 0,068), e o da localização do tumor também `r if (p_reto < 0.05) "é" else "não é"` significativo (razão de tempos de `r fmt(tr_reto, 3)`; p `r ifelse(p_reto < 0.001, "< 0,001", paste("=", fmt(p_reto, 3)))`).
+
+### Modelo de regressão de Cox
+
+O modelo de Cox, $h(t \mid \mathbf{x}) = h_0(t)\exp(\mathbf{x}^\top\boldsymbol\beta)$, não especifica o risco basal $h_0(t)$. Em troca, ele supõe **riscos proporcionais**: a razão de riscos entre dois pacientes é constante no tempo. Os empates foram tratados pelo método de Efron.
+
+```{r cox-ajuste}
+fit_cox <- coxph(form, data = dados_mod, ties = "efron")
+s_cox   <- summary(fit_cox)
+
+tibble(Termo = rotular(rownames(s_cox$conf.int)),
+       `Razão de riscos` = fmt(s_cox$conf.int[, "exp(coef)"], 3),
+       `IC 95%` = ic(s_cox$conf.int[, "lower .95"], s_cox$conf.int[, "upper .95"]),
+       p = fmt_p(s_cox$coefficients[, "Pr(>|z|)"])) |>
+  tabela(sprintf("Modelo de Cox: razões de riscos (C de Harrell = %s).",
+                 fmt(s_cox$concordance[1], 3)), align = "lrrr")
+```
+
+### Validação do modelo de Cox
+
+```{r cox-zph}
+zph <- cox.zph(fit_cox)
+
+as_tibble(zph$table, rownames = "Termo") |>
+  mutate(Termo = recode(Termo, estadio = "Estádio", idade10 = "Idade", sexo = "Sexo",
+                        categoria = "Categoria", localizacao = "Localização", GLOBAL = "Global"),
+         chisq = fmt(chisq, 2), p = fmt_p(p)) |>
+  rename(`Qui-quadrado` = chisq, gl = df) |>
+  tabela("Teste de proporcionalidade dos riscos baseado nos resíduos de Schoenfeld (Grambsch & Therneau, 1994).",
+         align = "lrrr")
+
+p_global <- zph$table["GLOBAL", "p"]
+```
+
+```{r interp-ph}
+lista     <- function(x, sep = ", ") if (length(x) <= 1) x else paste(paste(head(x, -1), collapse = sep), "e", tail(x, 1))
+txt_minus <- function(x) paste0(tolower(substr(x, 1, 1)), substring(x, 2))
+
+# Magnitude do desvio: reta ajustada a cada curva beta(t), na escala de tempo do próprio teste,
+# comparando a HR nos percentis 10 e 90 dos tempos de óbito
+zph_coef <- cox.zph(fit_cox, terms = FALSE)
+tq  <- quantile(zph_coef$time, c(0.1, 0.9))
+x_q <- approx(zph_coef$time, zph_coef$x, xout = tq, ties = mean)$y
+
+var_tempo <- map_dfr(seq_along(coef(fit_cox)), \(j) {
+  ab <- coef(lm(zph_coef$y[, j] ~ zph_coef$x))
+  tibble(coef   = names(coef(fit_cox))[j],
+         hr_cox = exp(coef(fit_cox)[[j]]),
+         hr_ini = exp(ab[[1]] + ab[[2]] * x_q[1]),
+         hr_fim = exp(ab[[1]] + ab[[2]] * x_q[2]))
+}) |>
+  mutate(variacao  = hr_fim / hr_ini - 1,
+         relevante = abs(log(hr_fim / hr_ini)) > log(1.25))   # variação > 25% para mais ou para menos
+
+var_tempo |>
+  transmute(Termo = rotular(coef), `HR (Cox)` = fmt(hr_cox, 2), `HR no início` = fmt(hr_ini, 2),
+            `HR no fim` = fmt(hr_fim, 2), `Variação` = pct(variacao),
+            Relevante = ifelse(relevante, "sim", "não")) |>
+  tabela(sprintf("Razão de riscos no início (percentil 10 dos tempos de óbito, %s anos) e no fim do seguimento (percentil 90, %s anos), pela tendência linear dos coeficientes no tempo. Relevante: razão entre a HR no fim e no início abaixo de 0,8 ou acima de 1,25.",
+                 fmt(tq[[1]], 2), fmt(tq[[2]], 2)), align = "lrrrrc")
+
+rel  <- filter(var_tempo, relevante)
+reto <- filter(var_tempo, coef == "localizacaoReto/junção")
+
+txt_ph <- if (nrow(rel) > 0) {
+  paste0("Por esse critério, o desvio é relevante para ",
+         lista(paste0(txt_minus(rotular(rel$coef)), ", cuja razão de riscos passa de ",
+                      fmt(rel$hr_ini, 2), " para ", fmt(rel$hr_fim, 2)), sep = "; "),
+         ". Para ", if (nrow(rel) > 1) "esses termos" else "esse termo",
+         ", uma razão de riscos única resume mal a relação, porque o efeito muda ao longo do seguimento.",
+         if (nrow(rel) < nrow(var_tempo)) " Para os demais, o desvio é estatisticamente detectável, mas pequeno, e a suposição de riscos proporcionais é aceitável na prática." else "")
+} else {
+  "Por esse critério, nenhuma razão de riscos varia de forma relevante, e a suposição de riscos proporcionais é aceitável na prática, apesar dos valores-p."
+}
+
+txt_reto <- if ((reto$hr_ini - 1) * (reto$hr_fim - 1) < 0) {
+  paste0("É o que a tabela mostra: a razão de riscos de reto/junção em relação ao cólon passa de ",
+         fmt(reto$hr_ini, 2), " no início para ", fmt(reto$hr_fim, 2),
+         " no fim, ou seja, o efeito inverte de sentido ao longo do seguimento.")
+} else {
+  paste0("Na tendência linear, a razão de riscos de reto/junção em relação ao cólon passa de ",
+         fmt(reto$hr_ini, 2), " para ", fmt(reto$hr_fim, 2),
+         ", sem inversão de sentido; a mudança pode não ser linear no tempo.")
+}
+```
+
+O teste rejeita a proporcionalidade para todas as covariáveis ao nível de 5%, assim como o teste global ($\chi^2$ = 109,49; 8 gl; p \< 0,001). Para medir o tamanho do desvio, ajustou-se uma reta a cada curva $\hat\beta(t)$, na mesma escala de tempo usada pelo teste, e comparou-se a razão de riscos no início e no fim do seguimento. Adotou-se como relevante uma variação maior que 25%, para mais ou para menos. `r txt_ph`
+
+A localização do tumor merece destaque. Ela tem a maior estatística do teste por grau de liberdade ($\chi^2$ = 38,11 com 1 gl), embora não tenha mostrado diferença no log-rank (p = 0,601). Essa combinação aparece quando o efeito muda de direção ao longo do tempo: se um grupo tem risco maior no início e menor depois, os dois períodos se compensam tanto no log-rank quanto na razão de riscos média do Cox. `r txt_reto`
+
+`r if (nrow(rel) > 0) "Esse resultado tem uma consequência para a escolha do modelo. A Weibull, que teve o melhor ajuste entre os modelos AFT, é também um modelo de riscos proporcionais: as razões de riscos implícitas nela são constantes no tempo, como as do Cox. Os desvios identificados aqui afetam, portanto, os dois modelos da mesma forma e não são um argumento para preferir um ao outro. A log-normal e a log-logística não impõem riscos proporcionais, mas tiveram ajuste global pior nos resíduos de Cox-Snell." else ""`
+
+Com `r fmt_n(n_mod)` pacientes, o teste tem poder para detectar desvios de proporcionalidade pequenos e sem relevância prática. Por isso, a decisão deve combinar o valor-p com a **magnitude** do desvio, vista nas curvas $\hat\beta(t)$ abaixo. Se a curva oscila pouco em torno de uma reta horizontal, a hipótese de riscos proporcionais é aceitável na prática, mesmo com p \< 0,05.
+
+```{r cox-schoenfeld, fig.height=7, fig.width=8, fig.cap="Coeficientes ao longo do tempo estimados pelos resíduos de Schoenfeld escalonados, com banda de 95%. Uma linha horizontal indica riscos proporcionais. A linha tracejada vermelha marca a estimativa do modelo de Cox."}
+zph_coef <- cox.zph(fit_cox, terms = FALSE)   # uma curva por coeficiente (fatores desdobrados)
+n_coef <- length(coef(fit_cox))
+par(mfrow = c(ceiling(n_coef / 3), 3), mar = c(4, 4, 2, 1))
+for (j in seq_len(n_coef)) {
+  plot(zph_coef[j], resid = FALSE, se = TRUE, xlab = "Anos", main = rotular(names(coef(fit_cox))[j]),
+       ylab = expression(hat(beta)(t)))
+  abline(h = coef(fit_cox)[j], col = "firebrick", lty = 2)
+}
+```
+
+```{r cox-cloglog, fig.height=3.8, fig.cap="log(-log S(t)) por estádio versus log(t). Curvas aproximadamente paralelas são compatíveis com riscos proporcionais para o estádio."}
+tibble(t = km_est$time, S = km_est$surv,
+       estadio = sub("estadio=", "", rep(names(km_est$strata), km_est$strata))) |>
+  filter(S > 0, S < 1, t > 0) |>
+  ggplot(aes(log(t), log(-log(S)), colour = estadio)) +
+  geom_step() +
+  scale_colour_brewer(palette = "Dark2") +
+  labs(x = "log(tempo em anos)", y = "log(-log S(t))", colour = "Estádio")
+```
+
+```{r cox-residuos, fig.height=3.8, fig.cap="Esquerda: resíduos martingale do modelo sem idade versus idade (forma funcional). Direita: resíduos de Cox-Snell do modelo de Cox."}
+fit_sem_idade <- update(fit_cox, . ~ . - idade10)
+df_mart <- tibble(idade = dados_mod$idade10 * 10 + 60,
+                  r = residuals(fit_sem_idade, type = "martingale"))
+
+set.seed(42)
+g1 <- ggplot(df_mart, aes(idade, r)) +
+  geom_point(data = slice_sample(df_mart, n = min(4000, nrow(df_mart))), alpha = 0.08, size = 0.6) +
+  geom_smooth(colour = "firebrick", se = TRUE) +
+  labs(x = "Idade (anos)", y = "Resíduo martingale", title = "Forma funcional da idade")
+
+r_cs_cox <- dados_mod$status - residuals(fit_cox, type = "martingale")
+g2 <- ggplot(cox_snell_df(r_cs_cox, dados_mod$status), aes(r, H)) +
+  geom_step(colour = "steelblue") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "firebrick") +
+  labs(x = "Resíduo de Cox-Snell", y = "Risco acumulado", title = "Ajuste global (Cox)")
+
+gridExtra::grid.arrange(g1, g2, ncol = 2)
+```
+
+### Cox estratificado por estádio (análise de sensibilidade)
+
+Quando a proporcionalidade falha para o estádio, uma alternativa é estratificar por ele. Cada estádio passa a ter o seu risco basal $h_{0k}(t)$, livre de forma, e o efeito do estádio deixa de ser estimado. A comparação abaixo mostra se as razões de riscos das demais covariáveis mudam com isso.
+
+```{r cox-estratificado}
+fit_cox_estr <- coxph(Surv(tempo_anos, status) ~ strata(estadio) + idade10 + sexo + categoria + localizacao,
+                      data = dados_mod, ties = "efron")
+
+hr <- function(f) { s <- summary(f)$conf.int
+  tibble(Termo = rownames(s), hr = paste0(fmt(s[, 1], 3), " ", ic(s[, 3], s[, 4]))) }
+
+# HR implícita pela Weibull AFT: HR = exp(-beta / escala)
+fw <- fits_aft[["Weibull"]]
+hr_weib <- tibble(Termo = names(coef(fw))[-1], hr_w = fmt(exp(-coef(fw)[-1] / fw$scale), 3))
+
+hr(fit_cox) |> rename(`Cox` = hr) |>
+  left_join(hr(fit_cox_estr) |> rename(`Cox estratificado` = hr), by = "Termo") |>
+  left_join(hr_weib |> rename(`Weibull (HR implícita)` = hr_w), by = "Termo") |>
+  mutate(Termo = rotular(Termo),
+         across(everything(), \(x) replace_na(x, "estrato"))) |>
+  tabela("Razões de riscos [IC 95%] no Cox, no Cox estratificado por estádio e implícitas no modelo Weibull.",
+         align = "lrrr")
+
+zph_estr <- cox.zph(fit_cox_estr)
+```
+
+No Cox estratificado, o teste global de proporcionalidade teve p `r ifelse(zph_estr$table["GLOBAL", "p"] < 0.001, "< 0,001", paste("=", fmt(zph_estr$table["GLOBAL", "p"], 3)))`. O modelo Weibull é ao mesmo tempo AFT e de riscos proporcionais. Por isso, quando as razões de riscos implícitas nele ficam próximas das do Cox, há indicação de que uma forma paramétrica é compatível com os dados.
+
+```{r interp-cox}
+fit_cox_ns <- coxph(Surv(tempo_anos, status) ~ estadio + splines::ns(idade10, df = 4) + sexo + categoria + localizacao,
+                    data = dados_mod, ties = "efron")
+p_nl    <- anova(fit_cox, fit_cox_ns)[["Pr(>|Chi|)"]][2]
+daic_nl <- AIC(fit_cox) - AIC(fit_cox_ns)
+p_nl_txt <- ifelse(p_nl < 0.001, "< 0,001", paste("=", fmt(p_nl, 3)))
+
+txt_nl <- if (daic_nl > 10) {
+  paste0("Substituir o termo linear por um spline natural com 4 graus de liberdade reduz o AIC em ", fmt(daic_nl, 1),
+         " pontos (p ", p_nl_txt, "), o que confirma a não linearidade. O termo linear foi mantido para preservar a leitura de um efeito por década, mas ele subestima a diferença de risco entre os mais idosos e superestima a diferença entre os adultos jovens.")
+} else if (daic_nl > 0) {
+  paste0("Substituir o termo linear por um spline natural com 4 graus de liberdade reduz o AIC em apenas ", fmt(daic_nl, 1),
+         " pontos (p ", p_nl_txt, "), então o termo linear é uma aproximação aceitável na faixa em que está a maior parte dos pacientes.")
+} else {
+  paste0("Ainda assim, substituir o termo linear por um spline natural com 4 graus de liberdade não melhora o AIC (p ", p_nl_txt,
+         "), então o termo linear é uma aproximação aceitável.")
+}
+```
+
+Os gráficos de $\hat\beta(t)$ confirmam e detalham a tabela anterior. Os coeficientes dos estádios II e III oscilam em torno da estimativa do Cox, com a reta horizontal dentro da banda de confiança em todo o seguimento, e a variação estimada é pequena (−4,3% e 12,2%). Para eles, a proporcionalidade se sustenta na prática.
+
+O estádio IV é o desvio mais importante. Seu coeficiente sobe de cerca de 1,2 nas primeiras semanas para cerca de 2,0 entre 1 e 2,5 anos, e nos dois primeiros meses a banda de confiança fica inteiramente abaixo da estimativa do Cox. Em razão de riscos, o excesso de risco do estádio IV em relação ao I passa de 4,57 no início para 8,03 por volta de 2,8 anos. Isso retoma o que a tabela de Nelson-Aalen sugeria na Seção 3: logo após o diagnóstico, os estádios iniciais também concentram parte dos óbitos, e a vantagem do estádio I se amplia com o tempo. A razão de riscos única de 6,00 é, portanto, a média de um efeito que cresce ao longo do primeiro ano.
+
+A idade tem o comportamento oposto: seu efeito é mais forte no início (razão de riscos de 1,43 por década) e se atenua para 1,13 depois de dois a três anos, com a banda de confiança excluindo a estimativa do Cox nos dois extremos. Uma interpretação plausível é que a idade pesa sobretudo na mortalidade precoce, ligada à fragilidade e a complicações do tratamento. A vantagem do convênio sobre o SUS também se concentra no início: a razão de riscos de 0,69 nas primeiras semanas chega a cerca de 1,0 por volta de 2,5 a 3 anos, ou seja, a diferença praticamente desaparece entre os pacientes que sobrevivem aos primeiros anos.
+
+A localização confirma a inversão de sentido antecipada pela comparação entre o teste de Schoenfeld e o log-rank. O coeficiente começa negativo, cruza o zero por volta de 4 meses e fica positivo depois, com a banda de confiança excluindo o zero nos dois trechos. Os tumores de reto e junção retossigmoide têm risco menor que os de cólon nos primeiros meses (razão de riscos de 0,79 no início) e maior a partir daí (1,52 por volta de 2,8 anos). Os dois efeitos se compensam na curva bruta, o que explica o log-rank não significativo (p = 0,601). Uma explicação possível é a maior frequência de apresentação em urgência nos tumores de cólon, com mortalidade precoce, enquanto no reto o tratamento costuma começar por terapia neoadjuvante e os óbitos se distribuem mais tarde; a base, porém, não permite verificar essa hipótese.
+
+Para sexo e atendimento particular, o critério linear acusa variação, mas os gráficos não sustentam uma tendência: as curvas oscilam, e a banda de confiança contém a estimativa do Cox em quase todo o seguimento. No atendimento particular, a banda é tão larga, por causa do tamanho do grupo, que a curva não permite conclusão. Esses dois desvios não foram considerados relevantes.
+
+Quanto à forma funcional, os resíduos martingale do modelo sem idade ficam praticamente constantes até cerca de 55 anos e crescem a partir daí, cada vez mais rápido. O efeito da idade não é linear: é pequeno entre os adultos jovens e se concentra nas idades mais altas. `r txt_nl` Os resíduos de Cox-Snell do Cox seguem a reta identidade até cerca de 2, com afastamento apenas na cauda, onde restam poucas observações, em padrão muito parecido com o da Weibull.
+
+Por fim, os efeitos das demais covariáveis são robustos à forma de modelar o estádio: estratificar por ele muda as razões de riscos em menos de 1% (a da idade, por exemplo, passa de 1,277 para 1,280). As razões de riscos implícitas na Weibull praticamente coincidem com as do Cox (estádio IV: 5,958 contra 5,997; idade: 1,278 contra 1,277). Como os dois modelos diferem apenas no tratamento do risco basal, essa coincidência indica que a forma Weibull descreve bem o risco basal destes dados.
+
+## Comparação dos modelos
+
+```{r comparacao}
+c_cox <- s_cox$concordance[1]
+
+bind_rows(
+  crit_aft |> transmute(Modelo = paste("AFT", Modelo), `Suposição` = "Tempo de falha acelerado",
+                        logLik = fmt(logLik, 1), AIC = fmt(AIC, 1), BIC = fmt(BIC, 1), C = fmt(C, 3)),
+  tibble(Modelo = "Cox", `Suposição` = "Riscos proporcionais",
+         logLik = paste(fmt(fit_cox$loglik[2], 1), "(parcial)"),
+         AIC = "não comparável", BIC = "não comparável", C = fmt(c_cox, 3))
+) |>
+  tabela("Comparação dos modelos de regressão. AIC e BIC só são comparáveis entre os modelos AFT, pois o Cox maximiza uma verossimilhança parcial; o índice C é comparável entre todos.",
+         align = "llrrrr")
+```
+
+# Conclusão
+
+```{r conclusao-calc}
+segundo_aft <- crit_aft$Modelo[2]
+dif_aic     <- crit_aft$`Dif. AIC`[2]
+melhor_bic  <- crit_aft$Modelo[which.min(crit_aft$BIC)]
+```
+
+Entre os modelos paramétricos de regressão, o **AFT `r melhor_aft_nome`** teve o menor AIC, `r fmt(dif_aic, 1)` pontos abaixo do segundo colocado (`r segundo_aft`). Pelo BIC, o melhor foi o **`r melhor_bic`**. No modelo de Cox, o teste global de proporcionalidade teve p `r ifelse(p_global < 0.001, "< 0,001", paste("=", fmt(p_global, 3)))`. O índice de concordância foi `r fmt(c_cox, 3)` no Cox e `r fmt(crit_aft$C[1], 3)` no AFT `r melhor_aft_nome`.
+
+O modelo final escolhido é o **AFT Weibull**, com estádio clínico, idade, sexo, categoria de atendimento e localização como covariáveis, tendo o Cox como referência semiparamétrica. A escolha se apoia nos três critérios do enunciado:
+
+1.  **Qualidade do ajuste.** Entre os modelos com verossimilhança completa, o AFT Weibull tem a maior log-verossimilhança e o menor AIC, `r fmt(dif_aic, 1)` pontos abaixo do segundo colocado (`r tolower(segundo_aft)`)`r if (melhor_bic == "Weibull") ", e também o menor BIC" else paste0("; pelo BIC, o melhor é o ", tolower(melhor_bic))`. `r if (dif_aic > 10) "Uma diferença acima de 10 pontos indica, pela regra usual de Burnham e Anderson (2002), suporte praticamente nulo para o modelo concorrente." else "Como a diferença é menor que 10 pontos, o modelo concorrente não pode ser descartado só por esse critério."` O Cox não entra nessa comparação, porque sua verossimilhança é parcial, mas o índice de concordância dele (`r fmt(c_cox, 3)`) é praticamente igual ao da Weibull (`r fmt(crit_aft$C[crit_aft$Modelo == "Weibull"], 3)`): os dois ordenam os pacientes por risco da mesma forma.
+
+2.  **Validação dos resíduos.** Os resíduos de Cox-Snell da Weibull seguem a reta identidade em praticamente toda a faixa, ao contrário dos da exponencial, da log-normal e da log-logística, e de forma muito parecida com os do Cox. A proporcionalidade dos riscos não se sustenta para o estádio IV, a idade, o convênio e a localização, cujos efeitos mudam ao longo do seguimento. Essa violação afeta igualmente a Weibull e o Cox, já que ambos são modelos de riscos proporcionais. Ela também não se resolve com as alternativas disponíveis. O Cox estratificado acomoda o desvio do estádio, mas não o das demais covariáveis, e mantém as razões de riscos delas praticamente inalteradas (variação inferior a 1%). Os modelos AFT que não impõem proporcionalidade, log-normal e log-logística, tiveram ajuste global claramente pior. A violação, portanto, não justifica trocar de modelo, mas exige ler as razões de tempos e de riscos como efeitos médios ao longo do seguimento, complementados pela mudança no tempo descrita na Seção 4.2.
+
+3.  **Interpretação.** A Weibull permite as duas leituras, o que é uma vantagem prática. A razão de tempos comunica o efeito na escala em que o paciente o vive: no estádio IV, o tempo até o óbito equivale a cerca de 1/13 do observado no estádio I, e cada década de idade o reduz em 29,5%. A razão de riscos, idêntica à do Cox, é a medida padrão na literatura oncológica e facilita a comparação com outros estudos: o risco de óbito no estádio IV é cerca de 6 vezes o do estádio I, e cada década de idade o multiplica por 1,28. Por ser paramétrica, a Weibull também permite estimar a curva de sobrevida e a mediana para qualquer perfil de paciente, o que o Cox só faz de forma não paramétrica. Os efeitos são coerentes com o esperado clinicamente: o risco cresce do estádio I ao IV e com a idade, e o atendimento por convênio se associa a maior sobrevida, sobretudo nos primeiros anos. A estimativa para o atendimento particular, baseada em apenas 44 pacientes, não deve ser interpretada além do sentido do efeito.
+
+## Limitações
+
+- **Registro hospitalar.** A coorte representa pacientes atendidos em hospitais habilitados em oncologia de São Paulo, não a população geral.
+- **Censura possivelmente informativa.** Pacientes perdidos de seguimento são censurados na última informação. Se a perda estiver associada a pior prognóstico, a sobrevida é superestimada.
+- **Unidade de análise.** A base não tem identificador de paciente, então quem teve mais de um tumor colorretal pode aparecer mais de uma vez.
+- **Seguimento.** Os anos de diagnóstico mais recentes têm seguimento curto e, segundo a FOSP, podem estar com o registro em andamento.
+- **Covariáveis.** O tratamento foi excluído pelos motivos da Seção 4.2. As variáveis biológicas e de comorbidade não estão disponíveis.
+
+# Referências
+
+- COLOSIMO, E. A.; GIOLO, S. R. *Análise de Sobrevivência Aplicada*. São Paulo: Blucher, 2006.
+- COX, D. R. Regression models and life-tables. *Journal of the Royal Statistical Society, Series B*, v. 34, n. 2, p. 187–220, 1972.
+- FUNDAÇÃO ONCOCENTRO DE SÃO PAULO. *Dicionário de Dados — RHC/SP*. Revisão de 20/07/2026.
+- GRAMBSCH, P. M.; THERNEAU, T. M. Proportional hazards tests and diagnostics based on weighted residuals. *Biometrika*, v. 81, n. 3, p. 515–526, 1994.
+- JACKSON, C. flexsurv: a platform for parametric survival modeling in R. *Journal of Statistical Software*, v. 70, n. 8, 2016.
+- KLEIN, J. P.; MOESCHBERGER, M. L. *Survival Analysis: Techniques for Censored and Truncated Data*. 2. ed. New York: Springer, 2003.
+- SCHEMPER, M.; SMITH, T. L. A note on quantifying follow-up in studies of failure time. *Controlled Clinical Trials*, v. 17, n. 4, p. 343–346, 1996.
+- THERNEAU, T. M.; GRAMBSCH, P. M. *Modeling Survival Data: Extending the Cox Model*. New York: Springer, 2000.
+
+\newpage
+
+# Apêndice: código R
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```

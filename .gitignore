@@ -50,3 +50,14 @@ Modelos-Regressao/dados/covid_doencas_preexistentes.csv
 Modelos-Regressao/dados/SPDadosCriminais_2025.xlsx
 Modelos-Regressao/projeto_final/Motor_Vehicle_Collisions.csv
 Modelos-Regressao/aulas/04 - Regressão Binária com Python.ipynb
+
+# Análise de Sobrevivência - bases do RHC (grandes demais para o GitHub)
+Analise-Sobrevivencia/ProjetoFinal/*.DBF
+Analise-Sobrevivencia/ProjetoFinal/*.zip
+Analise-Sobrevivencia/ProjetoFinal/*.rds
+
+# LaTeX - arquivos temporários
+*.aux
+*.toc
+*.synctex(busy)
+*.synctex.gz
